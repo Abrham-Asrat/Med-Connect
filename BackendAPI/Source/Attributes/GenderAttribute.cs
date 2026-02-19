@@ -7,7 +7,7 @@ using BackendAPI.Source.Models.Enums;
 
 namespace BackendAPI.Source.Attributes
 {
-    public class GenderAttrubute : ValidationAttribute
+    public class GenderAttribute : ValidationAttribute
     {
         protected override ValidationResult? IsValid (object? value,ValidationContext validationContext)
         {

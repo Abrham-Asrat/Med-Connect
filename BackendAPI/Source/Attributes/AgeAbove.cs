@@ -13,7 +13,7 @@ namespace BackendAPI.Source.Attributes
         {
             try
             {
-                if(value==null) return new ValidationResult("Date filed must be provivided");
+                if(value==null) return new ValidationResult("Date field must be provided");
                 if(value is not DateTime birthDate) return new ValidationResult("Date should be in the correct format. ");
                 
                 var today = DateTime.Today;

@@ -4,5 +4,6 @@ namespace BackendAPI.Source.Models.Enums
     {
         Male,
         Female
+ 
     }
 }

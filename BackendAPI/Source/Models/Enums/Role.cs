@@ -5,8 +5,7 @@ namespace BackendAPI.Source.Models.Enums
         Admin,
         Patient,
         Doctor, 
-        // Institution
-        // SupperAdmin
-
+        // Institution,
+        // SupperAdmin               
     }
 }

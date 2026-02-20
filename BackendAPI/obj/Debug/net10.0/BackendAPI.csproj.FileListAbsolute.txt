@@ -168,3 +168,11 @@ D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\ru\Microsoft.CodeAnalys
 D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\Serilog.AspNetCore.dll
+D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\Serilog.Extensions.Hosting.dll
+D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\Serilog.Extensions.Logging.dll
+D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\Serilog.Formatting.Compact.dll
+D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\Serilog.Settings.Configuration.dll
+D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\Serilog.Sinks.Debug.dll
+D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\Serilog.Sinks.File.dll
+D:\Real-project\Med-Connect\BackendAPI\bin\Debug\net10.0\Serilog.Sinks.Seq.dll

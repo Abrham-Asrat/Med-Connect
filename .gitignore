@@ -1,0 +1,50 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.cache
+*.config
+
+# Build results
+bin/
+obj/
+
+# NuGet
+*.nupkg
+packages/
+
+# ASP.NET
+*.vspscc
+
+# Rider
+.idea/
+*.sln.iml
+
+# Visual Studio Code
+.vscode/
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+
+# Others
+*.log
+
+# Ignore generated files
+*.g.cs
+
+# Ignore publish outputs
+publish/
+
+# Dependency directories
+node_modules/
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+
+
+BackendAPI/obj
+BackendAPI/bin
+BackendAPI/.env

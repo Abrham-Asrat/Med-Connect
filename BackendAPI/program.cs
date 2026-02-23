@@ -3,128 +3,218 @@ using FluentValidation;
 using BackendAPI.Source.Config;
 using BackendAPI.Source.Data;
 using BackendAPI.Source.Service;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
-using Serilog;
 using BackendAPI.Source.Validation;
-using Microsoft.Extensions.Options;
-
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Newtonsoft.Json.Converters;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 
 // Load Environment Variables
-var envFilePath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
-
-if (!File.Exists(envFilePath))
-{
-    throw new FileNotFoundException(".env file not found. Please create a .env file in the Backend directory with the required configuration.");
-}
-
-DotEnv.Load(options: new DotEnvOptions(ignoreExceptions: false, envFilePaths: new[] { envFilePath }));
-
-// Debug Auth0 Configuration
-
-var auth0Domain = Environment.GetEnvironmentVariable("AUTH0_DOMAIN");
-var auth0Audience = Environment.GetEnvironmentVariable("AUTH0_AUDIENCE");
-var auth0ClientId = Environment.GetEnvironmentVariable("AUTH0_CLIENT_ID");
-var auth0ClientSecret = Environment.GetEnvironmentVariable("AUTH0_CLIENT_SECRET");
-
-if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0Audience) || string.IsNullOrEmpty(auth0ClientId) || string.IsNullOrEmpty(auth0ClientSecret))
-{
-    throw new Exception("Auth0 configuration is missing. Please ensure AUTH0_DOMAIN, AUTH0_AUDIENCE, AUTH0_CLIENT_ID, and AUTH0_CLIENT_SECRET are set in the .env file.");
-}
+DotEnv.Load(options: new DotEnvOptions(ignoreExceptions: false));
 
 var builder = WebApplication.CreateBuilder(args);
+
 {
-    Log.Logger = new LoggerConfiguration()
-       .MinimumLevel.Debug() // Set the minimum log level to Debug
-       .WriteTo.Console() // Write logs to the console
-       .WriteTo.File("Logs/HealthHub.log", rollingInterval: RollingInterval.Day) // Write logs to a file
-       .WriteTo.Seq("http://localhost:5341/") // Write logs to Seq
-       .CreateLogger();
+  // Configure Serilog with appropriate sinks
+  Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug() // Set the minimum log level to Debug
+    .WriteTo.Console() // Write logs to the console
+    .WriteTo.File("Logs/HealthHub.log", rollingInterval: RollingInterval.Day) // Write logs to a file
+    .WriteTo.Seq("http://localhost:5341/") // Write logs to Seq
+    .CreateLogger();
 
-    Log.Information("Application Starting...");
+  Log.Information("Application Starting...");
 
-    // Configure Serilog to capture logs from application host
-    builder.Host.UseSerilog();
+  // Configure Serilog to capture logs from application host
+  builder.Host.UseSerilog();
 
-
-
-
-    // Database Configuration
-    builder.Services.AddDbContext<ApplicationDbContext>((ServiceProvider, options) =>
-        {
-            var appConfig = ServiceProvider.GetRequiredService<AppConfig>();
-            var connectionString = appConfig.DatabaseConnection;
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new Exception("Database connection string is missing. Please ensure DB_CONNECTION is set in the .env file.");
-            }
-            Log.Information($"Using Database Connection String: {connectionString}");
-
-            options.UseSqlServer(connectionString, sqlOptions =>
-               {
-                   sqlOptions.EnableRetryOnFailure(
-                       maxRetryCount: 3,
-                       maxRetryDelay: TimeSpan.FromSeconds(30),
-                       errorNumbersToAdd: null
-                   );
-               }
-               );
-        },
-         ServiceLifetime.Scoped  // Explicitly set to Scoped
-    );
-
-
-    //Register validation Services 
-    builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
-
-
-    // Register Application Services
-    builder.Services.AddScoped<UserService>();
-    builder.Services.AddScoped<Auth0Service>();
-
-
-    // Register AppConfig
-
-    // swagger Configuration
-
-    builder.Services.AddSwaggerGen(options =>
+  // Database Service
+  builder.Services.AddDbContext<ApplicationDbContext>(
+    (serviceProvider, options) =>
     {
-        var xmlFile = "HealthHub.xml";
-        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        options.IncludeXmlComments(xmlPath);
+      var appConfig = serviceProvider.GetRequiredService<AppConfig>();
+      var connectionString = appConfig.DatabaseConnection;
+      if (string.IsNullOrEmpty(connectionString))
+      {
+        throw new InvalidOperationException("DB_CONNECTION environment variable is not set.");
+      }
+      Log.Information($"This is the conn str: {connectionString}");
+      options.UseSqlServer(connectionString);
+    }
+  );
+
+
+
+  builder.Services.AddCors(
+    (options) =>
+    {
+      options.AddPolicy(
+        "AllowSpecificOrigin",
+        b =>
+        {
+          var config = new AppConfig(builder.Configuration);
+          Log.Logger.Information($"\n\nALlowedOrigins: {config.AllowedOrigins}");
+
+          b.WithOrigins(config.AllowedOrigins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        }
+      );
+    }
+  );
+
+  /*
+      Add Services to the Container
+  */
+  // Configure authentication with JWT and Auth0
+  // 1. Set JwtBearer as the default authentication and challenge schemes
+  // 2. Configure JwtBearer options with Auth0 settings
+  builder.Services.AddAuthentication(options =>
+    {
+      // options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+      // options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+      // options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+      options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+      options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+      var appConfig = new AppConfig(builder.Configuration);
+      options.Authority = $"https://{appConfig.Auth0Domain}/";
+      options.Audience = appConfig.Auth0Audience;
+      options.RequireHttpsMetadata = appConfig.IsProduction ?? true;
+
+      // Log.Logger.Information($"\nOrigins: {string.Join(",", appConfig.AllowedOrigins)}");
+      Log.Logger.Information($"\nAudience: {options.Audience}");
+      Log.Logger.Information($"\nAuthority: {options.Authority}");
+      Log.Logger.Information($"\nClientId: {appConfig.Auth0ClientId}");
+      Log.Logger.Information($"\nClientSecret: {appConfig.Auth0ClientSecret}");
+
+      // Configure Token Validation Parameters
+      options.TokenValidationParameters = new TokenValidationParameters
+      {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = appConfig.Auth0Authority,
+        ValidAudience = appConfig.Auth0Audience
+      };
+
+       // Optional: Add logging for auth failures
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Log.Error($"Authentication failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Log.Information($"Token validated for user: {context.Principal?.Identity?.Name}");
+            return Task.CompletedTask;
+        }
+    };
     });
 
+  // Configure Authorization
 
+
+  // Register Validation Services
+  builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
+
+
+  // Register the App Configuration Service
+  builder.Services.AddSingleton<AppConfig>(provider =>
+  {
+    var config = provider.GetRequiredService<IConfiguration>();
+    return new AppConfig(config);
+  });
+
+  // This service allows you to access the HttpContext in classes that
+  // are not directly part of the HTTP request pipeline
+  builder.Services.AddHttpContextAccessor();
+
+  // Register the signalr service for realtime comms
+  builder.Services.AddSignalR();
+
+  // Register Services
+  builder.Services.AddTransient<UserService>();
+
+
+
+  // builder.Services.AddTransient<Auth0Service>();
+
+
+
+  // Add other providers in the future here!
+
+  // This line registers the Lazy<T> type with the DI container to enable lazy loading for services.
+  builder.Services.AddTransient(typeof(Lazy<>), typeof(Lazy<>));
+
+  builder
+    .Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+    {
+      options.SerializerSettings.ReferenceLoopHandling = Newtonsoft
+        .Json
+        .ReferenceLoopHandling
+        .Ignore;
+      options.SerializerSettings.Converters.Add(
+        new Newtonsoft.Json.Converters.StringEnumConverter()
+      );
+      options.SerializerSettings.Converters.Add(new IsoDateTimeConverter());
+    });
+
+  builder.Services.AddEndpointsApiExplorer();
+  builder.Services.AddSwaggerGen(options =>
+  {
+    // Use the actual assembly name to find the XML file
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+    // Safety check: only include if the file exists
+    if (File.Exists(xmlPath))
+    {
+      options.IncludeXmlComments(xmlPath);
+    }
+  });
+
+  builder
+    .Services.AddRazorPages()
+    .AddRazorOptions(options =>
+    {
+      options.ViewLocationFormats.Add("/Source/Views/{0}.cshtml");
+    });
+
+  builder.Logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);
+  builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Debug);
+
+  // Close and Flush Serilog when the application exits
+  AppDomain.CurrentDomain.ProcessExit += (s, e) => Log.CloseAndFlush();
+
+  //----------------------------------------
 }
-
 
 var app = builder.Build();
 {
-    // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseDeveloperExceptionPage();
-    }
+  // app.UseExceptionHandler("/error"); // Exception handling endpoint
 
-    app.UseSerilogRequestLogging(); // Enable Serilog request logging
 
-    app.UseHttpsRedirection();
 
-    app.UseAuthorization();
+  app.UseCors("AllowSpecificOrigin");
+  app.UseAuthentication();
+  app.UseAuthorization();
+  app.UseSerilogRequestLogging(); // Enable Serilog Request Logging
+  app.MapControllers();
 
-    app.MapControllers();
 
-    // Enable Swagger middleware
+  if (app.Environment.IsDevelopment())
+  {
     app.UseSwagger();
-    app.UseSwaggerUI(Options =>
-    {
-        Options.SwaggerEndpoint("/swagger/v1/swagger.json", "Med-Connect API V1");
-        Options.RoutePrefix = string.Empty; // Set Swagger UI at the root
-    });
+    app.UseSwaggerUI();
+  }
 
-
-    app.Run(new AppConfig(app.Configuration).ApiOrigin);
-    Log.Information("Application Started Successfully.");
+   app.Run(new AppConfig(app.Configuration).ApiOrigin);
 }

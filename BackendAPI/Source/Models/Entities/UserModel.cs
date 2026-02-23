@@ -12,13 +12,10 @@ namespace BackendAPI.Source.Models.Entities
     {
         public Guid UserId { get; set; } = Guid.NewGuid();
 
-
-        public string? Auth0Id { get; set; }
-
-        public string? Auth0AccessToken { get; set; }
+        [Required]
+        public required string Auth0Id { get; set; }
 
 
-        public string? Auth0RefreshToken { get; set; }
 
         [Required]
         public required string FirstName { get; set; }
@@ -49,5 +46,8 @@ namespace BackendAPI.Source.Models.Entities
         [Required]
         [RoleValidation]
         public Role Role { get; set; }
+
+         // Optional: Track last login from token
+         public DateTime? LastLogin { get; set; }
     }
 }

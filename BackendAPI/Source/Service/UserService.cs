@@ -1,88 +1,153 @@
+// BackendAPI.Source.Service.UserService.cs
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using BackendAPI.Source.Data;
-using BackendAPI.Source.Models.Responses;
+using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Models.Dtos;
-using Microsoft.EntityFrameworkCore;
+using BackendAPI.Source.Models.Responses;
 using BackendAPI.Source.Helpers.Extensions;
-
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BackendAPI.Source.Service
 {
-    public class UserService
-     (
+    public class UserService(
         ApplicationDbContext appContext,
-        Auth0Service auth0Service,
         ILogger<UserService> logger
     )
     {
-        public async Task<ServiceResponse<ProfileDto>> RegisterUser(RegisterUserDto registerUserDto)
+        /// <summary>
+        /// Initialize local profile AFTER successful Auth0 authentication
+        /// Auth0Id and email come FROM VALIDATED TOKEN (never from DTO)
+        /// </summary>
+        public async Task<ServiceResponse<ProfileDto>> InitializeUserProfile(
+            string auth0Id, 
+            string emailFromToken, 
+            bool isEmailVerified,
+            RegisterUserDto dto
+        )
         {
-            Auth0UserDto? auth0User = null;
-
             try
             {
-                // Search user by the email 
+                // 🔒 CRITICAL: Validate inputs BEFORE database queries
+                if (string.IsNullOrWhiteSpace(auth0Id))
+                    return new ServiceResponse<ProfileDto>(false, 400, null, "Auth0 user ID is required");
+                
+                if (string.IsNullOrWhiteSpace(emailFromToken))
+                    return new ServiceResponse<ProfileDto>(false, 400, null, "Email from token is required");
 
-                var userByMail = await appContext.Users.AnyAsync(u => u.Email == registerUserDto.Email);
-
-                if (userByMail)
+                // ✅ Step 1: Prevent duplicate initialization for same Auth0 user
+                var existingByAuth0Id = await appContext.Users
+                    .FirstOrDefaultAsync(u => u.Auth0Id == auth0Id);
+                
+                if (existingByAuth0Id != null)
                 {
-                    return new ServiceResponse<ProfileDto>(false, 409, null, "User with the given email already exists");
+                    logger.LogWarning($"Duplicate profile initialization attempt for Auth0Id: {auth0Id}");
+                    return new ServiceResponse<ProfileDto>(
+                        false, 
+                        409, 
+                        null, 
+                        "Profile already exists for this authenticated user"
+                    );
                 }
 
-                var userByPhone = await appContext.Users.AnyAsync(u => u.Phone == registerUserDto.Phone);
-
-                if (userByPhone)
+                // ✅ Step 2: Enforce phone uniqueness (email uniqueness handled by Auth0)
+                var existingByPhone = await appContext.Users
+                    .AnyAsync(u => u.Phone == dto.Phone);
+                
+                if (existingByPhone)
                 {
-                    return new ServiceResponse<ProfileDto>(false, 409, null, "User with the given phone number already exists");
+                    logger.LogWarning($"Phone number already in use: {dto.Phone}");
+                    return new ServiceResponse<ProfileDto>(
+                        false, 
+                        409, 
+                        null, 
+                        "Phone number is already associated with another account"
+                    );
                 }
 
-                Guid userId = Guid.NewGuid();
+                // ✅ Step 3: Create user WITH token-derived identity (never trust DTO for identity)
+                var userEntity = dto.ToUser(auth0Id); // Auth0Id comes from token
+                
+                // 🔒 SECURITY: ALWAYS use email FROM TOKEN (not DTO) to prevent spoofing
+                userEntity.Email = emailFromToken;
+                userEntity.IsEmailVerified = isEmailVerified;
+                
+                // // 🔒 SECURITY: Enforce "User" role for self-registration (block privilege escalation)
+                // if (userEntity.Role != Role.User)
+                // {
+                //     logger.LogWarning($"Attempted privilege escalation during registration. Auth0Id: {auth0Id}, RequestedRole: {userEntity.Role}");
+                //     userEntity.Role = Role.User; // Force to User role
+                // }
 
-                // create user in auth0
-                auth0User = await auth0Service.CreateUserAsync(registerUserDto, userId);
+                userEntity.LastLogin = DateTime.UtcNow;
+                userEntity.UserId = Guid.NewGuid(); // Generate new GUID for local user
 
-
-                logger.LogInformation($"Auth0 User Created: {auth0User}");
-
-                if (auth0User == null || auth0User?.UserId == null)
-                {
-                    logger.LogError($"Auth0 User Creation Failed for email: {registerUserDto.Email}");
-                    return new ServiceResponse<ProfileDto>(false, 500, null, "Failed to create user in authentication service");
-                }
-
-
-                // Convert dto to user entity or Model
-                var userEntity = registerUserDto.ToUser();
-
-                userEntity.UserId = userId;
-                userEntity.Auth0Id = auth0User.UserId;
-                userEntity.ProfilePicture = auth0User.Profile;
-                userEntity.IsEmailVerified = auth0User.EmailVerified;
-
-                // Save user to database
-                var addUser = await appContext.Users.AddAsync(userEntity);
-
-                if (addUser == null)
-                {
-                    logger.LogError($"Failed to add user to database for email: {registerUserDto.Email}");
-                    return new ServiceResponse<ProfileDto>(false, 500, null, "Failed to create user in database");
-                }
-
+                // ✅ Step 4: Save to database
+                await appContext.Users.AddAsync(userEntity);
                 await appContext.SaveChangesAsync();
 
+                logger.LogInformation($"New user profile initialized. Auth0Id: {auth0Id}, UserId: {userEntity.UserId}");
 
-                return new ServiceResponse<ProfileDto>(true, 201, null, "Registration Success! We have sent you an email verification link to your email. Please verify your account.");  
+                return new ServiceResponse<ProfileDto>(
+                    true,
+                    201,
+                    userEntity.ToProfileDto(),
+                    "Profile created successfully. Welcome to MedConnect!"
+                );
             }
-            catch (System.Exception)
+            catch (Exception ex)
             {
-
-                throw;
+                logger.LogError(ex, "Failed to initialize user profile. Auth0Id: {Auth0Id}", auth0Id);
+                return new ServiceResponse<ProfileDto>(
+                    false,
+                    500,
+                    null,
+                    "Failed to create profile. Please try again later."
+                );
             }
-
         }
+
+        /// <summary>
+        /// Get user by Auth0 ID (for profile endpoints)
+        /// </summary>
+        public async Task<UserModel?> GetUserByAuth0IdAsync(string auth0Id)
+        {
+            if (string.IsNullOrWhiteSpace(auth0Id))
+                return null;
+
+            return await appContext.Users
+                .FirstOrDefaultAsync(u => u.Auth0Id == auth0Id);
+        }
+
+        /// <summary>
+        /// Update user profile (for PATCH /profile endpoint)
+        // /// </summary>
+        // public async Task<ServiceResponse<ProfileDto>> UpdateUserProfile(string auth0Id, UpdateProfileDto dto)
+        // {
+        //     try
+        //     {
+        //         var user = await GetUserByAuth0IdAsync(auth0Id);
+        //         if (user == null)
+        //             return new ServiceResponse<ProfileDto>(false, 404, null, "User profile not found");
+
+        //         // 🔒 Only allow updating non-identity fields
+        //         user.FirstName = dto.FirstName ?? user.FirstName;
+        //         user.LastName = dto.LastName ?? user.LastName;
+        //         user.Phone = dto.Phone ?? user.Phone;
+        //         user.Address = dto.Address ?? user.Address;
+        //         user.Gender = dto.Gender.HasValue ? (Gender)dto.Gender : user.Gender;
+        //         user.DateOfBirth = dto.DateOfBirth ?? user.DateOfBirth;
+        //         user.LastLogin = DateTime.UtcNow;
+
+        //         await appContext.SaveChangesAsync();
+        //         return new ServiceResponse<ProfileDto>(true, 200, user.ToProfileDto(), "Profile updated successfully");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         logger.LogError(ex, "Failed to update profile for Auth0Id: {Auth0Id}", auth0Id);
+        //         return new ServiceResponse<ProfileDto>(false, 500, null, "Failed to update profile");
+        //     }
+        // }
     }
 }

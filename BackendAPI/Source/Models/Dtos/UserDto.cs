@@ -1,13 +1,14 @@
+// BackendAPI.Source.Models.Dtos.UserDto.cs
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using BackendAPI.Source.Models.Enums;
 using BackendAPI.Source.Attributes;
 
 namespace BackendAPI.Source.Models.Dtos
 {
+    /// <summary>
+    /// Read-only user representation for API responses
+    /// </summary>
     public record UserDto
     {
         public Guid Id { get; init; }
@@ -15,49 +16,46 @@ namespace BackendAPI.Source.Models.Dtos
         public string LastName { get; init; } = null!;
         public string Email { get; init; } = null!;
         public string Phone { get; init; } = null!;
-
+        public string Role { get; init; } = null!;
+        public bool IsEmailVerified { get; init; }
     }
 
+    /// <summary>
+    /// Used ONLY for initializing local profile AFTER Auth0 authentication
+    /// Passwords are NEVER handled by this backend
+    /// </summary>
     public record RegisterUserDto
     {
-        [Required]
+        [Required(ErrorMessage = "First name is required")]
+        [StringLength(50, MinimumLength = 1)]
         public required string FirstName { get; init; }
 
-        [Required]
+        [Required(ErrorMessage = "Last name is required")]
+        [StringLength(50, MinimumLength = 1)]
         public required string LastName { get; init; }
 
-        [Required]
+        [Required(ErrorMessage = "Email is required")]
         [EmailAddress]
-        public required string Email { get; init; }
+        public required string Email { get; init; } // Fallback only
 
-
-        [Required]
-        [PasswordAttributes(8)]
-        public required string Password { get; init; }
-
-        [Required]
         [Phone]
-        [MinLength(4, ErrorMessage = "The field must be at least 4 characters long.")]
+        [MinLength(4)]
+        [MaxLength(20)]
         public required string Phone { get; init; }
 
-        [Required]
+        [Required(ErrorMessage = "Gender is required")]
+        [GenderAttribute]
         public required string Gender { get; init; }
 
-        [Required]
+        [Required(ErrorMessage = "Date of birth is required")]
+        [DataType(DataType.Date)]
         public required string DateOfBirth { get; init; }
 
-        [Required]
+        [StringLength(500)]
         public required string Address { get; init; }
 
-        [Required]
+        [Required(ErrorMessage = "Role is required")]
+        [RoleValidation]
         public required string Role { get; init; }
     }
-    
-    /// <summary>
-       /// These are the fields what a newly created Auth0 User will have
-    /// </summary>
-    /// <param name="UserId"></param>
-    /// <param name="Profile"></param>
-    /// <param name="EmailVerified"></param>
-    public record Auth0UserDto(string UserId, string Profile, bool EmailVerified);
 }

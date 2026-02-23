@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using BackendAPI.Source.Service;
 using BackendAPI.Source.Models.Dtos;
 using BackendAPI.Source.Helpers.Default;
@@ -10,58 +11,120 @@ using BackendAPI.Source.Validation;
 using BackendAPI.Source.Models.Responses;
 using BackendAPI.Source.Config;
 using FluentValidation;
+using System.Security.Claims;
+// using BackendAPI.Source.Models.Entities;
+using BackendAPI.Source.Helpers.Extensions;
 
 
 namespace BackendAPI.Source.Controllers
 {
     [ApiController]
-    [Route("Users")]
+    [Route("api/[controller]")] // Standardized REST route: /api/users
+    [Authorize] // 🔒 ALL endpoints require valid Auth0 token
     public class UserController(
         UserService userService,
         // AppConfig appConfig ,
         // ILogger<UserController> logger,
 
-        IValidator <RegisterUserDto> RegisterUserDtoValidator
+        IValidator<RegisterUserDto> registerUserDtoValidator
     ) : ControllerBase
     {
 
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterUser([FromBody] RegisterUserDto registerUserDto)
+       /// Initialize local profile AFTER first Auth0 login
+        /// Called by frontend AFTER successful Universal Login redirect
+        /// </summary>
+        [HttpPost("initialize")]
+        [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 201)]
+        [ProducesResponseType(typeof(ApiResponse<object>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<object>), 409)]
+        public async Task<IActionResult> InitializeProfile([FromBody] RegisterUserDto dto)
         {
-            try
+            // 🔒 STEP 1: Extract identity claims FROM TOKEN (never trust DTO!)
+            var auth0Id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                       ?? User.FindFirst("sub")?.Value; // Standard + Auth0 fallback
+            
+            var emailFromToken = User.FindFirst(ClaimTypes.Email)?.Value 
+                              ?? User.FindFirst("email")?.Value;
+            
+            var emailVerifiedClaim = User.FindFirst("email_verified")?.Value 
+                                  ?? User.FindFirst(ClaimTypes.Email)?.Value;
+            
+            var isEmailVerified = !string.IsNullOrEmpty(emailVerifiedClaim) 
+                               && bool.Parse(emailVerifiedClaim);
+
+            // 🔒 Validate token contains required identity claims
+            if (string.IsNullOrWhiteSpace(auth0Id))
+                return Unauthorized(new ApiResponse<object>(false, "Missing user identifier in authentication token",null));
+            
+            if (string.IsNullOrWhiteSpace(emailFromToken))
+                return BadRequest(new ApiResponse<object>(false, "Missing email claim in authentication token",null));
+
+            // 🔒 STEP 2: Validate DTO payload (business rules only — NOT identity)
+            var validation = registerUserDtoValidator.Validate(dto);
+            if (!validation.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    // return BadRequest(ModelState);
-                    HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
-
-                    throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
-                }
-
-                // Role based validation of payload
-                var validation = RegisterUserDtoValidator.Validate(registerUserDto);
-
-                if (!validation.IsValid)
-                {
-                    HttpContext.Items[ErrorFieldConstants.FluentValidationErrors] = validation.Errors;
-                    throw new BadHttpRequestException(ErrorMessages.FluentValidationError);
-                }
-
-                var Response = await userService.RegisterUser(registerUserDto);
-
-                if(!Response.Success)
-                {
-                    throw new BadHttpRequestException(Response.Message!);
-                }
-
-              return Ok(new ApiResponse<ProfileDto>(true, Response.Message, Response.Data));
-            }
-            catch (System.Exception)
-            {
-
-                throw;
+                var errors = validation.Errors.Select(e => new 
+                { 
+                    Field = e.PropertyName, 
+                    Message = e.ErrorMessage 
+                });
+                return BadRequest(new ApiResponse<object>(false, "Validation failed", errors));
             }
 
+            // 🔒 STEP 3: Initialize profile with token-derived identity
+            var response = await userService.InitializeUserProfile(
+                auth0Id, 
+                emailFromToken, 
+                isEmailVerified, 
+                dto
+            );
+
+            if (!response.Success)
+            {
+                return response.StatusCode switch
+                {
+                    409 => Conflict(new ApiResponse<object>(false, response.Message, null)),
+                    400 => BadRequest(new ApiResponse<object>(false, response.Message, null)),
+                    _ => StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null))
+                };
+            }
+
+            return CreatedAtAction(
+                nameof(GetProfile), 
+                null, 
+                new ApiResponse<ProfileDto>(true, response.Message, response.Data)
+            );
         }
+
+         /// <summary>
+        /// Get current authenticated user's profile
+        /// </summary>
+        [HttpGet("profile")]
+        [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<object>), 404)]
+        public async Task<IActionResult> GetProfile()
+        {
+            // 🔒 Extract Auth0 ID from token
+            var auth0Id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                       ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(auth0Id))
+                return Unauthorized(new ApiResponse<object>(false, "Missing user identifier in token", null));
+
+            // 🔒 Fetch profile from database
+            var user = await userService.GetUserByAuth0IdAsync(auth0Id);
+            if (user == null)
+                return NotFound(new ApiResponse<object>(false, "Profile not found. Call /initialize to create your profile.", null));
+
+            return Ok(new ApiResponse<ProfileDto>(
+                true, 
+                "Profile retrieved successfully", 
+                user.ToProfileDto()
+            ));
+        }
+
     }
+
+    
 }
+

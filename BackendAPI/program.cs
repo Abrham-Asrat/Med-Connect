@@ -83,7 +83,7 @@ var builder = WebApplication.CreateBuilder(args);
       var appConfig = new AppConfig(builder.Configuration);
       options.Authority = $"https://{appConfig.Auth0Domain}/";
       options.Audience = appConfig.Auth0Audience;
-      options.RequireHttpsMetadata = appConfig.IsProduction ?? true;
+      options.RequireHttpsMetadata = appConfig.IsProduction ?? false;
 
       // Log.Logger.Information($"\nOrigins: {string.Join(",", appConfig.AllowedOrigins)}");
       Log.Logger.Information($"\nAudience: {options.Audience}");

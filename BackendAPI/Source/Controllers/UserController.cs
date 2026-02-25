@@ -56,8 +56,12 @@ namespace BackendAPI.Source.Controllers
             if (string.IsNullOrWhiteSpace(auth0Id))
                 return Unauthorized(new ApiResponse<object>(false, "Missing user identifier in authentication token",null));
             
+            // Email from token is optional - we can use DTO email as fallback
             if (string.IsNullOrWhiteSpace(emailFromToken))
-                return BadRequest(new ApiResponse<object>(false, "Missing email claim in authentication token",null));
+            {
+                // Use email from DTO as fallback
+                emailFromToken = dto.Email;
+            }
 
             // 🔒 STEP 2: Validate DTO payload (business rules only — NOT identity)
             var validation = registerUserDtoValidator.Validate(dto);

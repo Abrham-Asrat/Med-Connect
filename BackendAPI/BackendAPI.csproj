@@ -8,6 +8,7 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
     <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
     <OpenApiDocumentsDirectory>obj\</OpenApiDocumentsDirectory>
+    <UserSecretsId>3a43ce58-d123-4567-8901-234567890abc</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

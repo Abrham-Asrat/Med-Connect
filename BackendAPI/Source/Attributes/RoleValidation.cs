@@ -18,7 +18,7 @@ namespace BackendAPI.Source.Attributes
                 return new ValidationResult("Role is Required");
             }
 
-            if(value is not Role role)
+            if(value is not string role)
             {
                 return new ValidationResult("Invalid Role Type");
             }

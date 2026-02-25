@@ -17,11 +17,11 @@ namespace BackendAPI.Source.Attributes
                 {
                     return new ValidationResult("Gender field cannot be empty.");
                 }
-                if(value is not Gender gender)
+                if(value is not string genderString)
                 {
                     return new ValidationResult("Invalid Gender Value");
                 }
-                if(!Enum.IsDefined(typeof(Gender), gender))
+                if(!Enum.TryParse<Gender>(genderString, true, out _))
                 {
                     return new ValidationResult("Gender must be either Male or Female.");
                 }

@@ -22,8 +22,8 @@ var builder = WebApplication.CreateBuilder(args);
   Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug() // Set the minimum log level to Debug
     .WriteTo.Console() // Write logs to the console
-    .WriteTo.File("Logs/HealthHub.log", rollingInterval: RollingInterval.Day) // Write logs to a file
-    .WriteTo.Seq("http://localhost:5341/") // Write logs to Seq
+    .WriteTo.File("Logs/MedConnecy.log", rollingInterval: RollingInterval.Day) // Write logs to a file
+    .WriteTo.Seq("http://localhost:5000/") // Write logs to Seq
     .CreateLogger();
 
   Log.Information("Application Starting...");
@@ -179,6 +179,32 @@ var builder = WebApplication.CreateBuilder(args);
     {
       options.IncludeXmlComments(xmlPath);
     }
+
+    // Add JWT Authentication to Swagger
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+      Name = "Authorization",
+      Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+      Scheme = "Bearer",
+      BearerFormat = "JWT",
+      In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+      Description = "Please enter your Auth0 token in the format: Bearer <token>"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+      {
+        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        {
+          Reference = new Microsoft.OpenApi.Models.OpenApiReference
+          {
+            Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+            Id = "Bearer"
+          }
+        },
+        new string[] {}
+      }
+    });
   });
 
   builder

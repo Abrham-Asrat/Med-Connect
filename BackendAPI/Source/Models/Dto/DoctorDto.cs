@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Models.Enums;
 using System.ComponentModel.DataAnnotations;
+using BackendAPI.Source.Models.Interface;
 
-namespace BackendAPI.Source.Models.Dtos
+namespace BackendAPI.Source.Models.Dto
 {
     public record DoctorDto
     {
@@ -56,7 +57,7 @@ namespace BackendAPI.Source.Models.Dtos
         [Required]
         public required decimal InPersonAppointmentFee { get; init; }
 
-      
+
 
         public DoctorStatus DoctorStatus { get; init; } = DoctorStatus.Active;
     }
@@ -72,8 +73,8 @@ namespace BackendAPI.Source.Models.Dtos
 
     );
 
-    public record DoctorSchedule(TimeRange TimeRange, bool IsFree);
+    public record DoctorSchedule(AppointmentTimeRange TimeRange, bool IsFree);
 
-public record DoctorSchedules(Dictionary<DateOnly, List<DoctorSchedule>> Data);
+    public record DoctorSchedules(Dictionary<DateOnly, List<DoctorSchedule>> Data);
 
 }

@@ -11,7 +11,7 @@ namespace BackendAPI.Source.Models.Entities
 {
     public class DoctorModel
     {
-        public Guid DoctorId { get; set; } = new Guid();
+        public Guid DoctorId { get; set; } = Guid.NewGuid();
 
         [Required]
         public required Guid UserId { get; set; }
@@ -36,6 +36,11 @@ namespace BackendAPI.Source.Models.Entities
         public virtual required UserModel User {get;set;}
 
         public virtual ICollection<DoctorSpecialtyModel> DoctorSpecialties { get; set; } = new HashSet<DoctorSpecialtyModel>();
+
+        public ICollection<AppointmentModel> Appointments { get; set; } = new HashSet<AppointmentModel>();
+        public ICollection<EducationModel> Educations { get; set; } = new HashSet<EducationModel>();
+        public ICollection<ExperienceModel> Experiences { get; set; } = new HashSet<ExperienceModel>();
+        public ICollection<ReviewModel> Reviews { get; set; } = new HashSet<ReviewModel>();
 
     }
 }

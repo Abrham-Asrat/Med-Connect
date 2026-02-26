@@ -10,7 +10,7 @@ namespace BackendAPI.Source.Models.Entities
 {
     public class FileModel : BaseEntity
     {
-        public Guid FileId { get; set; } = new Guid();
+        public Guid FileId { get; set; } =Guid.NewGuid();
         public string? FileName { get; set; }
         public required string MimeType { get; set; }
         public string? Url { get; set; }

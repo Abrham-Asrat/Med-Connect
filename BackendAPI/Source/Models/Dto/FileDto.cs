@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BackendAPI.Source.Models.Enums;
 
-namespace BackendAPI.Source.Models.Dtos
+namespace BackendAPI.Source.Models.Dto
 {
     public record CreateFileDto
     (
@@ -15,7 +15,7 @@ namespace BackendAPI.Source.Models.Dtos
     );
     
         
-    // Recieved form client to edit a file
+    // Received form client to edit a file
 public record EditFileDto(Guid FileId, string? MimeType, string? FileDataBase64, string? FileName);
 
 // Return to the Client

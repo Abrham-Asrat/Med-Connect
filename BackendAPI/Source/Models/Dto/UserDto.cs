@@ -1,10 +1,10 @@
-// BackendAPI.Source.Models.Dtos.UserDto.cs
+
 using System;
 using System.ComponentModel.DataAnnotations;
 using BackendAPI.Source.Models.Enums;
 using BackendAPI.Source.Attributes;
 
-namespace BackendAPI.Source.Models.Dtos
+namespace BackendAPI.Source.Models.Dto
 {
     /// <summary>
     /// Read-only user representation for API responses

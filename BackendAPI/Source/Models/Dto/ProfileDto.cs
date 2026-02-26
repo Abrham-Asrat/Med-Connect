@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BackendAPI.Source.Models.Enums;
 
-namespace BackendAPI.Source.Models.Dtos
+namespace BackendAPI.Source.Models.Dto
 {
     public record ProfileDto
     {

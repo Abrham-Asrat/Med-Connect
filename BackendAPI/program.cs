@@ -98,7 +98,9 @@ var builder = WebApplication.CreateBuilder(args);
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = appConfig.Auth0Authority,
+        // ValidIssuer = appConfig.Auth0Authority,
+        // ValidIssuer SHOULD have a trailing slash
+        ValidIssuer = $"https://{appConfig.Auth0Domain}/",
         ValidAudience = appConfig.Auth0Audience
       };
 

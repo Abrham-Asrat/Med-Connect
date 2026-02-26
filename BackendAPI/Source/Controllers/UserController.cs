@@ -32,7 +32,8 @@ namespace BackendAPI.Source.Controllers
 
        /// Initialize local profile AFTER first Auth0 login
         /// Called by frontend AFTER successful Universal Login redirect
-        /// </summary>
+        // / </summary>
+        
         [HttpPost("initialize")]
         [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 201)]
         [ProducesResponseType(typeof(ApiResponse<object>), 400)]

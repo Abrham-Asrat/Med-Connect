@@ -42,5 +42,51 @@ namespace BackendAPI.Source.Helpers.Extensions
                 ProfilePicture = user.ProfilePicture // Ensure this property exists in UserModel
             };
         }
+         
+
+         // Doctor Dto to Doctor Models
+         public static DoctorModel ToDoctorModel(this CreateDoctorDto dto, Guid doctorPreferenceId)
+         {
+             return new DoctorModel()
+             {
+                 User = dto.User,
+                 UserId = dto.User.UserId,
+                 Qualifications = dto.Qualifications,
+                 Biography = dto.Biography,
+                 DoctorStatus = dto.DoctorStatus,
+                 CvId = dto.Cv.FileId,
+                 Cv = dto.Cv,
+                 DoctorPreferenceId = doctorPreferenceId
+             };
+         }
+
+         public static SpecialtyModel ToSpecialty (this CreateSpecialtyDto dto)
+        {
+            return new SpecialtyModel()
+            {
+                SpecialtyName = dto.SpecialtyName
+            };
+        }
+
+        public static DoctorSpecialtyModel ToDoctorSpecialty (this Guid DoctorId , Guid SpecialtyId)
+        {
+            return new DoctorSpecialtyModel()
+            {
+                DoctorId = DoctorId,
+                SpecialtyId = SpecialtyId
+            };
+        }
+       
+
+       public static FileModel ToFile (this CreateFileDto fileDto)
+        {
+            return new FileModel()
+            {
+                FileName = fileDto.FileName,
+                FileData = FileHelper.ToBeStream(fileDto.FileDataBase64),
+                MimeType = fileDto.MimeType
+            };
+        }
+  
     }
 }

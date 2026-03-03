@@ -57,5 +57,27 @@ namespace BackendAPI.Source.Models.Dto
         [Required(ErrorMessage = "Role is required")]
         [RoleValidation]
         public required string Role { get; init; }
+
+
+        // Optional patient-specific fields (can be null for doctors)
+        public string? MedicalHistory { get; init; }
+        public string? EmergencyContact { get; init; }
+        public string? EmergencyPhone { get; init; }
+
+
+        // Optional doctor-specific fields (can be null for patients)
+        public List<string>? Specialties { get; init; } = [];
+        public List<string>? Availabilities { get; init; } = [];   
+
+        public string? Qualifications { get; init; }
+        public string? Biography { get; init; }
+        public DoctorStatus? DoctorStatus { get; init; }
+
+        public CreateFileDto? Cv { get; init; }
+        public required decimal OnlineAppointmentFee { get; init; }
+        public required decimal InPersonAppointmentFee { get; init; }
+
+        public List<CreateEducationDto> Education { get; init; } = [];
+        public List<CreateExperienceDto> Experience { get; init; } = [];
     }
 }

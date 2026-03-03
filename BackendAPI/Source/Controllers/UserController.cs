@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BackendAPI.Source.Service;
-using BackendAPI.Source.Models.Dtos;
+using BackendAPI.Source.Models.Dto;
 using BackendAPI.Source.Helpers.Default;
 using BackendAPI.Source.Validation;
 using BackendAPI.Source.Models.Responses;
@@ -34,11 +34,11 @@ namespace BackendAPI.Source.Controllers
         /// Called by frontend AFTER successful Universal Login redirect
         // / </summary>
         
-        [HttpPost("initialize")]
+        [HttpPost("Register")]
         [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 201)]
         [ProducesResponseType(typeof(ApiResponse<object>), 400)]
         [ProducesResponseType(typeof(ApiResponse<object>), 409)]
-        public async Task<IActionResult> InitializeProfile([FromBody] RegisterUserDto dto)
+        public async Task<IActionResult> RegisterUser([FromBody] RegisterUserDto dto)
         {
             // 🔒 STEP 1: Extract identity claims FROM TOKEN (never trust DTO!)
             var auth0Id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
@@ -77,7 +77,7 @@ namespace BackendAPI.Source.Controllers
             }
 
             // 🔒 STEP 3: Initialize profile with token-derived identity
-            var response = await userService.InitializeUserProfile(
+            var response = await userService.RegisterUser(
                 auth0Id, 
                 emailFromToken, 
                 isEmailVerified, 
@@ -94,39 +94,35 @@ namespace BackendAPI.Source.Controllers
                 };
             }
 
-            return CreatedAtAction(
-                nameof(GetProfile), 
-                null, 
-                new ApiResponse<ProfileDto>(true, response.Message, response.Data)
-            );
+             return StatusCode(response.StatusCode, response);
         }
 
-         /// <summary>
-        /// Get current authenticated user's profile
-        /// </summary>
-        [HttpGet("profile")]
-        [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 200)]
-        [ProducesResponseType(typeof(ApiResponse<object>), 404)]
-        public async Task<IActionResult> GetProfile()
-        {
-            // 🔒 Extract Auth0 ID from token
-            var auth0Id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                       ?? User.FindFirst("sub")?.Value;
+        //  /// <summary>
+        // /// Get current authenticated user's profile
+        // /// </summary>
+        // [HttpGet("profile")]
+        // [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 200)]
+        // [ProducesResponseType(typeof(ApiResponse<object>), 404)]
+        // public async Task<IActionResult> GetProfile()
+        // {
+        //     // 🔒 Extract Auth0 ID from token
+        //     var auth0Id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+        //                ?? User.FindFirst("sub")?.Value;
 
-            if (string.IsNullOrWhiteSpace(auth0Id))
-                return Unauthorized(new ApiResponse<object>(false, "Missing user identifier in token", null));
+        //     if (string.IsNullOrWhiteSpace(auth0Id))
+        //         return Unauthorized(new ApiResponse<object>(false, "Missing user identifier in token", null));
 
-            // 🔒 Fetch profile from database
-            var user = await userService.GetUserByAuth0IdAsync(auth0Id);
-            if (user == null)
-                return NotFound(new ApiResponse<object>(false, "Profile not found. Call /initialize to create your profile.", null));
+        //     // 🔒 Fetch profile from database
+        //     var user = await userService.GetUserByAuth0IdAsync(auth0Id);
+        //     if (user == null)
+        //         return NotFound(new ApiResponse<object>(false, "Profile not found. Call /initialize to create your profile.", null));
 
-            return Ok(new ApiResponse<ProfileDto>(
-                true, 
-                "Profile retrieved successfully", 
-                user.ToProfileDto()
-            ));
-        }
+        //     return Ok(new ApiResponse<ProfileDto>(
+        //         true, 
+        //         "Profile retrieved successfully", 
+        //         user.ToProfileDto()
+        //     ));
+        // }
 
     }
 

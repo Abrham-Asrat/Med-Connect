@@ -19,6 +19,7 @@ namespace BackendAPI.Source.Models.Entities
         [Required]
         public required DateTime GraduationDate { get; set; }
 
+        public required Guid DoctorId { get; set; }
         public virtual DoctorModel? Doctor { get; set; }
     }
 }

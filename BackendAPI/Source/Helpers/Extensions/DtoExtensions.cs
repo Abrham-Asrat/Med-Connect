@@ -1,6 +1,6 @@
 
 using BackendAPI.Source.Attributes;
-using BackendAPI.Source.Models.Dtos;
+using BackendAPI.Source.Models.Dto;
 using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Models.Enums;
 
@@ -10,7 +10,7 @@ namespace BackendAPI.Source.Helpers.Extensions
     {
 
         /// Maps RegisterUserDto to User,
-        public static UserModel ToUser(this RegisterUserDto dto, string auth0Id)
+        public static UserModel ToUserModel(this RegisterUserDto dto, string auth0Id)
         {
             return new UserModel
             {
@@ -26,23 +26,7 @@ namespace BackendAPI.Source.Helpers.Extensions
             };
         }
 
-        public static ProfileDto ToProfileDto(this UserModel user)
-        {
-            return new ProfileDto
-            {
-                UserId = user.UserId,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                Phone = user.Phone ?? string.Empty,
-                Address = user.Address ?? string.Empty,
-                Gender = user.Gender,
-                Role = user.Role,
-                DateOfBirth = user.DateOfBirth,
-                ProfilePicture = user.ProfilePicture // Ensure this property exists in UserModel
-            };
-        }
-         
+     
 
          // Doctor Dto to Doctor Models
          public static DoctorModel ToDoctorModel(this CreateDoctorDto dto, Guid doctorPreferenceId)
@@ -60,7 +44,7 @@ namespace BackendAPI.Source.Helpers.Extensions
              };
          }
 
-         public static SpecialtyModel ToSpecialty (this CreateSpecialtyDto dto)
+         public static SpecialtyModel ToSpecialtyModel (this CreateSpecialtyDto dto)
         {
             return new SpecialtyModel()
             {
@@ -68,17 +52,17 @@ namespace BackendAPI.Source.Helpers.Extensions
             };
         }
 
-        public static DoctorSpecialtyModel ToDoctorSpecialty (this Guid DoctorId , Guid SpecialtyId)
+        public static DoctorSpecialtyModel ToDoctorSpecialty (this CreateDoctorSpecialtyDto createDoctorSpecialtyDto, Guid DoctorId , Guid SpecialtyId)
         {
             return new DoctorSpecialtyModel()
             {
-                DoctorId = DoctorId,
+                DoctorId = DoctorId, 
                 SpecialtyId = SpecialtyId
             };
         }
        
-
-       public static FileModel ToFile (this CreateFileDto fileDto)
+     
+       public static FileModel ToFileModel (this CreateFileDto fileDto)
         {
             return new FileModel()
             {
@@ -87,6 +71,43 @@ namespace BackendAPI.Source.Helpers.Extensions
                 MimeType = fileDto.MimeType
             };
         }
-  
+       
+       public static EducationModel ToEducationModel(this CreateEducationDto dto, Guid doctorId)
+       {
+           return new EducationModel()
+           {
+               Degree = dto.Degree,
+               Institution = dto.Institution,
+               GraduationDate = DateTime.Parse(dto.GraduationDate),
+               DoctorId = doctorId
+           };
+       }
+
+       public static ExperienceModel ToExperienceModel(this CreateExperienceDto dto, Guid doctorId)
+       {
+           return new ExperienceModel()
+           {
+               Institution = dto.Institution,
+               Position = dto.Position,
+               StartDate = DateTime.Parse(dto.StartDate),
+               EndDate = string.IsNullOrEmpty(dto.EndDate) ? null : DateTime.Parse(dto.EndDate),
+               Description = dto.Description,
+               DoctorId = doctorId
+           };
+       }
+
+       public static ReviewModel ToReviewModel(this CreateReviewDto dto, Guid doctorId, Guid userId)
+       {
+           return new ReviewModel()
+           {
+               Comment = dto.Comment,
+               Rating = dto.Rating,
+               DoctorId = doctorId,
+            //    PatientId = PatientId
+           };
+       }
+   
+   
+   
     }
 }

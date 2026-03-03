@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Models.Enums;
 
 namespace BackendAPI.Source.Models.Dto
@@ -12,11 +13,17 @@ namespace BackendAPI.Source.Models.Dto
       [Required] string MimeType,
       [Required] string FileDataBase64,
       [Required] string FileName
-    );
-    
-        
+    )
+    {
+        internal static FileModel ToFileModel(CreateFileDto dto)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+
     // Received form client to edit a file
-public record EditFileDto(Guid FileId, string? MimeType, string? FileDataBase64, string? FileName);
+    public record EditFileDto(Guid FileId, string? MimeType, string? FileDataBase64, string? FileName);
 
 // Return to the Client
 public record FileDto(

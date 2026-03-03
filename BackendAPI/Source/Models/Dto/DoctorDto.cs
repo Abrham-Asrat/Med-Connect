@@ -57,6 +57,9 @@ namespace BackendAPI.Source.Models.Dto
         [Required]
         public required decimal InPersonAppointmentFee { get; init; }
 
+        [Required]
+        public required List<CreateEducationDto> Educations { get; set; }
+        public required List<CreateExperienceDto> Experiences { get; set; }
 
 
         public DoctorStatus DoctorStatus { get; init; } = DoctorStatus.Active;

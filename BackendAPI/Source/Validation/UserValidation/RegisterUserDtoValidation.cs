@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BackendAPI.Source.Models.Dtos;
+using BackendAPI.Source.Models.Dto;
 using BackendAPI.Source.Helpers.Default;
 using BackendAPI.Source.Models.Enums;
 using FluentValidation;

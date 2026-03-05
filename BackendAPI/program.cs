@@ -138,15 +138,19 @@ var builder = WebApplication.CreateBuilder(args);
   // are not directly part of the HTTP request pipeline
   builder.Services.AddHttpContextAccessor();
 
-  // Register the signalr service for realtime comms
+  // Register the SignalR for realtime comms
   builder.Services.AddSignalR();
 
   // Register Services
   builder.Services.AddTransient<UserService>();
+  builder.Services.AddTransient<DoctorService>();
+  builder.Services.AddTransient<DoctorSpecialtyService>();
+  builder.Services.AddTransient<SpecialtyService>();
+  builder.Services.AddTransient<FileService>();
 
 
 
-  // builder.Services.AddTransient<Auth0Service>();
+ 
 
 
 

@@ -24,7 +24,7 @@ namespace BackendAPI.Source.Attributes
             }
            if (!Enum.IsDefined(typeof(Role), role))
                 {
-                    return new ValidationResult("Role Shold be Either Admin, Doctor, or Patient");
+                    return new ValidationResult("Role Should be Either Admin, Doctor, or Patient");
                     
                 }
 

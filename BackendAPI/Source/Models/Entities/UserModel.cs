@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+// using System.Linq;
+// using System.Threading.Tasks;
 using BackendAPI.Source.Attributes;
 using BackendAPI.Source.Models.Enums;
 
@@ -29,8 +29,9 @@ namespace BackendAPI.Source.Models.Entities
 
         public bool IsEmailVerified { get; set; } = false;
 
+        [Required]
         [Phone]
-        public string? Phone { get; set; }
+        public required string Phone { get; set; }
 
         [Required]
         [GenderAttribute]

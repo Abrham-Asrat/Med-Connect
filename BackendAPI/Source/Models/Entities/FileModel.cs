@@ -10,12 +10,12 @@ namespace BackendAPI.Source.Models.Entities
 {
     public class FileModel : BaseEntity
     {
-        public Guid FileId { get; set; } =Guid.NewGuid();
+        public Guid FileId { get; set; } = Guid.NewGuid();
         public string? FileName { get; set; }
         public required string MimeType { get; set; }
         public string? Url { get; set; }
 
-        [MaxLength(5 * 1024 * 1024)] // Max file size of 10MB
+        [MaxLength(5 * 1024 * 1024)] // Max file size of 5MB
         public required byte[] FileData { get; set; } = [];
         public int FileSize => FileData.Length;
     }

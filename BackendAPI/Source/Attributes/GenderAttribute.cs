@@ -32,7 +32,7 @@ namespace BackendAPI.Source.Attributes
                 
                 Console.WriteLine($"{ex}");
                 
-                return new ValidationResult("Invalid Gender type! Must Be either Mlae or FeMale!");
+                return new ValidationResult("Invalid Gender type! Must Be either Male or Female!");
             }
         }
         

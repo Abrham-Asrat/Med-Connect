@@ -8,7 +8,8 @@ namespace BackendAPI.Source.Models.Entities
 {
     public class DoctorAvailabilityModel
     {
-        public Guid DoctorAvailabilityID { get; set; } = Guid.NewGuid();
+   
+        public Guid DoctorAvailabilityId { get; set; } = Guid.NewGuid();
 
         [Required]
         public required Guid DoctorId { get; set; }

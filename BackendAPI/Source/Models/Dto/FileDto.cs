@@ -1,29 +1,17 @@
-using System;
-using System.Collections.Generic;
+// Recieved from client to create a file
+
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
-using BackendAPI.Source.Models.Entities;
+using BackendAPI.Source.Helpers.Default;
 using BackendAPI.Source.Models.Enums;
 
-namespace BackendAPI.Source.Models.Dto
-{
-    public record CreateFileDto
-    (
-      [Required] string MimeType,
-      [Required] string FileDataBase64,
-      [Required] string FileName
-    )
-    {
-        internal static FileModel ToFileModel(CreateFileDto dto)
-        {
-            throw new NotImplementedException();
-        }
-    }
+public record CreateFileDto(
+  [Required] string MimeType,
+  [Required] string FileDataBase64,
+  [Required] string? FileName
+);
 
-
-    // Received form client to edit a file
-    public record EditFileDto(Guid FileId, string? MimeType, string? FileDataBase64, string? FileName);
+// Recieved form client to edit a file
+public record EditFileDto(Guid FileId, string? MimeType, string? FileDataBase64, string? FileName);
 
 // Return to the Client
 public record FileDto(
@@ -33,5 +21,3 @@ public record FileDto(
   string? FileName,
   int fileSize
 );
-
-}

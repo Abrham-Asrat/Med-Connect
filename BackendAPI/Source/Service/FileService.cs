@@ -21,7 +21,8 @@ namespace BackendAPI.Source.Service
         {
            try
            {
-            var file = await appContext.Files.AddAsync(CreateFileDto.ToFileModel(dto));
+            // use extension method rather than attempting static call
+            var file = await appContext.Files.AddAsync(dto.ToFileModel());
             await appContext.SaveChangesAsync();
 
             return file.Entity;

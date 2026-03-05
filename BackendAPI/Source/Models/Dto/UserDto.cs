@@ -11,13 +11,14 @@ namespace BackendAPI.Source.Models.Dto
     /// </summary>
     public record UserDto
     {
-        public Guid Id { get; init; }
-        public string FirstName { get; init; } = null!;
-        public string LastName { get; init; } = null!;
-        public string Email { get; init; } = null!;
-        public string Phone { get; init; } = null!;
-        public string Role { get; init; } = null!;
-        public bool IsEmailVerified { get; init; }
+        public required Guid UserId { get; init; }
+        public required string FirstName { get; init; } = null!;
+        public required string LastName { get; init; } = null!;
+        public required string Email { get; init; } = null!;
+        public required string Phone { get; init; } = null!;
+        public required string Role { get; init; } = null!;
+        public required DateOnly DateOfBirth {get; init;}
+        public required bool IsEmailVerified { get; init; }
     }
 
     /// <summary>
@@ -44,7 +45,6 @@ namespace BackendAPI.Source.Models.Dto
         public required string Phone { get; init; }
 
         [Required(ErrorMessage = "Gender is required")]
-        [GenderAttribute]
         public required string Gender { get; init; }
 
         [Required(ErrorMessage = "Date of birth is required")]
@@ -66,8 +66,8 @@ namespace BackendAPI.Source.Models.Dto
 
 
         // Optional doctor-specific fields (can be null for patients)
-        public List<string>? Specialties { get; init; } = [];
-        public List<string>? Availabilities { get; init; } = [];   
+        public List<string> Specialties { get; init; } = [];
+        public List<DoctorAvailabilityDto> Availabilities { get; init; } = [];   
 
         public string? Qualifications { get; init; }
         public string? Biography { get; init; }

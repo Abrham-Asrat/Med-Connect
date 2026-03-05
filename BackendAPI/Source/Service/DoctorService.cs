@@ -8,14 +8,16 @@ using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Helpers.Default;
 using BackendAPI.Source.Helpers.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace BackendAPI.Source.Service
 {
     public class DoctorService(
         ApplicationDbContext appContext,
         ILogger<DoctorService> logger
-        // DoctorSpecialtyService doctorSpecialtyService,
-        // SpecialtyService specialtyService
+    // DoctorSpecialtyService doctorSpecialtyService,
+    // SpecialtyService specialtyService
 
     )
     {
@@ -110,19 +112,108 @@ namespace BackendAPI.Source.Service
                 await appContext.SaveChangesAsync();
 
                 return experience.Entity.ToExperienceDto();
-            } 
+            }
 
             catch (Exception ex)
             {
 
                 logger.LogError($"{ex} : An error trying to create Experience");
 
-                throw;  
+                throw;
             }
         }
 
         // <summary>
+        // Get Doctor Availabilities by DoctorId
+
+        public async Task<List<DoctorAvailabilityModel>> AddDoctorAvailabilitiesAsync(List<DoctorAvailabilityDto> doctorAvailabilities, DoctorModel doctor)
+        {
+            try
+            {
+                List<DoctorAvailabilityModel> dbDoctorAvailabilities = [];
+
+                if (doctorAvailabilities.Count == 0)
+                {
+                    foreach (DayOfWeek day in new List<DayOfWeek>{
+                    DayOfWeek.Monday,
+                    DayOfWeek.Tuesday,
+                    DayOfWeek.Wednesday,
+                    DayOfWeek.Thursday,
+                    DayOfWeek.Friday,
+                    DayOfWeek.Saturday,
+                    DayOfWeek.Sunday
+                    })
+                    {
+                        dbDoctorAvailabilities.Add(
+                           new DoctorAvailabilityModel
+                           {
+                               Doctor = doctor,
+                               DoctorId = doctor.DoctorId,
+                               AvailableDay = day,
+                               StartTime =new TimeOnly(10, 0),
+                               EndTime =new TimeOnly(10, 0),
+                           });
+
+                    }
+                }
+                else
+                {
+                    foreach (var (day, startTime, endTime) in doctorAvailabilities)
+                    {
+                        dbDoctorAvailabilities.Add(
+                            new DoctorAvailabilityModel
+                            {
+                                Doctor = doctor, 
+                                DoctorId = doctor.DoctorId,
+                                AvailableDay = day.ConvertToEnum<DayOfWeek>(),
+                                StartTime = TimeOnly.Parse(startTime),
+                                EndTime = TimeOnly.Parse(endTime)
+                            }
+                        );
+                    }
+                }
+
+                await appContext.DoctorAvailabilities.AddRangeAsync(dbDoctorAvailabilities);
+
+                await appContext.SaveChangesAsync();
+                return dbDoctorAvailabilities;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"{ex} : An error trying to get doctor availabilities for DoctorId: {doctor.DoctorId}");
+                throw;
+            }
+        }
         
+
+        // instead of having separate methods for each type of doctor data (education, experience, etc), we can have a generic method that takes the type as a parameter and uses reflection to query the correct DbSet based on the type. This way, we can reduce code duplication and make it easier to maintain.
+
+        // public async Task<List<EducationModel>> GetDoctorEducationsAsync(Guid doctorId)
+        // {
+        //     try
+        //     {
+        //         return await appContext.Educations.Where(e => e.DoctorId == doctorId).ToListAsync();       
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         logger.LogError($"{ex} : An error trying to get doctor educations for DoctorId: {doctorId}");
+        //         throw;
+        //     }
+        // }
+        public async Task<List<T>> GetDataAsync<T>(Guid doctorId) where T : class
+        {
+            try
+            {
+                return await appContext.Set<T>().Where(e => EF.Property<Guid>(e, "DoctorId") == doctorId).ToListAsync();  
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"{ex} : An error trying to get doctor data for DoctorId: {doctorId}");
+                throw;
+            }
+        }
+
+
 
     }
 }

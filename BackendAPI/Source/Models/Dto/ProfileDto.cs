@@ -19,4 +19,17 @@ namespace BackendAPI.Source.Models.Dto
         public required string Address { get; init; }
         public required Role Role { get; init; }
     }
+
+    public record DoctorProfileDto : ProfileDto
+    {
+        public required Guid DoctorId { get; init; }
+        public required List<string> Specialties { get; init; } = [];
+        public required List<DoctorAvailabilityDto> Availabilities { get; init; } = [];   
+        public required string Qualifications { get; init; }
+        public required string Biography { get; init; }
+
+        public required DoctorStatus DoctorStatus { get; init; }
+        public required List<EducationDto> Educations { get; init; } = [];
+        public required List<ExperienceDto> Experiences { get; init; } = [];
+    }
 }

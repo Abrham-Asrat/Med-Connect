@@ -31,8 +31,10 @@ namespace BackendAPI.Source.Models.Responses
     public class ServiceResponse<T> : ServiceResponse, IServiceResponse<T>
     {
         public T? Data { get; init; }
+        public ServiceResponse()
+          : base(true, 200) { }
 
-        public ServiceResponse(bool success, int statusCode, T? data , string? message = null) : base(success, statusCode, message)
+        public ServiceResponse(bool success, int statusCode, T? data, string? message = null) : base(success, statusCode, message)
         {
             this.Data = data;
         }

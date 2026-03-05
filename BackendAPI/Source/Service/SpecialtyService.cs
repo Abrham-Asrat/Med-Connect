@@ -20,9 +20,10 @@ namespace BackendAPI.Source.Service
     {
 
         // <summary>
-        /// Creates a new medical specialty if it doesn't already exist.
-        /// Checks for existing specialty by name (case-insensitive) to prevent duplicates.
-        /// </summary>  
+        // Creates a new medical specialty if it doesn't already exist.
+        // Checks for existing specialty by name (case-insensitive) to prevent duplicates.
+        // <summary>  
+       
         public async Task<SpecialtyModel> CreateSpecialtyAsync(CreateSpecialtyDto specialtyDto)
         {
             try
@@ -49,8 +50,8 @@ namespace BackendAPI.Source.Service
 
 
         //<summary>
-        /// Create all medical specialties from the database.
-        /// </summary>
+        // Create all medical specialties from the database.
+        //<summary>
   
 
         public async Task<List<SpecialtyModel>> CreateSpecialtiesAsync(List<CreateSpecialtyDto> specialtiesDto)

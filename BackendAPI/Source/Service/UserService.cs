@@ -12,13 +12,16 @@ using BackendAPI.Source.Models.Enums;
 using System.ComponentModel.DataAnnotations;
 using BackendAPI.Source.Service;
 
+
 namespace BackendAPI.Source.Service
 {
     public class UserService(
         ApplicationDbContext appContext,
         ILogger<UserService> logger,
         FileService fileService,
-        DoctorService doctorService
+        DoctorService doctorService,
+        DoctorSpecialtyService doctorSpecialtyService,
+        SpecialtyService specialtyService
     )
     {
         /// <summary>
@@ -93,7 +96,12 @@ namespace BackendAPI.Source.Service
 
                 Role role = Enum.Parse<Role>(registerUserDto.Role, true);
 
+                ProfileDto? userProfile = null;
 
+                if (role == Role.Doctor && registerUserDto.Cv == null)
+                {
+                    return new ServiceResponse<ProfileDto>(false, 400, null, "CV is required for Doctor registration");
+                }
                 if (role == Role.Doctor)
                 {
                     var cvFile = await fileService.CreateFileAsync(
@@ -103,42 +111,91 @@ namespace BackendAPI.Source.Service
                           registerUserDto.Cv!.FileDataBase64,
                           registerUserDto!.Cv!.FileName
                       )
-                    );       
-                    
-                     // Create Doctor
+                    );
+
+                    // doctor lists may be null if omitted from JSON; normalise them here
+                    var dtoEducations = registerUserDto.Education ?? new List<CreateEducationDto>();
+                    var dtoExperiences = registerUserDto.Experience ?? new List<CreateExperienceDto>();
+
+                    // Create Doctor
                     // DoctorModel doctor
 
                     DoctorModel doctor = await doctorService.CreateDoctorAsync(
                         registerUserDto.ToCreateDoctorDto(
                             addUser.Entity,
                             cvFile,
-                            registerUserDto.Education,
-                            registerUserDto.Experience
+                            dtoEducations,
+                            dtoExperiences
                         )
                     );
 
 
                     // Create Specialties
-                    var specialties = await SpecialtyService.CreateSpecialtiesAsync(
+                    var specialties = await specialtyService.CreateSpecialtiesAsync(
                         registerUserDto.Specialties.ToSpecialtyList(doctor.DoctorId)
                         );
+
+                    // Create Doctor Specialties 
+
+                    var CreateDoctorSpecialty = specialties.Select(S => new CreateDoctorSpecialtyDto
+                    {
+                        DoctorId = doctor.DoctorId,
+                        SpecialtyId = S.SpecialtyId
+
+                    }).ToList();
+
+                    // Create the specialty-doctor association 
+
+                    var doctorSpecialties = await doctorSpecialtyService.CreateDoctorSpecialtiesAsync(CreateDoctorSpecialty);
+
+                    // Create Doctor Availability 
+                    var availabilities = await doctorService.AddDoctorAvailabilitiesAsync(
+                        registerUserDto.Availabilities,
+                        doctor
+                    );
+
+
+                    // ICollection<EducationModel> educations = await doctorService.GetDoctorEducationsAsync(doctor.DoctorId);
+
+                    ICollection<EducationModel> educations = await doctorService.GetDataAsync<EducationModel>(doctor.DoctorId);
+                    ICollection<ExperienceModel> experiences = await doctorService.GetDataAsync<ExperienceModel>(doctor.DoctorId);
+
+                    userProfile = addUser.Entity.ToDoctorProfileDto(doctor, availabilities, specialties, educations, experiences);
+
                 }
 
 
 
 
-                await appContext.SaveChangesAsync();
+                try
+                {
+                    await appContext.SaveChangesAsync();
+                    logger.LogInformation("Successfully saved changes to database for user registration");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed To save changes to database during user registration");
+                    throw;
+                }
 
+                return new ServiceResponse<ProfileDto>(
+                    success: true,
+                    statusCode: 201,
+                    message: "Registration success✨ We have sent you an email verification to link to you email. Please verify your account",
+                    data: userProfile
+                );
 
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to initialize user profile. Auth0Id: {Auth0Id}", auth0Id);
+                // include message in response during development; remove or sanitize for production
+                var errorMessage = $"Failed to create profile. {ex.Message}";
                 return new ServiceResponse<ProfileDto>(
                     false,
                     500,
                     null,
-                    "Failed to create profile. Please try again later."
+                    errorMessage
                 );
             }
         }
@@ -155,8 +212,8 @@ namespace BackendAPI.Source.Service
                 .FirstOrDefaultAsync(u => u.Auth0Id == auth0Id);
         }
 
-        /// <summary>
-        /// Update user profile (for PATCH /profile endpoint)
+        // <summary>
+        // Update user profile (for PATCH /profile endpoint)
         // /// </summary>
         // public async Task<ServiceResponse<ProfileDto>> UpdateUserProfile(string auth0Id, UpdateProfileDto dto)
         // {

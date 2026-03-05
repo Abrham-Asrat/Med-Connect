@@ -20,11 +20,12 @@ namespace BackendAPI.Source.Helpers.Extensions
                 Email = dto.Email, // Set Email property as required
                 Phone = dto.Phone,
                 Address = dto.Address,
-                Gender = Enum.Parse<Gender>(dto.Gender, true),
-                Role = Enum.Parse<Role>(dto.Role, true),
-                DateOfBirth = DateOnly.Parse(dto.DateOfBirth)
+                Gender = dto.Gender.ConvertToEnum<Gender>(),
+
+                Role = dto.Role.ConvertToEnum<Role>(),
+                DateOfBirth = dto.DateOfBirth.ConvertTo<DateOnly>()
             };
-        }
+        }   
 
      
 
@@ -78,7 +79,7 @@ namespace BackendAPI.Source.Helpers.Extensions
            {
                Degree = dto.Degree,
                Institution = dto.Institution,
-               GraduationDate = DateTime.Parse(dto.GraduationDate),
+               GraduationDate = dto.GraduationDate.ConvertTo<DateTime>(),
                DoctorId = doctorId
            };
        }
@@ -89,8 +90,8 @@ namespace BackendAPI.Source.Helpers.Extensions
            {
                Institution = dto.Institution,
                Position = dto.Position,
-               StartDate = DateTime.Parse(dto.StartDate),
-               EndDate = string.IsNullOrEmpty(dto.EndDate) ? null : DateTime.Parse(dto.EndDate),
+               StartDate = dto.StartDate.ConvertTo<DateTime>(),
+               EndDate = dto.EndDate == null ? null : dto.EndDate.ConvertTo<DateTime>(),
                Description = dto.Description,
                DoctorId = doctorId
            };

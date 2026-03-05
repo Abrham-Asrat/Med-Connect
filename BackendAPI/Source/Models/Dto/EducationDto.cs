@@ -22,7 +22,7 @@ namespace BackendAPI.Source.Models.Dto
         [Required] string Institution,
         [Required] string GraduationDate
 
-    );
+    );  
 
     public record UpdateEducationDto
     (

@@ -30,7 +30,7 @@ namespace BackendAPI.Source.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // EF convention doesn't recognise DoctorAvailabilityId as the key of
+            // EF convention doesn't recognize DoctorAvailabilityId as the key of
             // DoctorAvailabilityModel (class name ends with "Model"), so configure
             // explicitly.  The [Key] attribute should work but being explicit
             // eliminates any ambiguity and avoids the runtime exception.

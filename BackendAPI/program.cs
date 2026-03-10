@@ -28,7 +28,9 @@ var builder = WebApplication.CreateBuilder(args);
 
   Log.Information("Application Starting...");
 
-  // Configure Serilog to capture logs from application host
+  // Configure Serilog to capture logs from application host  
+
+  
   builder.Host.UseSerilog();
 
   // Database Service

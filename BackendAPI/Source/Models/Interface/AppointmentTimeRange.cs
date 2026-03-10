@@ -13,7 +13,7 @@ namespace BackendAPI.Source.Models.Interface
         public void Deconstruct(out TimeOnly startTime, out TimeOnly endTime)
         {
             startTime = StartTime;
-            endTime = EndTime;
+            endTime   = EndTime;
         }
     }
-}
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              

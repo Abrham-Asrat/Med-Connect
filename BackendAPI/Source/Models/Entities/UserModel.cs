@@ -42,7 +42,8 @@ namespace BackendAPI.Source.Models.Entities
 
         public string? ProfilePicture { get; set; }
 
-        public string? Address { get; set; }
+        [Required]
+        public required string? Address { get; set; }
 
         [Required]
         [RoleValidation]
@@ -50,5 +51,6 @@ namespace BackendAPI.Source.Models.Entities
 
          // Optional: Track last login from token
          public DateTime? LastLogin { get; set; }
+
     }
 }

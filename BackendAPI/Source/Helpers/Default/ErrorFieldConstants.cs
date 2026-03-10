@@ -20,7 +20,7 @@ namespace BackendAPI.Source.Helpers.Default
         public static string InternalServerError = "An unexpected error occurred. Please try again later.";
         public static string NotFoundError = "The requested resource was not found.";
          public static string UnauthorizedError = "You are not authorized to perform this action.";
-        public static string ValidationError = "Request Validation Error has occured!";
+        public static string ValidationError = "Request Validation Error has occurred!";
         public static string InvalidGenderProvided = "Invalid Gender Provided.";
     }
 }

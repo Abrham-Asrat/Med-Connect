@@ -17,7 +17,6 @@ namespace BackendAPI.Source.Helpers.Extensions
                 Auth0Id = auth0Id, // ✅ Comes ONLY from validated token
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
-                Email = dto.Email, // Set Email property as required
                 Phone = dto.Phone,
                 Address = dto.Address,
                 Gender = dto.Gender.ConvertToEnum<Gender>(),

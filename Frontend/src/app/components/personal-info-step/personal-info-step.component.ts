@@ -318,10 +318,7 @@ export class PersonalInfoStepComponent implements OnInit, OnDestroy {
             const registrationData: RegisterUserDto = {
               firstName: formData.firstName,
               lastName: formData.lastName,
-              email: this.registrationService.getRegistrationData().email || '',
-              phone: formData.phone,
-              gender: formData.gender,
-              dateOfBirth: formData.dateOfBirth,
+
               address: formData.address,
               role: this.registrationService.getRegistrationData().role || ''
             };

@@ -12,13 +12,13 @@ namespace BackendAPI.Source.Models.Dto
     public record UserDto
     {
         public required Guid UserId { get; init; }
-        public required string FirstName { get; init; } = null!;
-        public required string LastName { get; init; } = null!;
-        public required string Email { get; init; } = null!;
-        public required string Phone { get; init; } = null!;
-        public required string Role { get; init; } = null!;
+        public required string FirstName { get; init; }
+        public required string LastName { get; init; } 
+        public required string Phone { get; init; } 
+        public required Gender Gender { get; init; }
         public required DateOnly DateOfBirth {get; init;}
-        public required bool IsEmailVerified { get; init; }
+        public required string Address { get; init; }
+        public required string ProfilePicture { get; init; }
     }
 
     /// <summary>
@@ -35,9 +35,9 @@ namespace BackendAPI.Source.Models.Dto
         [StringLength(50, MinimumLength = 1)]
         public required string LastName { get; init; }
 
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress]
-        public required string Email { get; init; } // Fallback only
+        // [Required(ErrorMessage = "Email is required")]
+        // [EmailAddress]
+        // public required string Email { get; init; } // Fallback only
 
         [Phone]
         [MinLength(4)]
@@ -80,4 +80,17 @@ namespace BackendAPI.Source.Models.Dto
         public List<CreateEducationDto> Education { get; init; } = [];
         public List<CreateExperienceDto> Experience { get; init; } = [];
     }
+     
+
+   
+
+    // <summary>
+    // Dto for Login data transfer object Access token response, not used in this backend as Auth0 handles authentication, but defined for completeness and potential future use
+    // </summary>
+    public record LoginResponseDto
+    {
+        public required string AccessToken { get; init; }
+        public required DateTime ExpiresAt { get; init; }
+    }
+
 }

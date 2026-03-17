@@ -45,6 +45,7 @@ namespace BackendAPI.Source.Models.Dto
         [Required]
         public required FileModel Cv { get; init; }
 
+        public DoctorStatus DoctorStatus { get; init; } = DoctorStatus.Active;
         [Required]
         public required string Qualifications { get; init; }
 
@@ -62,7 +63,6 @@ namespace BackendAPI.Source.Models.Dto
         public required List<CreateExperienceDto> Experiences { get; set; }
 
 
-        public DoctorStatus DoctorStatus { get; init; } = DoctorStatus.Active;
     }
 
     //Dto for

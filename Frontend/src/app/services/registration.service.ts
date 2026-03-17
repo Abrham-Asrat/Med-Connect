@@ -78,7 +78,7 @@ export class RegistrationService {
     
     switch (step) {
       case 1:
-        return !!(data.role && data.email);
+        return !!data.role;
       case 2:
         return !!(data.firstName && data.lastName && data.phone && data.gender && data.dateOfBirth && data.address);
       default:

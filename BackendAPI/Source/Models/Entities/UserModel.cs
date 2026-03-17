@@ -23,9 +23,9 @@ namespace BackendAPI.Source.Models.Entities
         [Required]
         public required string LastName { get; set; }
 
-        [Required]
-        [EmailAddress]
-        public required string Email { get; set; }
+        // [Required]
+        // [EmailAddress]
+        // public required string Email { get; set; }
 
         public bool IsEmailVerified { get; set; } = false;
 

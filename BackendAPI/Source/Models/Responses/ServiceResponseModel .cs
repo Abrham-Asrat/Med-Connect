@@ -25,7 +25,7 @@ namespace BackendAPI.Source.Models.Responses
     {
         public bool Success { get; init; } = success;
         public int StatusCode { get; init; } = statusCode;
-        public string? Message { get; init; } = message;
+        public string? Message { get; init; } = message; //Email from token is required
     }
 
     public class ServiceResponse<T> : ServiceResponse, IServiceResponse<T>

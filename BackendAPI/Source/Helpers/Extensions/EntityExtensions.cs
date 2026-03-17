@@ -32,7 +32,7 @@ namespace BackendAPI.Source.Helpers.Extensions
             );
         }
 
-        public static CreateDoctorDto ToCreateDoctorDto(this RegisterUserDto registerUserDto, UserModel user, FileModel cv, List<CreateEducationDto>? createEducationDto, List<CreateExperienceDto>? createExperienceDto)
+        public static CreateDoctorDto ToCreateDoctorDto(this RegisterUserDto registerUserDto, UserModel user, FileModel cv, List<CreateEducationDto>? createEducationDto, List<CreateExperienceDto>? createExperienceDto, DoctorStatus doctorStatus = DoctorStatus.Active)
         {
             // backend expects non-null lists; caller may have omitted fields in JSON
             createEducationDto ??= new List<CreateEducationDto>();
@@ -47,7 +47,8 @@ namespace BackendAPI.Source.Helpers.Extensions
                 Educations = createEducationDto,
                 Experiences = createExperienceDto,
                 OnlineAppointmentFee = registerUserDto.OnlineAppointmentFee,
-                InPersonAppointmentFee = registerUserDto.InPersonAppointmentFee
+                InPersonAppointmentFee = registerUserDto.InPersonAppointmentFee,
+                DoctorStatus = doctorStatus
             };
         }
 
@@ -61,7 +62,6 @@ namespace BackendAPI.Source.Helpers.Extensions
                 UserId = user.UserId,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                Email = user.Email,
                 ProfilePicture = user.ProfilePicture ?? "",
                 Phone = user.Phone,
                 Gender = user.Gender,

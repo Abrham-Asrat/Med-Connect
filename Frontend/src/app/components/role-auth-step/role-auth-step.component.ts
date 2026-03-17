@@ -43,16 +43,6 @@ import { CommonModule } from '@angular/common';
               </mat-error>
             </mat-form-field>
 
-            <mat-form-field appearance="fill" class="full-width">
-              <mat-label>Email</mat-label>
-              <input matInput type="email" formControlName="email" required>
-              <mat-error *ngIf="roleForm.get('email')?.hasError('required')">
-                Email is required
-              </mat-error>
-              <mat-error *ngIf="roleForm.get('email')?.hasError('email')">
-                Please enter a valid email
-              </mat-error>
-            </mat-form-field>
 
             <mat-form-field appearance="fill" class="full-width">
               <mat-label>Password</mat-label>
@@ -113,7 +103,6 @@ export class RoleAuthStepComponent implements OnInit {
   ) {
     this.roleForm = this.fb.group({
       role: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
@@ -121,10 +110,9 @@ export class RoleAuthStepComponent implements OnInit {
   ngOnInit(): void {
     // Load any existing data
     const existingData = this.registrationService.getRegistrationData();
-    if (existingData.role || existingData.email) {
+    if (existingData.role) {
       this.roleForm.patchValue({
-        role: existingData.role,
-        email: existingData.email
+        role: existingData.role
       });
     }
   }
@@ -137,14 +125,12 @@ export class RoleAuthStepComponent implements OnInit {
       const formData = this.roleForm.value;
       
       console.log('[Step 1] Saving form data:', {
-        role: formData.role,
-        email: formData.email
+        role: formData.role
       });
       
-      // Save role and email to registration service
+      // Save role to registration service
       this.registrationService.updateRegistrationData({
-        role: formData.role,
-        email: formData.email
+        role: formData.role
       });
 
       console.log('[Step 1] Marking step 1 as complete');

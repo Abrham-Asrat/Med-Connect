@@ -11,7 +11,6 @@ namespace BackendAPI.Source.Models.Dto
         public required Guid UserId { get; init; }
         public required string FirstName { get; init; }
         public required string LastName { get; init; }
-        public required string Email { get; init; }
         public required string ProfilePicture { get; init; }
         public required string Phone { get; init; }
         public required Gender Gender { get; init; }

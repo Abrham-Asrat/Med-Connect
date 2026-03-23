@@ -135,15 +135,34 @@ namespace BackendAPI.Source.Controllers
         // }
 
         [HttpPost("login")]
+        [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<object>), 401)]
+        [ProducesResponseType(typeof(ApiResponse<object>), 404)]
         public async Task<IActionResult> LoginUser()
         {
             try
             {
-                
+                var auth0Id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? User.FindFirst("sub")?.Value;
+
+                if (string.IsNullOrWhiteSpace(auth0Id))
+                    return Unauthorized(new ApiResponse<object>(false, "Missing user identifier in authentication token", null));
+
+                var response = await userService.LoginUserAsync(auth0Id);
+
+                if (!response.Success)
+                {
+                    return response.StatusCode switch
+                    {
+                        404 => NotFound(new ApiResponse<object>(false, response.Message, null)),
+                        _ => StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null))
+                    };
+                }
+
+                return Ok(new ApiResponse<ProfileDto>(true, response.Message ?? "Login successful", response.Data));
             }
             catch (System.Exception)
             {
-                
                 logger.LogError("An unexpected error occurred during user login.");
                 return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred. Please try again later.", null));
             }

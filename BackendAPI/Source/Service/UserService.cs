@@ -160,68 +160,6 @@ namespace BackendAPI.Source.Service
 
                     userProfile = addUser.Entity.ToDoctorProfileDto(doctor, availabilities, specialties, educations, experiences);
                 }
-                    var cvFile = await fileService.CreateFileAsync(
-
-                      new CreateFileDto(
-                          registerUserDto.Cv!.MimeType,
-                          registerUserDto.Cv!.FileDataBase64,
-                          registerUserDto!.Cv!.FileName
-                      )
-                    );
-
-                    // doctor lists may be null if omitted from JSON; normalise them here
-                    var dtoEducations = registerUserDto.Education ?? new List<CreateEducationDto>();
-                    var dtoExperiences = registerUserDto.Experience ?? new List<CreateExperienceDto>();
-
-                    // Create Doctor
-                    // DoctorModel doctor
-
-                    DoctorModel doctor = await doctorService.CreateDoctorAsync(
-                        registerUserDto.ToCreateDoctorDto(
-                            addUser.Entity,
-                            cvFile,
-                            dtoEducations,
-                            dtoExperiences
-                        )
-                    );
-
-
-                    // Create Specialties
-                    var specialties = await specialtyService.CreateSpecialtiesAsync(
-                        registerUserDto.Specialties.ToSpecialtyList(doctor.DoctorId)
-                        );
-
-                    // Create Doctor Specialties 
-
-                    var CreateDoctorSpecialty = specialties.Select(S => new CreateDoctorSpecialtyDto
-                    {
-                        DoctorId = doctor.DoctorId,
-                        SpecialtyId = S.SpecialtyId
-
-                    }).ToList();
-
-                    // Create the specialty-doctor association 
-
-                    var doctorSpecialties = await doctorSpecialtyService.CreateDoctorSpecialtiesAsync(CreateDoctorSpecialty);
-
-                    // Create Doctor Availability 
-                    var availabilities = await doctorService.AddDoctorAvailabilitiesAsync(
-                        registerUserDto.Availabilities,
-                        doctor
-                    );
-
-
-                    // ICollection<EducationModel> educations = await doctorService.GetDoctorEducationsAsync(doctor.DoctorId);
-
-                    ICollection<EducationModel> educations = await doctorService.GetDataAsync<EducationModel>(doctor.DoctorId);
-                    ICollection<ExperienceModel> experiences = await doctorService.GetDataAsync<ExperienceModel>(doctor.DoctorId);
-
-                    userProfile = addUser.Entity.ToDoctorProfileDto(doctor, availabilities, specialties, educations, experiences);
-
-                }
-
-
-
 
                 try
                 {
@@ -272,6 +210,65 @@ namespace BackendAPI.Source.Service
                 .FirstOrDefaultAsync(u => u.Auth0Id == auth0Id);
         }
 
-        partial async Task<ServiceResponse<Login
+        private static ProfileDto MapToProfileDto(UserModel user)
+        {
+            return new ProfileDto
+            {
+                UserId = user.UserId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                ProfilePicture = user.ProfilePicture ?? string.Empty,
+                Phone = user.Phone,
+                Gender = user.Gender,
+                DateOfBirth = user.DateOfBirth,
+                Address = user.Address ?? string.Empty,
+                Role = user.Role
+            };
+        }
+
+        public async Task<ServiceResponse<ProfileDto>> LoginUserAsync(string auth0Id)
+        {
+            if (string.IsNullOrWhiteSpace(auth0Id))
+                return new ServiceResponse<ProfileDto>(false, 401, null, "Missing user identifier in token");
+
+            var user = await GetUserByAuth0IdAsync(auth0Id);
+            if (user == null)
+                return new ServiceResponse<ProfileDto>(false, 404, null, "User not found. Please register first.");
+
+            user.LastLogin = DateTime.UtcNow;
+
+            await appContext.SaveChangesAsync();
+
+            if (user.Role == Role.Doctor)
+            {
+                var doctor = await appContext.Doctors
+                    .FirstOrDefaultAsync(d => d.UserId == user.UserId);
+
+                if (doctor == null)
+                    return new ServiceResponse<ProfileDto>(false, 500, null, "Doctor profile is missing for this user.");
+
+                var availabilities = await appContext.DoctorAvailabilities
+                    .Where(a => a.DoctorId == doctor.DoctorId)
+                    .ToListAsync();
+
+                var specialtyIds = await appContext.DoctorSpecialties
+                    .Where(ds => ds.DoctorId == doctor.DoctorId)
+                    .Select(ds => ds.SpecialtyId)
+                    .ToListAsync();
+
+                var specialties = await appContext.Specializations
+                    .Where(s => specialtyIds.Contains(s.SpecialtyId))
+                    .ToListAsync();
+
+                var educations = await doctorService.GetDataAsync<EducationModel>(doctor.DoctorId);
+                var experiences = await doctorService.GetDataAsync<ExperienceModel>(doctor.DoctorId);
+
+                var doctorDto = user.ToDoctorProfileDto(doctor, availabilities, specialties, educations, experiences);
+                return new ServiceResponse<ProfileDto>(true, 200, doctorDto, "Login successful");
+            }
+
+            var profileDto = MapToProfileDto(user);
+            return new ServiceResponse<ProfileDto>(true, 200, profileDto, "Login successful");
+        }
     }
-}
+}   

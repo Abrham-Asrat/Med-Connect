@@ -19,11 +19,22 @@ namespace BackendAPI.Source.Models.Dto
         public required Role Role { get; init; }
     }
 
+    public record Auth0ProfileDto
+    {
+        public Guid UserId { get; init; }
+        public string FirstName { get; init; } = string.Empty;
+        public string LastName { get; init; } = string.Empty;
+        public Role Role { get; init; }
+        public String Phone { get; init; } = string.Empty;
+        public Gender Gender { get; init; }
+        public string DateOfBirth { get; init; } = string.Empty;
+    }
+
     public record DoctorProfileDto : ProfileDto
     {
         public required Guid DoctorId { get; init; }
         public required List<string> Specialties { get; init; } = [];
-        public required List<DoctorAvailabilityDto> Availabilities { get; init; } = [];   
+        public required List<DoctorAvailabilityDto> Availabilities { get; init; } = [];
         public required string Qualifications { get; init; }
         public required string Biography { get; init; }
 

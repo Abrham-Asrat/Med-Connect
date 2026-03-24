@@ -29,7 +29,7 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
       {
         email = userDto.Email,
         password = userDto.Password,
-        connection = "Username-Password-Authentication",
+        connection = "Med-Connect-Database",
         user_metadata = new
         {
           userId,
@@ -173,7 +173,7 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
       request.AddParameter("audience", appConfig.Auth0Audience);
       request.AddParameter("client_id", appConfig.Auth0ClientId);
       request.AddParameter("client_secret", appConfig.Auth0ClientSecret);
-      request.AddParameter("connection", "Username-Password-Authentication");
+      request.AddParameter("connection", "Med-Connect-Database");
 
       var response = await client.ExecuteAsync(request);
 

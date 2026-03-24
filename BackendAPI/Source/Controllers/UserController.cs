@@ -21,7 +21,7 @@ namespace BackendAPI.Source.Controllers
 {
     [ApiController]
     [Route("api/[controller]")] // Standardized REST route: /api/users
-    [Authorize] // 🔒 ALL endpoints require valid Auth0 token
+    // [Authorize] // 🔒 ALL endpoints require valid Auth0 token
     public class UserController(
         UserService userService,
         // AppConfig appConfig ,
@@ -43,65 +43,40 @@ namespace BackendAPI.Source.Controllers
         {
             try
             {
-                // 🔒 STEP 1: Extract identity claims FROM TOKEN (never trust DTO!)
-                var auth0Id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                           ?? User.FindFirst("sub")?.Value; // Standard + Auth0 fallback
-
-                // email is no longer stored locally; Auth0 handles it.
-                // We still extract the verified claim for informational purposes.
-                var emailVerifiedClaim = User.FindFirst("email_verified")?.Value
-                                      ?? User.FindFirst(ClaimTypes.Email)?.Value;
-                var isEmailVerified = !string.IsNullOrEmpty(emailVerifiedClaim)
-                                   && bool.Parse(emailVerifiedClaim);
-
-                // 🔒 Validate token contains required identity claims
-                if (string.IsNullOrWhiteSpace(auth0Id))
-                    return Unauthorized(new ApiResponse<object>(false, "Missing user identifier in authentication token", null));
-
-
-                // 🔒 STEP 2: Validate DTO payload (business rules only — NOT identity)
-
                 if (!ModelState.IsValid)
                 {
                     HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
-                    throw new ValidationException(ErrorMessages.ModelValidationError);
-                }
-                var validation = registerUserDtoValidator.Validate(dto);
-                if (!validation.IsValid)
-                {
-                    var errors = validation.Errors.Select(e => new
-                    {
-                        Field = e.PropertyName,
-                        Message = e.ErrorMessage
-                    });
-                    return BadRequest(new ApiResponse<object>(false, "Validation failed", errors));
+
+                    throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
                 }
 
-                // 🔒 STEP 3: Initialize profile with token-derived identity
-                var response = await userService.RegisterUser(
-                    auth0Id,
-                    isEmailVerified,
-                    dto
-                );
+                // Role Based Validation of payload 
+                var validation = registerUserDtoValidator.Validate(dto);
+
+                if (!validation.IsValid)
+                {
+                    HttpContext.Items[ErrorFieldConstants.FluentValidationErrors] = validation.ToFluentValidationErrorResult();
+                } 
+
+                var response = await userService.RegisterUser(dto);
 
                 if (!response.Success)
                 {
                     return response.StatusCode switch
                     {
-                        409 => Conflict(new ApiResponse<object>(false, response.Message, null)),
                         400 => BadRequest(new ApiResponse<object>(false, response.Message, null)),
+                        409 => Conflict(new ApiResponse<object>(false, response.Message, null)),
                         _ => StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null))
                     };
                 }
 
-                return StatusCode(response.StatusCode, response);
-
+                return Ok(new ApiResponse<ProfileDto>(true, response.Message ?? "User registered successfully", response.Data));
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
 
-        
-                logger.LogError("An unexpected error occurred during user registration.");
+
+                 logger.LogError(ex, "Failed to Register User\n\n");
                 return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred. Please try again later.", null));
             }
 

@@ -3,6 +3,7 @@ using FluentValidation;
 using BackendAPI.Source.Config;
 using BackendAPI.Source.Data;
 using BackendAPI.Source.Service;
+using BackendAPI.Source.Helpers.Extensions;
 using BackendAPI.Source.Validation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,31 @@ using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Newtonsoft.Json.Converters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+// using Microsoft.AspNetCore.Authentication.Cookies;
+using BackendAPI.Source.Services;
 
 
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+
+if(!File.Exists(envPath))
+{
+   throw new FileNotFoundException("The .env file was not found at the expected path: " + envPath);
+
+}
 // Load Environment Variables
-DotEnv.Load(options: new DotEnvOptions(ignoreExceptions: false));
+DotEnv.Load(options: new DotEnvOptions(ignoreExceptions: false, envFilePaths: new[] { envPath }));
+
+// Debug Auth0 Configuration
+var auth0Domain = Environment.GetEnvironmentVariable("AUTH0_DOMAIN");
+var auth0Audience = Environment.GetEnvironmentVariable("AUTH0_AUDIENCE");
+var auth0ClientId = Environment.GetEnvironmentVariable("AUTH0_CLIENT_ID");
+var auth0ClientSecret = Environment.GetEnvironmentVariable("AUTH0_CLIENT_SECRET");
+
+if (string.IsNullOrEmpty(auth0Domain) || string.IsNullOrEmpty(auth0Audience) || string.IsNullOrEmpty(auth0ClientId) || string.IsNullOrEmpty(auth0ClientSecret))
+{
+    throw new InvalidOperationException("One or more Auth0 configuration environment variables are missing. Please check your .env file.");
+}
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +50,7 @@ var builder = WebApplication.CreateBuilder(args);
 
   Log.Information("Application Starting...");
 
-  // Configure Serilog to capture logs from application host  
+  // Configure  to capture logs from application host  
 
   
   builder.Host.UseSerilog();
@@ -145,6 +167,10 @@ var builder = WebApplication.CreateBuilder(args);
 
   // Register Services
   builder.Services.AddTransient<UserService>();
+  builder.Services.AddTransient<AuthService>();
+  builder.Services.AddTransient<Auth0Service>();
+  builder.Services.AddTransient<EmailService>();
+  builder.Services.AddTransient<RenderingService>();
   builder.Services.AddTransient<DoctorService>();
   builder.Services.AddTransient<DoctorSpecialtyService>();
   builder.Services.AddTransient<SpecialtyService>();
@@ -238,6 +264,9 @@ var app = builder.Build();
 
 
   app.UseCors("AllowSpecificOrigin");
+
+  app.UseCustomValidationMiddleware(); // Custom middleware to handle FluentValidation errors
+  app.UseCookieMiddleware(); // Enable cookie handling (if needed for future features)
   app.UseAuthentication();
   app.UseAuthorization();
   app.UseSerilogRequestLogging(); // Enable Serilog Request Logging

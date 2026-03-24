@@ -10,13 +10,14 @@ namespace BackendAPI.Source.Helpers.Extensions
     {
 
         /// Maps RegisterUserDto to User,
-        public static UserModel ToUserModel(this RegisterUserDto dto, string auth0Id)
+        public static UserModel ToUserModel(this RegisterUserDto dto)
         {
             return new UserModel
             {
-                Auth0Id = auth0Id, // ✅ Comes ONLY from validated token
+                
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
+                Email = dto.Email,
                 Phone = dto.Phone,
                 Address = dto.Address,
                 Gender = dto.Gender.ConvertToEnum<Gender>(),

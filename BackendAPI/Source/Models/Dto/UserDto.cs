@@ -90,7 +90,7 @@ namespace BackendAPI.Source.Models.Dto
 
 
     // A filed What a newly created Auth0 user would have, used for initializing local profile
-    public record Auth0UserInfoDto ( string Auth0Id, string Profile, bool IsEmailVerified );
+    public record Auth0UserInfoDto ( string UserId, string Profile, bool IsEmailVerified );
 
     /// Auth0 Login Data Transfer Object. Used for returning Auth0 login information to the client.
     public record Auth0LoginDto ( string AccessToken,int ExpiresIn, Auth0ProfileDto Profile );

@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 
 using RestSharp;
 
-namespace HealthHub.Source.Services;
+namespace BackendAPI.Source.Service;
 
 public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
 {

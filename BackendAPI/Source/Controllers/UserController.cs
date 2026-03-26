@@ -82,59 +82,55 @@ namespace BackendAPI.Source.Controllers
 
         }
 
-        //  /// <summary>
-        // /// Get current authenticated user's profile
-        // /// </summary>
-        // [HttpGet("profile")]
-        // [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 200)]
-        // [ProducesResponseType(typeof(ApiResponse<object>), 404)]
-        // public async Task<IActionResult> GetProfile()
-        // {
-        //     // 🔒 Extract Auth0 ID from token
-        //     var auth0Id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-        //                ?? User.FindFirst("sub")?.Value;
-
-        //     if (string.IsNullOrWhiteSpace(auth0Id))
-        //         return Unauthorized(new ApiResponse<object>(false, "Missing user identifier in token", null));
-
-        //     // 🔒 Fetch profile from database
-        //     var user = await userService.GetUserByAuth0IdAsync(auth0Id);
-        //     if (user == null)
-        //         return NotFound(new ApiResponse<object>(false, "Profile not found. Call /initialize to create your profile.", null));
-
-        //     return Ok(new ApiResponse<ProfileDto>(
-        //         true, 
-        //         "Profile retrieved successfully", 
-        //         user.ToProfileDto()
-        //     ));
-        // }
-
+       
+    //    <summary>
+        // Login Controller 
+    //    </Summary>
         [HttpPost("login")]
-        [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 200)]
-        [ProducesResponseType(typeof(ApiResponse<object>), 401)]
-        [ProducesResponseType(typeof(ApiResponse<object>), 404)]
-        public async Task<IActionResult> LoginUser()
+        public async Task<IActionResult> LoginUserAsync(LoginUserDto dto)
         {
             try
             {
-                var auth0Id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                           ?? User.FindFirst("sub")?.Value;
+                if(!ModelState.IsValid)
+                {
+                    HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
+                    throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
+                }
 
-                if (string.IsNullOrWhiteSpace(auth0Id))
-                    return Unauthorized(new ApiResponse<object>(false, "Missing user identifier in authentication token", null));
+                var response = await userService.LoginUserAsync(dto);
 
-                var response = await userService.LoginUserAsync(auth0Id);
 
                 if (!response.Success)
                 {
                     return response.StatusCode switch
                     {
+                        400 => BadRequest(new ApiResponse<object>(false, response.Message, null)),
                         404 => NotFound(new ApiResponse<object>(false, response.Message, null)),
                         _ => StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null))
                     };
                 }
+                var CookiesOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTime.UtcNow.AddDays(7) // Set cookie expiration as needed
+                };
+                Response.Cookies.Append(AuthDefaults.AccessToken.ToSnakeCase(), response.Data?.AccessToken ?? string.Empty, CookiesOptions);
 
-                return Ok(new ApiResponse<ProfileDto>(true, response.Message ?? "Login successful", response.Data));
+                var UserProfile = response.Data?.Profile;
+
+                foreach(
+                    var field in UserProfile.GetType().GetProperties(
+                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+                    )
+                )
+                {
+                    var value = field.GetValue(UserProfile);
+                    Response.Cookies.Append(field.Name.ToSnakeCase(), value?.ToString() ?? string.Empty, CookiesOptions);
+                }
+
+                return Ok(new ApiResponse<Auth0LoginDto>(true, response.Message ?? "Login successful", response.Data));
             }
             catch (System.Exception)
             {
@@ -142,9 +138,22 @@ namespace BackendAPI.Source.Controllers
                 return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred. Please try again later.", null));
             }
         }
+   
+        [HttpGet("all")]
 
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                var response = await userService.GetAllUsersAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation("Failed to get all users");
+                
+                throw new Exception("Failed to get all users", ex);
+            }
+        }
     }
-
-
 }
 

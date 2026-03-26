@@ -10,9 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using BackendAPI.Source.Models.Enums;
 using System.ComponentModel.DataAnnotations;
-
-
-
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 
 namespace BackendAPI.Source.Service
@@ -31,6 +29,7 @@ namespace BackendAPI.Source.Service
         /// Initialize local profile AFTER successful Auth0 authentication
         /// Auth0Id and email come FROM VALIDATED TOKEN (never from DTO)
         /// </summary>
+        
         public async Task<ServiceResponse<ProfileDto>> RegisterUser(
 
             RegisterUserDto registerUserDto
@@ -139,8 +138,6 @@ namespace BackendAPI.Source.Service
 
 
                     userProfile = addUser.Entity.ToDoctorProfileDto(doctor, availabilities, specialties, educations, experiences);
-
-
                 }
 
 
@@ -188,7 +185,6 @@ namespace BackendAPI.Source.Service
             return await appContext.Users
                 .FirstOrDefaultAsync(u => u.Auth0Id == auth0Id);
         }
-
         private static ProfileDto MapToProfileDto(UserModel user)
         {
             return new ProfileDto
@@ -205,49 +201,64 @@ namespace BackendAPI.Source.Service
             };
         }
 
-        public async Task<ServiceResponse<ProfileDto>> LoginUserAsync(string auth0Id)
+
+       // Login Service 
+        public async Task<ServiceResponse<Auth0LoginDto>> LoginUserAsync(LoginUserDto loginUserDto)
         {
-            if (string.IsNullOrWhiteSpace(auth0Id))
-                return new ServiceResponse<ProfileDto>(false, 401, null, "Missing user identifier in token");
-
-            var user = await GetUserByAuth0IdAsync(auth0Id);
-            if (user == null)
-                return new ServiceResponse<ProfileDto>(false, 404, null, "User not found. Please register first.");
-
-            user.LastLogin = DateTime.UtcNow;
-
-            await appContext.SaveChangesAsync();
-
-            if (user.Role == Role.Doctor)
+            try
             {
-                var doctor = await appContext.Doctors
-                    .FirstOrDefaultAsync(d => d.UserId == user.UserId);
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.Email == loginUserDto.Email);
 
-                if (doctor == null)
-                    return new ServiceResponse<ProfileDto>(false, 500, null, "Doctor profile is missing for this user.");
+                if(user == null)
+                {
+                    throw new KeyNotFoundException("User with that email is not found");
+                }
 
-                var availabilities = await appContext.DoctorAvailabilities
-                    .Where(a => a.DoctorId == doctor.DoctorId)
-                    .ToListAsync();
+                if(user.Auth0Id == null)
+                {
+                    throw new KeyNotFoundException("User does not have an Auth0 ID");
+                }
 
-                var specialtyIds = await appContext.DoctorSpecialties
-                    .Where(ds => ds.DoctorId == doctor.DoctorId)
-                    .Select(ds => ds.SpecialtyId)
-                    .ToListAsync();
+                var auth0LoginDto = await auth0Service.LoginUserAsync(loginUserDto, user.Auth0Id);
 
-                var specialties = await appContext.Specializations
-                    .Where(s => specialtyIds.Contains(s.SpecialtyId))
-                    .ToListAsync();
+                logger.LogInformation($"Auth0 Login Response in UserService: {auth0LoginDto}");
+                return new ServiceResponse<Auth0LoginDto>(true, 200,auth0LoginDto, "Login success!");
 
-                var educations = await doctorService.GetDataAsync<EducationModel>(doctor.DoctorId);
-                var experiences = await doctorService.GetDataAsync<ExperienceModel>(doctor.DoctorId);
-
-                var doctorDto = user.ToDoctorProfileDto(doctor, availabilities, specialties, educations, experiences);
-                return new ServiceResponse<ProfileDto>(true, 200, doctorDto, "Login successful");
             }
-
-            var profileDto = MapToProfileDto(user);
-            return new ServiceResponse<ProfileDto>(true, 200, profileDto, "Login successful");
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to login user");
+                throw;
+            }
         }
+
+        // Get All user Service Worked here 
+        public async Task<ServiceResponse<List<UserDto>>> GetAllUsersAsync()
+        {
+            try
+            {
+                var users = await appContext.Users.ToListAsync();
+
+                List<ProfileDto?> profiles = []; 
+
+                foreach(UserModel u in users)
+                {
+                    if(u.Role == Role.Doctor)
+                    {
+                        profiles.Add(await doctorService.GetDoctorProfileAsync(u.UserId));
+                    }
+
+                }
+
+                return new ServiceResponse<List<ProfileDto>>(true, 200, profiles, "Users retrieved successfully");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get all users");
+                throw new Exception("Failed to Get all users from database", ex );
+            }
+        }
+
+      
     }
 }

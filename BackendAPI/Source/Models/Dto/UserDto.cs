@@ -93,7 +93,7 @@ namespace BackendAPI.Source.Models.Dto
     public record Auth0UserInfoDto ( string UserId, string Profile, bool IsEmailVerified );
 
     /// Auth0 Login Data Transfer Object. Used for returning Auth0 login information to the client.
-    public record Auth0LoginDto ( string AccessToken,int ExpiresIn, Auth0ProfileDto Profile );
+    public record Auth0LoginDto (string AccessToken, int ExpiresIn,[Required] Auth0ProfileDto Profile);
 
-     public record LoginUserDto([Required][EmailAddress] string Email, [Required] string Password);
+     public record LoginUserDto([Required] [EmailAddress] string Email, [Required] string Password);
 }

@@ -52,7 +52,7 @@ namespace BackendAPI.Source.Helpers.Extensions
             };
         }
 
-        public static DoctorProfileDto ToDoctorProfileDto(this UserModel user, DoctorModel doctor,
+        public static DoctorProfileDto ToDoctorProfileDto(this  DoctorModel doctor, UserModel user,
         ICollection<DoctorAvailabilityModel> availabilities,
         ICollection<SpecialtyModel> specialties, ICollection<EducationModel> educations, ICollection<ExperienceModel> experiences)
         {

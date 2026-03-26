@@ -6,6 +6,7 @@ using BackendAPI.Source.Data;
 using BackendAPI.Source.Models.Dto;
 using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Helpers.Default;
+
 using BackendAPI.Source.Helpers.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
@@ -225,7 +226,34 @@ namespace BackendAPI.Source.Service
             }
         }
 
+        // Retrieves Doctor profile of the doctor with in specified userid 
+        public async Task<DoctorProfileDto> GetDoctorProfileAsync(Guid userId)
+        {
+            try
+            {
+                var doctor = await appContext.Doctors.Where(d=> d.UserId == userId).Include(d=>d.User).Include(d=> d.DoctorAvailabilities).Include(d=> d.DoctorSpecialties).Include(d=> d.Educations).Include(d=>d.Experiences).SingleOrDefaultAsync();
 
+                if(doctor == null)
+                {
+                    throw new KeyNotFoundException("Doctor with this user Id is not Found, Couldn't retrieve profile information ");
+                }
 
+                return doctor.ToDoctorProfileDto(
+                    doctor.User,                   
+                    doctor.DoctorAvailabilities,
+                    doctor.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds=> ds.Specialty!).ToList(),
+                    doctor.Educations,
+                    doctor.Experiences
+                );
+                
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation(ex, "Failed to get doctor Profile");
+                                                          
+                throw new Exception("Failed To get doctor Profile");
+            }
+        }
     }
 }

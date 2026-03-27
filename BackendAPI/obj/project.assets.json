@@ -5262,14 +5262,10 @@
       ]
     },
     {
-      "code": "NU1902",
+      "code": "NU1900",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Package 'MimeKit' 2.9.1 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-g7hc-96xr-gvvx",
-      "libraryId": "MimeKit",
-      "targetGraphs": [
-        "net10.0"
-      ]
+      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json."
     }
   ]
 }

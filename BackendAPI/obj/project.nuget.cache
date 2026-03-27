@@ -102,16 +102,13 @@
       ]
     },
     {
-      "code": "NU1902",
+      "code": "NU1900",
       "level": "Warning",
-      "message": "Package 'MimeKit' 2.9.1 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-g7hc-96xr-gvvx",
+      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json.",
       "projectPath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
       "warningLevel": 1,
       "filePath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
-      "libraryId": "MimeKit",
-      "targetGraphs": [
-        "net10.0"
-      ]
+      "targetGraphs": []
     }
   ]
 }

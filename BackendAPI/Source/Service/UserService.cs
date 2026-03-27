@@ -29,7 +29,7 @@ namespace BackendAPI.Source.Service
         /// Initialize local profile AFTER successful Auth0 authentication
         /// Auth0Id and email come FROM VALIDATED TOKEN (never from DTO)
         /// </summary>
-        
+
         public async Task<ServiceResponse<ProfileDto>> RegisterUser(
 
             RegisterUserDto registerUserDto
@@ -202,19 +202,19 @@ namespace BackendAPI.Source.Service
         }
 
 
-       // Login Service 
+        // Login Service 
         public async Task<ServiceResponse<Auth0LoginDto>> LoginUserAsync(LoginUserDto loginUserDto)
         {
             try
             {
                 var user = await appContext.Users.FirstOrDefaultAsync(u => u.Email == loginUserDto.Email);
 
-                if(user == null)
+                if (user == null)
                 {
                     throw new KeyNotFoundException("User with that email is not found");
                 }
 
-                if(user.Auth0Id == null)
+                if (user.Auth0Id == null)
                 {
                     throw new KeyNotFoundException("User does not have an Auth0 ID");
                 }
@@ -222,7 +222,7 @@ namespace BackendAPI.Source.Service
                 var auth0LoginDto = await auth0Service.LoginUserAsync(loginUserDto, user.Auth0Id);
 
                 logger.LogInformation($"Auth0 Login Response in UserService: {auth0LoginDto}");
-                return new ServiceResponse<Auth0LoginDto>(true, 200,auth0LoginDto, "Login success!");
+                return new ServiceResponse<Auth0LoginDto>(true, 200, auth0LoginDto, "Login success!");
 
             }
             catch (Exception ex)
@@ -233,32 +233,37 @@ namespace BackendAPI.Source.Service
         }
 
         // Get All user Service Worked here 
-        public async Task<ServiceResponse<List<UserDto>>> GetAllUsersAsync()
+        public async Task<ServiceResponse<List<ProfileDto?>>>GetAllUsersAsync()
         {
             try
             {
                 var users = await appContext.Users.ToListAsync();
 
-                List<ProfileDto?> profiles = []; 
+                List<ProfileDto?> profiles = [];
 
-                foreach(UserModel u in users)
+                foreach (UserModel u in users)
                 {
-                    if(u.Role == Role.Doctor)
+                    if (u.Role == Role.Doctor)
                     {
                         profiles.Add(await doctorService.GetDoctorProfileAsync(u.UserId));
+                    }
+                    else if(u.Role == Role.Patient || u.Role == Role.Admin)
+                    {
+                        profiles.Add(MapToProfileDto(u));
                     }
 
                 }
 
-                return new ServiceResponse<List<ProfileDto>>(true, 200, profiles, "Users retrieved successfully");
+                return new ServiceResponse<List<ProfileDto?>>(true, 200, profiles, "Successfully retrieved all users"
+        );
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to get all users");
-                throw new Exception("Failed to Get all users from database", ex );
+                throw new Exception("Failed to Get all users from database", ex);
             }
         }
 
-      
+
     }
 }

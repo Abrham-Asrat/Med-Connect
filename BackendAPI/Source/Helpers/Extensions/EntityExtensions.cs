@@ -52,7 +52,38 @@ namespace BackendAPI.Source.Helpers.Extensions
             };
         }
 
-        public static DoctorProfileDto ToDoctorProfileDto(this  DoctorModel doctor, UserModel user,
+        public static DoctorProfileDto ToDoctorProfileDto(this DoctorModel doctor, UserModel user,
+        ICollection<DoctorAvailabilityModel> availabilities,
+        ICollection<SpecialtyModel> specialties, ICollection<EducationModel> educations, ICollection<ExperienceModel> experiences)
+        {
+            return new DoctorProfileDto
+            {
+                // for user common 
+                UserId = user.UserId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                ProfilePicture = user.ProfilePicture ?? "",
+                Phone = user.Phone,
+                Gender = user.Gender,
+                DateOfBirth = user.DateOfBirth,
+                Address = user.Address ?? "",
+                Role = user.Role,
+
+
+                // For Doctor specified 
+                DoctorId = doctor.DoctorId,
+                Specialties = specialties.Select(s => s.ToSpecialtyDto()).ToList(),
+                Availabilities = availabilities.Select(a => a.ToAvailabilityDto()).ToList(),
+                Educations = educations.Select(e => e.ToEducationDto()).ToList(),
+                Experiences = experiences.Select(e => e.ToExperienceDto()).ToList(),
+                Qualifications = doctor.Qualifications,
+                Biography = doctor.Biography,
+                DoctorStatus = doctor.DoctorStatus
+
+            };
+        }
+
+        public static DoctorProfileDto ToDoctorProfileDto(this  UserModel user , DoctorModel doctor,
         ICollection<DoctorAvailabilityModel> availabilities,
         ICollection<SpecialtyModel> specialties, ICollection<EducationModel> educations, ICollection<ExperienceModel> experiences)
         {

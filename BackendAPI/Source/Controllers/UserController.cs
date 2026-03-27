@@ -146,6 +146,12 @@ namespace BackendAPI.Source.Controllers
             try
             {
                 var response = await userService.GetAllUsersAsync();
+                if (!response.Success)
+                {
+                    return StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null));
+                }
+
+                return Ok(new ApiResponse<List<ProfileDto?>>(true, response.Message ?? "Users retrieved successfully", response.Data));
             }
             catch (Exception ex)
             {

@@ -24,11 +24,12 @@ namespace BackendAPI.Source.Service
         DoctorSpecialtyService doctorSpecialtyService,
         SpecialtyService specialtyService
     )
+    
     {
-        /// <summary>
-        /// Initialize local profile AFTER successful Auth0 authentication
-        /// Auth0Id and email come FROM VALIDATED TOKEN (never from DTO)
-        /// </summary>
+            // <summary>
+            //Initialize local profile AFTER successful Auth0 authentication
+            //Auth0Id and email come FROM VALIDATED TOKEN (never from DTO)
+            //</summary>
 
         public async Task<ServiceResponse<ProfileDto>> RegisterUser(
 
@@ -247,15 +248,10 @@ namespace BackendAPI.Source.Service
                     {
                         profiles.Add(await doctorService.GetDoctorProfileAsync(u.UserId));
                     }
-                    else if(u.Role == Role.Patient || u.Role == Role.Admin)
-                    {
-                        profiles.Add(MapToProfileDto(u));
-                    }
-
+            
                 }
 
-                return new ServiceResponse<List<ProfileDto?>>(true, 200, profiles, "Successfully retrieved all users"
-        );
+                return new ServiceResponse<List<ProfileDto?>>(true, 200, profiles, "Successfully retrieved all users");
             }
             catch (Exception ex)
             {
@@ -263,7 +259,6 @@ namespace BackendAPI.Source.Service
                 throw new Exception("Failed to Get all users from database", ex);
             }
         }
-
-
+   
     }
 }

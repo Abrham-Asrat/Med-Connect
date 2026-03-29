@@ -151,7 +151,10 @@ namespace BackendAPI.Source.Controllers
                     return StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null));
                 }
 
-                return Ok(new ApiResponse<List<ProfileDto?>>(true, response.Message ?? "Users retrieved successfully", response.Data));
+                // return Ok(new ApiResponse<List<ProfileDto?>>(true, response.Message ?? "Users retrieved successfully", response.Data));
+
+                return Ok(response);
+               
             }
             catch (Exception ex)
             {

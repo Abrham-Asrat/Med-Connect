@@ -21,7 +21,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
       var message = new MimeMessage();
 
       // Setup the Contents of your email address
-      message.From.Add(new MailboxAddress("MedConnect Inc.", "dagtef@gmail.com"));
+      message.From.Add(new MailboxAddress("MedConnect Inc.", "medconnect@gmail.com"));
       message.To.Add(new MailboxAddress(toName, toEmail));
       message.Subject = subject;
       message.Body = new TextPart("html") { Text = body };

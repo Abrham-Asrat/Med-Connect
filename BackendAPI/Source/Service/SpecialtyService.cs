@@ -50,7 +50,7 @@ namespace BackendAPI.Source.Service
 
 
         //<summary>
-        // Create all medical specialties from the database.
+        //N Create all medical specialties from the database.
         //<summary>
   
 

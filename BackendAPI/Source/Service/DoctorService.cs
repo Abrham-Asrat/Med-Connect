@@ -6,6 +6,7 @@ using BackendAPI.Source.Data;
 using BackendAPI.Source.Models.Dto;
 using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Helpers.Default;
+using BackendAPI.Source.Models.Enums;
 
 using BackendAPI.Source.Helpers.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -16,9 +17,9 @@ namespace BackendAPI.Source.Service
 {
     public class DoctorService(
         ApplicationDbContext appContext,
-        ILogger<DoctorService> logger
-    // DoctorSpecialtyService doctorSpecialtyService,
-    // SpecialtyService specialtyService
+        ILogger<DoctorService> logger,
+    DoctorSpecialtyService doctorSpecialtyService,
+    SpecialtyService specialtyService
 
     )
     {
@@ -151,8 +152,8 @@ namespace BackendAPI.Source.Service
                                Doctor = doctor,
                                DoctorId = doctor.DoctorId,
                                AvailableDay = day,
-                               StartTime =new TimeOnly(10, 0),
-                               EndTime =new TimeOnly(10, 0),
+                               StartTime = new TimeOnly(10, 0),
+                               EndTime = new TimeOnly(10, 0),
                            });
 
                     }
@@ -164,7 +165,7 @@ namespace BackendAPI.Source.Service
                         dbDoctorAvailabilities.Add(
                             new DoctorAvailabilityModel
                             {
-                                Doctor = doctor, 
+                                Doctor = doctor,
                                 DoctorId = doctor.DoctorId,
                                 AvailableDay = day.ConvertToEnum<DayOfWeek>(),
                                 StartTime = TimeOnly.Parse(startTime),
@@ -185,7 +186,7 @@ namespace BackendAPI.Source.Service
                 throw;
             }
         }
-        
+
 
         // instead of having separate methods for each type of doctor data (education, experience, etc), we can have a generic method that takes the type as a parameter and uses reflection to query the correct DbSet based on the type. This way, we can reduce code duplication and make it easier to maintain.
 
@@ -193,7 +194,7 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                return await appContext.Educations.Where(e => e.DoctorId == doctorId).ToListAsync();       
+                return await appContext.Educations.Where(e => e.DoctorId == doctorId).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -205,7 +206,7 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                return await appContext.Experiences.Where(e => e.DoctorId == doctorId).ToListAsync();       
+                return await appContext.Experiences.Where(e => e.DoctorId == doctorId).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -217,7 +218,7 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                return await appContext.Set<T>().Where(e => EF.Property<Guid>(e, "DoctorId") == doctorId).ToListAsync();  
+                return await appContext.Set<T>().Where(e => EF.Property<Guid>(e, "DoctorId") == doctorId).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -231,29 +232,169 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                var doctor = await appContext.Doctors.Where(d=> d.UserId == userId).Include(d=>d.User).Include(d=> d.DoctorAvailabilities).Include(d=> d.DoctorSpecialties).Include(d=> d.Educations).Include(d=>d.Experiences).SingleOrDefaultAsync();
+                var doctor = await appContext.Doctors.Where(d => d.UserId == userId).Include(d => d.User).Include(d => d.DoctorAvailabilities).Include(d => d.DoctorSpecialties).Include(d => d.Educations).Include(d => d.Experiences).SingleOrDefaultAsync();
 
-                if(doctor == null)
+                if (doctor == null)
                 {
                     throw new KeyNotFoundException("Doctor with this user Id is not Found, Couldn't retrieve profile information ");
                 }
 
                 return doctor.ToDoctorProfileDto(
-                    doctor.User,                   
+                    doctor.User,
                     doctor.DoctorAvailabilities,
-                    doctor.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds=> ds.Specialty!).ToList(),
+                    doctor.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds => ds.Specialty!).ToList(),
                     doctor.Educations,
                     doctor.Experiences
                 );
-                
+
 
             }
             catch (Exception ex)
             {
                 logger.LogInformation(ex, "Failed to get doctor Profile");
-                                                          
+
                 throw new Exception("Failed To get doctor Profile");
             }
         }
+
+            public async Task<DoctorProfileDto> UpdateDoctorProfileAsync(UpdateDoctorProfileDto updateProfileDto)
+        {
+            try
+            {
+                var doctor = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(d => d.Specialty).Include(d => d.DoctorAvailabilities).Include(d => d.Educations).Include(d => d.Experiences).FirstOrDefaultAsync(d => d.UserId == updateProfileDto.UserId);
+
+                if (doctor == null)
+                {
+                    throw new KeyNotFoundException("Doctor with this user Id is not Found, Couldn't update profile information ");
+                }
+
+
+                // create new specialties if provided in the updateProfileDto, and get the list of specialties to be updated for the doctor
+
+                var specialties = updateProfileDto.Specialties != null ? await specialtyService.CreateSpecialtiesAsync(updateProfileDto.Specialties.ToSpecialtyList(doctor.DoctorId)) : null;
+
+
+                var DoctorSpecialties = specialties != null ? await doctorSpecialtyService.CreateDoctorSpecialtiesAsync(specialties.Select(s => s.ToCreateDoctorSpecialtyDto(doctor)).ToList()) : null;
+
+                var availabilities = updateProfileDto.Availabilities != null ? await AddDoctorAvailabilitiesAsync(updateProfileDto.Availabilities, doctor) : null;
+
+                // updates 
+                doctor.DoctorSpecialties = DoctorSpecialties ?? doctor.DoctorSpecialties;
+
+                doctor.Qualifications = updateProfileDto.Qualifications ?? doctor.Qualifications;
+
+                doctor.DoctorStatus = updateProfileDto.DoctorStatus != null ? updateProfileDto.DoctorStatus.ConvertToEnum<DoctorStatus>() : doctor.DoctorStatus;
+
+                doctor.Biography = updateProfileDto.Biography ?? doctor.Biography;
+
+                doctor.DoctorAvailabilities = availabilities != null ? availabilities ?? doctor.DoctorAvailabilities : doctor.DoctorAvailabilities;
+
+                if (updateProfileDto.Educations != null)
+                {
+                    await DeleteAllEducationAsync(doctor.DoctorId);
+
+                    foreach (UpdateEducationDto dto in updateProfileDto.Educations)
+                    {
+                        await CreateEducationAsync(new CreateEducationDto
+                        (
+                            dto.Degree!,
+                            dto.Institution!,
+                            dto.GraduationDate!
+                        ),
+                          doctor.DoctorId
+                        );
+                    }
+                }
+
+                if(updateProfileDto.Experiences != null)
+                {
+                    await DeleteAllExperiencesAsync(doctor.DoctorId);
+
+                    foreach (UpdateExperienceDto dto in updateProfileDto.Experiences)
+                    {
+                        await CreateExperienceAsync(new CreateExperienceDto
+                        (
+                            dto.Institution!,
+                            dto.Position!,
+                            dto.StartDate!,
+                            dto.EndDate!,
+                            dto.Description!
+                            
+                        ),
+                          doctor.DoctorId
+                        );
+                    }
+                }
+
+               await appContext.SaveChangesAsync();
+
+               return doctor.ToDoctorProfileDto(
+                doctor.User,
+                doctor.DoctorAvailabilities,
+                doctor.DoctorSpecialties.Where(s => s != null).Select(ds=> ds.Specialty!).ToList(), doctor.Educations, doctor.Experiences
+               );
+
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogInformation($"{ex}: An error occurred trying to edit doctor");
+                throw new Exception("Error Occured trying to update Doctor");
+            }
+        }
+
+
+
+
+
+        // <summary>
+        // Delete all doctor data related to the .
+        // <summary>
+
+        public async Task DeleteAllEducationAsync(Guid doctorId)
+        {
+            try
+            {
+                var educations = appContext.Educations.Where(e => e.DoctorId == doctorId);
+
+                if (!educations.Any())
+                {
+                    throw new KeyNotFoundException($"Doctor with id {doctorId} has no education to delete");
+
+                }
+
+                appContext.Educations.RemoveRange(educations);
+                await appContext.SaveChangesAsync();
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError($"{ex} : An error occurred while trying to delete educations for doctor with id {doctorId}");
+                throw new Exception("Failed to delete doctor educations");
+            }
+        }
+        public async Task DeleteAllExperiencesAsync(Guid doctorId)
+        {
+            try
+            {
+                var experiences = appContext.Experiences.Where(e => e.DoctorId == doctorId);
+
+                if (!experiences.Any())
+                {
+                    throw new KeyNotFoundException($"Doctor with id {doctorId} has no experiences to delete");
+                }
+
+                appContext.Experiences.RemoveRange(experiences);
+                await appContext.SaveChangesAsync();
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError($"{ex} : An error occurred while trying to delete experiences for doctor with id {doctorId}");
+                throw new Exception("Failed to delete doctor experiences");
+            }
+        }
+
+
+
+
+
     }
 }

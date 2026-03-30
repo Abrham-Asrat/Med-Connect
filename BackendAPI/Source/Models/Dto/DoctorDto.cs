@@ -78,6 +78,16 @@ namespace BackendAPI.Source.Models.Dto
 
     public record DoctorSchedule(AppointmentTimeRange TimeRange, bool IsFree);
 
+    public record UpdateDoctorProfileDto(
+       Guid UserId,
+       List<string>? Specialties = null,
+       string? Qualifications = null,
+       string? Biography = null,
+       List<DoctorAvailabilityDto>? Availabilities = null,
+       string? DoctorStatus = null,
+       List<UpdateEducationDto>? Educations = null,
+       List<UpdateExperienceDto>? Experiences = null);
+
     public record DoctorSchedules(Dictionary<DateOnly, List<DoctorSchedule>> Data);
 
 }

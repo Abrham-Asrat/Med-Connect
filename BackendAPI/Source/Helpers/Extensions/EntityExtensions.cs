@@ -153,5 +153,16 @@ namespace BackendAPI.Source.Helpers.Extensions
                 file.FileSize
             );
         }
+
+        public static CreateDoctorSpecialtyDto ToCreateDoctorSpecialtyDto(this SpecialtyModel specialty, DoctorModel doctor)
+        {
+            return new CreateDoctorSpecialtyDto
+            {
+                
+                DoctorId = doctor.DoctorId,
+                SpecialtyId = specialty.SpecialtyId
+            };
+            
+        }
     }
 }

@@ -27,7 +27,9 @@ namespace BackendAPI.Source.Controllers
         // AppConfig appConfig ,
         ILogger<UserController> logger,
 
-        IValidator<RegisterUserDto> registerUserDtoValidator
+        IValidator<RegisterUserDto> registerUserDtoValidator,
+
+        IValidator<UpdateProfileDto> updateProfileValidator
     ) : ControllerBase
     {
 
@@ -139,6 +141,7 @@ namespace BackendAPI.Source.Controllers
             }
         }
    
+        // Get All Users Controller - Admin Only Access
         [HttpGet("all")]
 
         public async Task<IActionResult> GetAllUsers()
@@ -163,6 +166,86 @@ namespace BackendAPI.Source.Controllers
                 throw new Exception("Failed to get all users", ex);
             }
         }
+         // update user Profile Controller 
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateProfileDto dto)
+        {
+            try
+            {
+                if(!ModelState.IsValid)
+                {
+                    HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
+                    throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
+                }
+
+               var validation = await updateProfileValidator.ValidateAsync(dto);
+
+                if (!validation.IsValid)
+                {
+                    HttpContext.Items[ErrorFieldConstants.FluentValidationErrors] = validation.ToFluentValidationErrorResult();
+                    throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
+                }
+
+                var response = await userService.UpdateUserProfile(dto);
+                if (!response.Success)
+                {
+                    return StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null));
+                }
+
+                return StatusCode(response.StatusCode,response);
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to update user profile for User ID: {UserId}", User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
+                
+                throw new Exception("Failed to update user profile", ex);
+            }
+        }
+
+        // Delete User Profile Controller
+         
+        [HttpDelete("{userId}")] 
+        public async Task<IActionResult> DeleteUser(Guid userId)
+        {
+            try
+            {
+                var response = await userService.DeleteUserAsync(userId);
+                if (!response.Success)
+                {
+                    return StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null));
+                }
+
+                return NoContent();
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to delete user with ID: {UserId}", userId); 
+                
+                throw new Exception("Failed to delete user", ex);
+            }
+        }
+ 
+        // Get user profile by user id
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> GetUserProfile(Guid userId)
+        {
+            try
+            {
+                var response = await userService.GetUserProfileAsync(userId);
+                if (!response.Success)
+                {
+                    return StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null));
+                }
+
+                return Ok(response);
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to get user profile for ID: {UserId}", userId);
+                return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred. Please try again later.", null));
+            }
+        }
+
     }
 }
 

@@ -9,6 +9,8 @@ using BackendAPI.Source.Helpers.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using BackendAPI.Source.Models.Enums;
+using BackendAPI.Source.Attributes;
+
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -24,12 +26,12 @@ namespace BackendAPI.Source.Service
         DoctorSpecialtyService doctorSpecialtyService,
         SpecialtyService specialtyService
     )
-    
+
     {
-            // <summary>
-            //Initialize local profile AFTER successful Auth0 authentication
-            //Auth0Id and email come FROM VALIDATED TOKEN (never from DTO)
-            //</summary>
+        // <summary>
+        //Initialize local profile AFTER successful Auth0 authentication
+        //Auth0Id and email come FROM VALIDATED TOKEN (never from DTO)
+        //</summary>
 
         public async Task<ServiceResponse<ProfileDto>> RegisterUser(
 
@@ -234,7 +236,7 @@ namespace BackendAPI.Source.Service
         }
 
         // Get All user Service Worked here 
-        public async Task<ServiceResponse<List<ProfileDto?>>>GetAllUsersAsync()
+        public async Task<ServiceResponse<List<ProfileDto?>>> GetAllUsersAsync()
         {
             try
             {
@@ -248,7 +250,7 @@ namespace BackendAPI.Source.Service
                     {
                         profiles.Add(await doctorService.GetDoctorProfileAsync(u.UserId));
                     }
-            
+
                 }
 
                 return new ServiceResponse<List<ProfileDto?>>(true, 200, profiles, "Successfully retrieved all users");
@@ -259,6 +261,130 @@ namespace BackendAPI.Source.Service
                 throw new Exception("Failed to Get all users from database", ex);
             }
         }
-   
+
+        // Update User Profile Service
+        public async Task<ServiceResponse> UpdateUserProfile(UpdateProfileDto updateProfileDto)
+        {
+            try
+            {
+                Guid userId = updateProfileDto.UserId.ConvertToGuid();
+
+                var user = await appContext.Users.FirstOrDefaultAsync(U => U.UserId == userId);
+                if (user == null)
+                {
+                    throw new KeyNotFoundException("User with that id is not found.");
+                }
+
+                // Update only the fields that are provided in the DTO (non-null)
+                user.FirstName = updateProfileDto.FirstName ?? user.FirstName;
+                user.LastName = updateProfileDto.LastName ?? user.LastName;
+                user.ProfilePicture = updateProfileDto.ProfilePicture ?? user.ProfilePicture;
+                user.Phone = updateProfileDto.Phone ?? user.Phone;
+
+                user.Address = updateProfileDto.Address ?? user.Address;
+
+
+                user.DateOfBirth = updateProfileDto.DateOfBirth == null ? user.DateOfBirth : updateProfileDto.DateOfBirth.ConvertTo<DateOnly>();
+
+                user.Gender = updateProfileDto.Gender != null ? updateProfileDto.Gender.ConvertToEnum<Gender>() : user.Gender;
+
+                if (updateProfileDto.Email != null && updateProfileDto.Email != user.Email)
+                {
+                    user.Email = updateProfileDto.Email;
+                    user.IsEmailVerified = false; // Mark email as unverified if it has been changed
+                }
+
+                ProfileDto? updatedProfile = null;
+
+                if (user.Role == Role.Doctor)
+                {
+                    updatedProfile = await doctorService.UpdateDoctorProfileAsync
+                    (
+                        new UpdateDoctorProfileDto
+                        (
+                            userId, 
+                            updateProfileDto.Specialties,updateProfileDto.Qualifications, updateProfileDto.Biography,
+                            updateProfileDto.Availabilities,
+                            updateProfileDto.DoctorStatus,
+                            updateProfileDto.Educations, updateProfileDto.Experiences
+                        )                       
+                  );
+                }
+                await appContext.SaveChangesAsync();
+
+                return new ServiceResponse<ProfileDto> (true , 200 , updatedProfile , "Profile Update Success");
+
+
+
+            }
+            catch (System.Exception)
+            {
+
+                throw;
+            }
+        }
+        // Delete User Service
+        public async Task<ServiceResponse> DeleteUserAsync(Guid userId)
+        {
+            try
+            {
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null)
+                {
+                    return new ServiceResponse(false, 404, "User not found");
+                }
+
+                if (user.Auth0Id != null)
+                {
+                    await auth0Service.DeleteUserAsync(user.Auth0Id);
+                }
+
+                // Remove user appointments if exist
+                // await appointmentService.DeleteAppointmentWhereUserIdAsync(userId);
+
+                appContext.Users.Remove(user);
+                await appContext.SaveChangesAsync();
+
+                return new ServiceResponse(true, 204, "User deleted successfully");
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to delete user with ID: {UserId}", userId);
+
+                throw new Exception("Failed to delete user", ex);
+            }
+
+        }
+
+
+        // Get user profile by user id
+        public async Task<ServiceResponse<ProfileDto>> GetUserProfileAsync(Guid userId)
+        {
+            try
+            {
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null)
+                {
+                    return new ServiceResponse<ProfileDto>(false, 404, null, "User not found");
+                }
+
+                ProfileDto? profile = null;
+
+                if (user.Role == Role.Doctor)
+                {
+                    profile = await doctorService.GetDoctorProfileAsync(user.UserId);
+                }
+
+                return new ServiceResponse<ProfileDto>(true, 200, profile, "User profile retrieved successfully");
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to get user profile with ID: {UserId}", userId);
+
+                throw new Exception("Failed to get user profile", ex);
+            }
+        }
     }
 }

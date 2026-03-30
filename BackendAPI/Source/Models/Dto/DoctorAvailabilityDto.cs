@@ -16,4 +16,5 @@ namespace BackendAPI.Source.Models.Dto
         public required List<AppointmentTimeRange> AvailableTimes { get; set; }
     }
    
+   public record AvailabilityDto(string Day , string StartTime , string EndTime);  
 }

@@ -12,22 +12,23 @@ namespace BackendAPI.Source.Models.Entities
     {
         public Guid UserId { get; set; } = Guid.NewGuid();
 
-        [Required]
-        public required string Auth0Id { get; set; }
-
-
-
+        public string? Auth0Id { get; set; }
+        public string? Auth0AccessToken { get; set; }
+        public string? Auth0RefreshToken { get; set; }
+    
         [Required]
         public required string FirstName { get; set; }
 
         [Required]
         public required string LastName { get; set; }
 
-        // [Required]
-        // [EmailAddress]
-        // public required string Email { get; set; }
+        [Required]
+        [EmailAddress]
+        public required string Email { get; set; }
 
         public bool IsEmailVerified { get; set; } = false;
+
+        public int? Otp { get; set; }
 
         [Required]
         [Phone]
@@ -49,8 +50,8 @@ namespace BackendAPI.Source.Models.Entities
         [RoleValidation]
         public Role Role { get; set; }
 
-         // Optional: Track last login from token
-         public DateTime? LastLogin { get; set; }
+        // Optional: Track last login from token
+        public DateTime? LastLogin { get; set; }
 
     }
 }

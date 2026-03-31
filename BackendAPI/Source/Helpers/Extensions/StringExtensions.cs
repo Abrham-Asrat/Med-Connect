@@ -20,9 +20,9 @@ namespace BackendAPI.Source.Helpers.Extensions
             }
         }
 
-        public static T ConvertToEnum<T>(this string str) where T : struct, Enum
+        public static T ConvertToEnum<T>(this string str , bool ignoreCase = false) where T : struct, Enum
         {
-            if (Enum.TryParse<T>(str, true, out T result))
+            if (Enum.TryParse<T>(str, ignoreCase, out T result))
             {
                 return result;
             }

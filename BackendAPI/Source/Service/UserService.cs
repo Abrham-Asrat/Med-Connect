@@ -9,8 +9,10 @@ using BackendAPI.Source.Helpers.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using BackendAPI.Source.Models.Enums;
+using BackendAPI.Source.Attributes;
+
 using System.ComponentModel.DataAnnotations;
-using BackendAPI.Source.Service;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 
 namespace BackendAPI.Source.Service
@@ -20,175 +22,152 @@ namespace BackendAPI.Source.Service
         ILogger<UserService> logger,
         FileService fileService,
         DoctorService doctorService,
+        Auth0Service auth0Service,
         DoctorSpecialtyService doctorSpecialtyService,
         SpecialtyService specialtyService
     )
+
     {
-        /// <summary>
-        /// Initialize local profile AFTER successful Auth0 authentication
-        /// Auth0Id and email come FROM VALIDATED TOKEN (never from DTO)
-        /// </summary>
+        // <summary>
+        //Initialize local profile AFTER successful Auth0 authentication
+        //Auth0Id and email come FROM VALIDATED TOKEN (never from DTO)
+        //</summary>
+
         public async Task<ServiceResponse<ProfileDto>> RegisterUser(
-            string auth0Id,
-            bool isEmailVerified,
+
             RegisterUserDto registerUserDto
         )
         {
+            Auth0UserInfoDto? auth0User = null;
             try
             {
-                // 🔒 CRITICAL: Validate inputs BEFORE database queries
-                if (string.IsNullOrWhiteSpace(auth0Id))
-                    return new ServiceResponse<ProfileDto>(false, 400, null, "Auth0 user ID is required");
+                //Search the user by Email 
+                var userByEmail = await appContext.Users.AnyAsync(u => u.Email == registerUserDto.Email);
 
-                // no email parameter any longer; Auth0 manages it.  keep the
-                // check placeholder in case signature changes accidentally.
-
-                // ✅ Step 1: Prevent duplicate initialization for same Auth0 user
-                var existingByAuth0Id = await appContext.Users
-                    .FirstOrDefaultAsync(u => u.Auth0Id == auth0Id);
-
-                if (existingByAuth0Id != null)
+                if (userByEmail)
                 {
-                    logger.LogWarning($"Duplicate profile initialization attempt for Auth0Id: {auth0Id}");
-                    return new ServiceResponse<ProfileDto>(
-                        false,
-                        409,
-                        null,
-                        "Profile already exists for this authenticated user"
-                    );
+                    logger.LogInformation("User with this email exists");
+                    throw new BadHttpRequestException("User with  this email already exist ");
+
                 }
 
-                // ✅ Step 2: Enforce phone uniqueness (email uniqueness handled by Auth0)
-                var existingByPhone = await appContext.Users
-                    .AnyAsync(u => u.Phone == registerUserDto.Phone);
+                // search the user by phone number 
+                var userByPhone = await appContext.Users.AnyAsync(u => u.Phone == registerUserDto.Phone);
 
-                if (existingByPhone)
+                if (userByPhone)
                 {
-                    logger.LogWarning($"Phone number already in use: {registerUserDto.Phone}");
-                    return new ServiceResponse<ProfileDto>(
-                        false,
-                        409,
-                        null,
-                        "Phone number is already associated with another account"
-                    );
+                    logger.LogInformation("User with this phone number exists");
+                    throw new BadHttpRequestException("User with  this phone number already exist ");
+
                 }
 
-                // ✅ Step 3: Create user WITH token-derived identity (never trust DTO for identity)
-                var userEntity = registerUserDto.ToUserModel(auth0Id); // Auth0Id comes from token
+                // Create user in Auth0
+                Guid userId = Guid.NewGuid();
 
-                // 🔒 SECURITY: Prefer email FROM TOKEN (not DTO) to prevent spoofing.  
-                // Some tokens may omit the email claim; the controller will have
-                // already fallen back to the DTO value in that case, so we still
-                // assign from the parameter.  We do NOT re‑trust the DTO in the
-                // service layer.
-                // userEntity.Email = emailFromToken;
-                userEntity.IsEmailVerified = isEmailVerified;
+                // Create user in Auth0
+                auth0User = await auth0Service.CreateUserAsync(registerUserDto, userId);
 
-                // 🔒 ROLE SECURITY: Parse and enforce allowed roles from DTO (defense in depth)
-                if (!Enum.TryParse<Role>(registerUserDto.Role, true, out var requestedRole))
+                logger.LogInformation($"Auth0Created User in USerServices auth0User : {auth0User}");
+
+                if (auth0User == null || auth0User.UserId == null)
                 {
-                    return new ServiceResponse<ProfileDto>(false, 400, null, "Invalid role.");
+                    throw new Exception("Failed to create user in Auth0");
                 }
 
-                if (requestedRole == Role.Admin)
-                {
-                    logger.LogWarning($"Privilege escalation attempt during registration. Auth0Id: {auth0Id}, RequestedRole: {registerUserDto.Role}");
-                    return new ServiceResponse<ProfileDto>(false, 403, null, "Self-registration as Admin is not allowed.");
-                }
+                var user = registerUserDto.ToUserModel();
 
-                // Optional: require email verification before Doctor registration
-                if (requestedRole == Role.Doctor && !isEmailVerified)
-                {
-                    logger.LogWarning($"Unverified user attempted Doctor role during registration. Auth0Id: {auth0Id}");
-                    return new ServiceResponse<ProfileDto>(false, 403, null, "Doctor registration requires email verification.");
-                }
+                // add additional user Entity with auth0user Accordingly 
+                user.UserId = userId;
+                user.Auth0Id = auth0User.UserId;
+                user.ProfilePicture = auth0User.Profile;
+                user.IsEmailVerified = auth0User.IsEmailVerified;
 
-                userEntity.Role = requestedRole;
-                userEntity.LastLogin = DateTime.UtcNow;
-                userEntity.UserId = Guid.NewGuid(); // Generate new GUID for local user
 
-                // ✅ Step 4: Save to database
-                var addUser = await appContext.Users.AddAsync(userEntity);
-                var role = requestedRole;
+                // add User to the database 
+                var addUser = await appContext.Users.AddAsync(user);
+
+                // add Doctor , patient , Admin by there own specified work and role 
+
+                Role role = registerUserDto.Role.ConvertToEnum<Role>();
+
                 ProfileDto? userProfile = null;
 
-                if (role == Role.Doctor && registerUserDto.Cv == null)
-                {
-                    return new ServiceResponse<ProfileDto>(false, 400, null, "CV is required for Doctor registration");
-                }
-
+                // Add Doctor 
                 if (role == Role.Doctor)
                 {
-                    var cvFile = await fileService.CreateFileAsync(
-                      new CreateFileDto(
-                          registerUserDto.Cv!.MimeType,
-                          registerUserDto.Cv!.FileDataBase64,
-                          registerUserDto!.Cv!.FileName
-                      )
-                    );
-
-                    // doctor lists may be null if omitted from JSON; normalise them here
-                    var dtoEducations = registerUserDto.Education ?? new List<CreateEducationDto>();
-                    var dtoExperiences = registerUserDto.Experience ?? new List<CreateExperienceDto>();
-
-                    // Create Doctor with Inactive status, pending admin approval
-                    DoctorModel doctor = await doctorService.CreateDoctorAsync(
-                        registerUserDto.ToCreateDoctorDto(
-                            addUser.Entity,
-                            cvFile,
-                            dtoEducations,
-                            dtoExperiences,
-                            DoctorStatus.Inactive
+                    var DoctorCv = await fileService.CreateFileAsync(
+                        new CreateFileDto(
+                            registerUserDto.Cv!.MimeType,
+                            registerUserDto.Cv!.FileDataBase64,
+                            registerUserDto.Cv!.FileName
                         )
                     );
 
-                    // Create Specialties
-                    var specialties = await specialtyService.CreateSpecialtiesAsync(
-                        registerUserDto.Specialties.ToSpecialtyList(doctor.DoctorId)
+                    // Creating Doctor 
+                    DoctorModel doctor = await doctorService.CreateDoctorAsync(
+                        registerUserDto.ToCreateDoctorDto(
+                            addUser.Entity,
+                            DoctorCv,
+                            registerUserDto.Education,
+                            registerUserDto.Experience
+                        )
                     );
 
-                    var createDoctorSpecialty = specialties.Select(S => new CreateDoctorSpecialtyDto
+                    // Create  Specialties
+
+                    var specialties = await specialtyService.CreateSpecialtiesAsync
+                    (
+                     registerUserDto.Specialties.ToSpecialtyList(doctor.DoctorId)
+                    );
+
+                    var createDoctorSpecialtyDto = specialties.Select(s => new CreateDoctorSpecialtyDto
                     {
                         DoctorId = doctor.DoctorId,
-                        SpecialtyId = S.SpecialtyId
+                        SpecialtyId = s.SpecialtyId
                     }).ToList();
 
-                    await doctorSpecialtyService.CreateDoctorSpecialtiesAsync(createDoctorSpecialty);
-                    var availabilities = await doctorService.AddDoctorAvailabilitiesAsync(registerUserDto.Availabilities, doctor);
-                    ICollection<EducationModel> educations = await doctorService.GetDataAsync<EducationModel>(doctor.DoctorId);
-                    ICollection<ExperienceModel> experiences = await doctorService.GetDataAsync<ExperienceModel>(doctor.DoctorId);
+
+                    // Create Specialty for doctor
+                    var doctorSpecialty = await doctorSpecialtyService.CreateDoctorSpecialtiesAsync(createDoctorSpecialtyDto);
+
+
+                    // Create availabilities
+                    var availabilities = await doctorService.AddDoctorAvailabilitiesAsync(registerUserDto.Availabilities,
+                    doctor);
+
+                    ICollection<EducationModel> educations = await doctorService.GetDoctorEducationsAsync(doctor.DoctorId);
+
+                    ICollection<ExperienceModel> experiences = await doctorService.GetDoctorExperiencesAsync(doctor.DoctorId);
+
 
                     userProfile = addUser.Entity.ToDoctorProfileDto(doctor, availabilities, specialties, educations, experiences);
                 }
 
+
                 try
                 {
                     await appContext.SaveChangesAsync();
-                    logger.LogInformation("Successfully saved changes to database for user registration");
+                    logger.LogInformation("Successfully saved changes to database for user registration ");
+
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
-                    logger.LogError(ex, "Failed To save changes to database during user registration");
-                    throw;
+
+                    logger.LogError(ex, "Failed to save changes to database during user registration");
+                    throw new Exception("Database operation failed during user registration", ex);
                 }
 
-                var responseMessage = role == Role.Doctor
-                    ? "Registration successful✨. Doctor profile is pending admin approval."
-                    : "Registration successful✨";
-
-                return new ServiceResponse<ProfileDto>(
-                    success: true,
-                    statusCode: 201,
-                    message: responseMessage,
-                    data: userProfile
-                );
-
+                return new ServiceResponse<ProfileDto>(success: true,
+                statusCode: 201,
+                message: "Registration Success! We have sent you an email verification link to your email. Please verify your account.",
+                data: userProfile
+     );
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to initialize user profile. Auth0Id: {Auth0Id}", auth0Id);
+
                 // include message in response during development; remove or sanitize for production
-                var errorMessage = $"Failed to create profile. {ex.Message}";
+                var errorMessage = $"failed To register user {ex}";
                 return new ServiceResponse<ProfileDto>(
                     false,
                     500,
@@ -209,7 +188,6 @@ namespace BackendAPI.Source.Service
             return await appContext.Users
                 .FirstOrDefaultAsync(u => u.Auth0Id == auth0Id);
         }
-
         private static ProfileDto MapToProfileDto(UserModel user)
         {
             return new ProfileDto
@@ -226,49 +204,188 @@ namespace BackendAPI.Source.Service
             };
         }
 
-        public async Task<ServiceResponse<ProfileDto>> LoginUserAsync(string auth0Id)
+
+        // Login Service 
+        public async Task<ServiceResponse<Auth0LoginDto>> LoginUserAsync(LoginUserDto loginUserDto)
         {
-            if (string.IsNullOrWhiteSpace(auth0Id))
-                return new ServiceResponse<ProfileDto>(false, 401, null, "Missing user identifier in token");
-
-            var user = await GetUserByAuth0IdAsync(auth0Id);
-            if (user == null)
-                return new ServiceResponse<ProfileDto>(false, 404, null, "User not found. Please register first.");
-
-            user.LastLogin = DateTime.UtcNow;
-
-            await appContext.SaveChangesAsync();
-
-            if (user.Role == Role.Doctor)
+            try
             {
-                var doctor = await appContext.Doctors
-                    .FirstOrDefaultAsync(d => d.UserId == user.UserId);
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.Email == loginUserDto.Email);
 
-                if (doctor == null)
-                    return new ServiceResponse<ProfileDto>(false, 500, null, "Doctor profile is missing for this user.");
+                if (user == null)
+                {
+                    throw new KeyNotFoundException("User with that email is not found");
+                }
 
-                var availabilities = await appContext.DoctorAvailabilities
-                    .Where(a => a.DoctorId == doctor.DoctorId)
-                    .ToListAsync();
+                if (user.Auth0Id == null)
+                {
+                    throw new KeyNotFoundException("User does not have an Auth0 ID");
+                }
 
-                var specialtyIds = await appContext.DoctorSpecialties
-                    .Where(ds => ds.DoctorId == doctor.DoctorId)
-                    .Select(ds => ds.SpecialtyId)
-                    .ToListAsync();
+                var auth0LoginDto = await auth0Service.LoginUserAsync(loginUserDto, user.Auth0Id);
 
-                var specialties = await appContext.Specializations
-                    .Where(s => specialtyIds.Contains(s.SpecialtyId))
-                    .ToListAsync();
+                logger.LogInformation($"Auth0 Login Response in UserService: {auth0LoginDto}");
+                return new ServiceResponse<Auth0LoginDto>(true, 200, auth0LoginDto, "Login success!");
 
-                var educations = await doctorService.GetDataAsync<EducationModel>(doctor.DoctorId);
-                var experiences = await doctorService.GetDataAsync<ExperienceModel>(doctor.DoctorId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to login user");
+                throw;
+            }
+        }
 
-                var doctorDto = user.ToDoctorProfileDto(doctor, availabilities, specialties, educations, experiences);
-                return new ServiceResponse<ProfileDto>(true, 200, doctorDto, "Login successful");
+        // Get All user Service Worked here 
+        public async Task<ServiceResponse<List<ProfileDto?>>> GetAllUsersAsync()
+        {
+            try
+            {
+                var users = await appContext.Users.ToListAsync();
+
+                List<ProfileDto?> profiles = [];
+
+                foreach (UserModel u in users)
+                {
+                    if (u.Role == Role.Doctor)
+                    {
+                        profiles.Add(await doctorService.GetDoctorProfileAsync(u.UserId));
+                    }
+
+                }
+
+                return new ServiceResponse<List<ProfileDto?>>(true, 200, profiles, "Successfully retrieved all users");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get all users");
+                throw new Exception("Failed to Get all users from database", ex);
+            }
+        }
+
+        // Update User Profile Service
+        public async Task<ServiceResponse> UpdateUserProfile(UpdateProfileDto updateProfileDto)
+        {
+            try
+            {
+                Guid userId = updateProfileDto.UserId.ConvertToGuid();
+
+                var user = await appContext.Users.FirstOrDefaultAsync(U => U.UserId == userId);
+                if (user == null)
+                {
+                    throw new KeyNotFoundException("User with that id is not found.");
+                }
+
+                // Update only the fields that are provided in the DTO (non-null)
+                user.FirstName = updateProfileDto.FirstName ?? user.FirstName;
+                user.LastName = updateProfileDto.LastName ?? user.LastName;
+                user.ProfilePicture = updateProfileDto.ProfilePicture ?? user.ProfilePicture;
+                user.Phone = updateProfileDto.Phone ?? user.Phone;
+
+                user.Address = updateProfileDto.Address ?? user.Address;
+
+
+                user.DateOfBirth = updateProfileDto.DateOfBirth == null ? user.DateOfBirth : updateProfileDto.DateOfBirth.ConvertTo<DateOnly>();
+
+                user.Gender = updateProfileDto.Gender != null ? updateProfileDto.Gender.ConvertToEnum<Gender>() : user.Gender;
+
+                if (updateProfileDto.Email != null && updateProfileDto.Email != user.Email)
+                {
+                    user.Email = updateProfileDto.Email;
+                    user.IsEmailVerified = false; // Mark email as unverified if it has been changed
+                }
+
+                ProfileDto? updatedProfile = null;
+
+                if (user.Role == Role.Doctor)
+                {
+                    updatedProfile = await doctorService.UpdateDoctorProfileAsync
+                    (
+                        new UpdateDoctorProfileDto
+                        (
+                            userId, 
+                            updateProfileDto.Specialties,updateProfileDto.Qualifications, updateProfileDto.Biography,
+                            updateProfileDto.Availabilities,
+                            updateProfileDto.DoctorStatus,
+                            updateProfileDto.Educations, updateProfileDto.Experiences
+                        )                       
+                  );
+                }
+                await appContext.SaveChangesAsync();
+
+                return new ServiceResponse<ProfileDto> (true , 200 , updatedProfile , "Profile Update Success");
+
+
+
+            }
+            catch (System.Exception)
+            {
+
+                logger.LogInformation("Error occurred when trying to get all user");
+                throw ;
+            }
+        }
+        // Delete User Service
+        public async Task<ServiceResponse> DeleteUserAsync(Guid userId)
+        {
+            try
+            {
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null)
+                {
+                    return new ServiceResponse(false, 404, "User not found");
+                }
+
+                if (user.Auth0Id != null)
+                {
+                    await auth0Service.DeleteUserAsync(user.Auth0Id);
+                }
+
+                // Remove user appointments if exist
+                // await appointmentService.DeleteAppointmentWhereUserIdAsync(userId);
+
+                appContext.Users.Remove(user);
+                await appContext.SaveChangesAsync();
+
+                return new ServiceResponse(true, 204, "User deleted successfully");
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to delete user with ID: {UserId}", userId);
+
+                throw new Exception("Failed to delete user", ex);
             }
 
-            var profileDto = MapToProfileDto(user);
-            return new ServiceResponse<ProfileDto>(true, 200, profileDto, "Login successful");
+        }
+
+
+        // Get user profile by user id
+        public async Task<ServiceResponse<ProfileDto>> GetUserProfileAsync(Guid userId)
+        {
+            try
+            {
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null)
+                {
+                    return new ServiceResponse<ProfileDto>(false, 404, null, "User not found");
+                }
+
+                ProfileDto? profile = null;
+
+                if (user.Role == Role.Doctor)
+                {
+                    profile = await doctorService.GetDoctorProfileAsync(user.UserId);
+                }
+
+                return new ServiceResponse<ProfileDto>(true, 200, profile, "User profile retrieved successfully");
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to get user profile with ID: {UserId}", userId);
+
+                throw new Exception("Failed to get user profile", ex);
+            }
         }
     }
-}   
+}

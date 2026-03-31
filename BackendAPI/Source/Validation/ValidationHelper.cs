@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BackendAPI.Source.Helpers;
 using BackendAPI.Source.Models.Enums;
 
 namespace BackendAPI.Source.Validation
@@ -21,6 +22,45 @@ namespace BackendAPI.Source.Validation
                 return false;
 
             return DateTime.TryParse(date, out _);
+        }
+
+         public static bool IsImageMime(string mimeType)
+  {
+    var isValidMime = Mime.ReverseMimes.TryGetValue(mimeType, out MimeDefaults mimeDefaultType);
+
+    if (!isValidMime)
+      return false;
+
+    return mimeDefaultType switch
+    {
+      MimeDefaults.Jpeg => true,
+      MimeDefaults.Png => true,
+      MimeDefaults.Gif => true,
+      MimeDefaults.Bmp => true,
+      MimeDefaults.Webp => true,
+      MimeDefaults.Tiff => true,
+      _ => false
+    };
+  }
+
+  public static bool IsValidBase64(string b64String)
+  {
+    try
+    {
+      FileHelper.ToByteStream(b64String);
+      return true;
+    }
+    catch (FormatException)
+    {
+      return false;
+    }
+  }
+
+        public static bool BeValidDoctorStatus(string? doctorStatusString)
+        {
+            if (doctorStatusString == null)
+                return false;
+            return Enum.TryParse<DoctorStatus>(doctorStatusString, true, out _);
         }
 
         public static bool BeAValidDateOnlyString(string? date)
@@ -51,7 +91,7 @@ namespace BackendAPI.Source.Validation
                 return false;
             return Enum.TryParse<Gender>(genderString, true, out _);
         }
-        
+
         public static bool BeAtLeast18YearsOldFromString(string? dateString)
         {
             if (dateString == null)

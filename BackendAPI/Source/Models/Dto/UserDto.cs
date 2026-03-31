@@ -3,6 +3,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using BackendAPI.Source.Models.Enums;
 using BackendAPI.Source.Attributes;
+using System.ComponentModel;
 
 namespace BackendAPI.Source.Models.Dto
 {
@@ -13,10 +14,11 @@ namespace BackendAPI.Source.Models.Dto
     {
         public required Guid UserId { get; init; }
         public required string FirstName { get; init; }
-        public required string LastName { get; init; } 
-        public required string Phone { get; init; } 
+        public required string LastName { get; init; }
+        public required string Email { get; init; }
+        public required string Phone { get; init; }
         public required Gender Gender { get; init; }
-        public required DateOnly DateOfBirth {get; init;}
+        public required DateOnly DateOfBirth { get; init; }
         public required string Address { get; init; }
         public required string ProfilePicture { get; init; }
     }
@@ -35,9 +37,13 @@ namespace BackendAPI.Source.Models.Dto
         [StringLength(50, MinimumLength = 1)]
         public required string LastName { get; init; }
 
-        // [Required(ErrorMessage = "Email is required")]
-        // [EmailAddress]
-        // public required string Email { get; init; } // Fallback only
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress]
+        public required string Email { get; init; }
+
+         [Required(ErrorMessage = "Password is required")]
+         [Password(8)]
+        public required string Password { get; init; }
 
         [Phone]
         [MinLength(4)]
@@ -67,7 +73,7 @@ namespace BackendAPI.Source.Models.Dto
 
         // Optional doctor-specific fields (can be null for patients)
         public List<string> Specialties { get; init; } = [];
-        public List<DoctorAvailabilityDto> Availabilities { get; init; } = [];   
+        public List<DoctorAvailabilityDto> Availabilities { get; init; } = [];
 
         public string? Qualifications { get; init; }
         public string? Biography { get; init; }
@@ -80,17 +86,14 @@ namespace BackendAPI.Source.Models.Dto
         public List<CreateEducationDto> Education { get; init; } = [];
         public List<CreateExperienceDto> Experience { get; init; } = [];
     }
-     
 
-   
 
-    // <summary>
-    // Dto for Login data transfer object Access token response, not used in this backend as Auth0 handles authentication, but defined for completeness and potential future use
-    // </summary>
-    public record LoginResponseDto
-    {
-        public required string AccessToken { get; init; }
-        public required DateTime ExpiresAt { get; init; }
-    }
 
+    // A filed What a newly created Auth0 user would have, used for initializing local profile
+    public record Auth0UserInfoDto ( string UserId, string Profile, bool IsEmailVerified );
+
+    /// Auth0 Login Data Transfer Object. Used for returning Auth0 login information to the client.
+    public record Auth0LoginDto (string AccessToken, int ExpiresIn,[Required] Auth0ProfileDto Profile);
+
+     public record LoginUserDto([Required] [EmailAddress] string Email, [Required] string Password);
 }

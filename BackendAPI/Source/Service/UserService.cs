@@ -320,7 +320,8 @@ namespace BackendAPI.Source.Service
             catch (System.Exception)
             {
 
-                throw;
+                logger.LogInformation("Error occurred when trying to get all user");
+                throw ;
             }
         }
         // Delete User Service

@@ -68,7 +68,7 @@ namespace BackendAPI.Source.Helpers.Extensions
             return new FileModel()
             {
                 FileName = fileDto.FileName,
-                FileData = FileHelper.ToBeStream(fileDto.FileDataBase64),
+                FileData = FileHelper.ToByteStream(fileDto.FileDataBase64),
                 MimeType = fileDto.MimeType
             };
         }

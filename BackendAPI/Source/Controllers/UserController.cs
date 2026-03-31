@@ -11,6 +11,7 @@ using BackendAPI.Source.Validation;
 using BackendAPI.Source.Models.Responses;
 using BackendAPI.Source.Config;
 using FluentValidation;
+using FluentValidation.Results;
 using System.Security.Claims;
 // using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Helpers.Extensions;
@@ -244,6 +245,36 @@ namespace BackendAPI.Source.Controllers
                 logger.LogError(ex, "Failed to get user profile for ID: {UserId}", userId);
                 return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred. Please try again later.", null));
             }
+        }
+
+   
+        // <summary>
+        //Endpoint responsible for getting the profile or the currently logged in user 
+        // </summary>
+        [HttpGet("profile/me")]
+        [Authorize]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            try
+            {
+                bool validGuid = Guid.TryParse(HttpContext.Request.Cookies[CookieDefaults.Profile.UserId]?.ToString(), out var userId);
+
+                if (!validGuid)
+                {
+                    throw new UnauthorizedAccessException($"Please login again. Cookie is corrupt. {userId}");
+
+
+                }
+
+                var response = await userService.GetUserProfileAsync(userId);
+
+                return Ok(response);
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogInformation(ex, "Failed to get user Profile");
+                throw;
+            } 
         }
 
     }

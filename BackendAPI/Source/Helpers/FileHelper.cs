@@ -16,7 +16,7 @@ namespace BackendAPI.Source.Helpers
           return await File.ReadAllTextAsync(filePath);
         }
 
-        public static byte[] ToBeStream(string base64) =>Convert.FromBase64String(base64);
+        public static byte[] ToByteStream(string base64) =>Convert.FromBase64String(base64);
         public static string ToBase64(byte[] byteStream) => Convert.ToBase64String(byteStream);
     }
 }

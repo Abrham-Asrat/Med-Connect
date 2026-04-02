@@ -387,5 +387,52 @@ namespace BackendAPI.Source.Service
                 throw new Exception("Failed to get user profile", ex);
             }
         }
+
+        // Email verification check service
+        public async Task<ServiceResponse<bool?>> CheckEmailVerified(string email)
+        {
+            try
+            {
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+                if (user == null)
+                {
+                    return new ServiceResponse<bool?>(false, 404, false, "User not found");
+                }
+
+                if (user.IsEmailVerified)
+                  {
+                    logger.LogInformation("Email is verified for user with email: {Email}", email);
+                    return new ServiceResponse<bool?>(true, 200, true, "Email is verified"); 
+                  }
+                if (user.Auth0Id == null)
+                   {
+                    throw new KeyNotFoundException("User doesn't have an account.");
+                   }
+
+                var isEmailVerified = await auth0Service.IsEmailVerified(user.Auth0Id);
+
+
+                if (isEmailVerified == null)
+                   {
+                    logger.LogError("Failed to retrieve email verification status from Auth0 for user with email: {Email}", email);
+                   throw new Exception("Failed to verify email.");
+                   }
+         // Sync the auth0 email verification status with the user entity
+                 user.IsEmailVerified = (bool)isEmailVerified;
+
+                 await appContext.SaveChangesAsync();
+
+
+                return new ServiceResponse<bool?>(true, 200, user.IsEmailVerified, "Email verification status retrieved successfully");
+               }
+
+               catch (System.Exception ex)
+               {
+                logger.LogError(ex, "Failed to check email verification for email: {Email}", email);
+
+                throw new Exception("Failed to check email verification", ex);
+               }
+        }
     }
 }

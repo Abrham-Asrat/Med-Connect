@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "V6gwZLgcwbE=",
+  "dgSpecHash": "90UbS0i24gI=",
   "success": true,
-  "projectFilePath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
+  "projectFilePath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Abrish\\.nuget\\packages\\auth0.aspnetcore.authentication\\1.6.1\\auth0.aspnetcore.authentication.1.6.1.nupkg.sha512",
     "C:\\Users\\Abrish\\.nuget\\packages\\azure.core\\1.47.1\\azure.core.1.47.1.nupkg.sha512",
@@ -93,22 +93,25 @@
       "code": "NU1510",
       "level": "Warning",
       "message": "PackageReference Microsoft.AspNetCore.Authentication.Cookies will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
-      "projectPath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
+      "projectPath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
       "warningLevel": 1,
-      "filePath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
+      "filePath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
       "libraryId": "Microsoft.AspNetCore.Authentication.Cookies",
       "targetGraphs": [
         "net10.0"
       ]
     },
     {
-      "code": "NU1900",
+      "code": "NU1902",
       "level": "Warning",
-      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json.",
-      "projectPath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
+      "message": "Package 'MimeKit' 2.9.1 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-g7hc-96xr-gvvx",
+      "projectPath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
       "warningLevel": 1,
-      "filePath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
-      "targetGraphs": []
+      "filePath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
+      "libraryId": "MimeKit",
+      "targetGraphs": [
+        "net10.0"
+      ]
     }
   ]
 }

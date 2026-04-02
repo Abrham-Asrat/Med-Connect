@@ -302,17 +302,17 @@ namespace BackendAPI.Source.Service
                     (
                         new UpdateDoctorProfileDto
                         (
-                            userId, 
-                            updateProfileDto.Specialties,updateProfileDto.Qualifications, updateProfileDto.Biography,
+                            userId,
+                            updateProfileDto.Specialties, updateProfileDto.Qualifications, updateProfileDto.Biography,
                             updateProfileDto.Availabilities,
                             updateProfileDto.DoctorStatus,
                             updateProfileDto.Educations, updateProfileDto.Experiences
-                        )                       
+                        )
                   );
                 }
                 await appContext.SaveChangesAsync();
 
-                return new ServiceResponse<ProfileDto> (true , 200 , updatedProfile , "Profile Update Success");
+                return new ServiceResponse<ProfileDto>(true, 200, updatedProfile, "Profile Update Success");
 
 
 
@@ -321,7 +321,7 @@ namespace BackendAPI.Source.Service
             {
 
                 logger.LogInformation("Error occurred when trying to get all user");
-                throw ;
+                throw;
             }
         }
         // Delete User Service
@@ -387,5 +387,55 @@ namespace BackendAPI.Source.Service
                 throw new Exception("Failed to get user profile", ex);
             }
         }
+
+
+
+        // For Email Verifications 
+        public async Task<ServiceResponse<bool?>> IsEmailRegisteredAsync(string email)
+        {
+            try
+            {
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+                if (user == null)
+                {
+                    throw new KeyNotFoundException("Uset with that email is not found");
+                }
+
+                if (user.IsEmailVerified)
+                {
+                    return new ServiceResponse<bool?>(true, 200, true, "Email is Verified");
+                }
+
+                if (user.Auth0Id == null)
+                {
+                    throw new KeyNotFoundException("User doesn't have an account.");
+                }
+
+                var isEmailVerified = await auth0Service.IsEmailVerified(user.Auth0Id);
+
+                if (isEmailVerified == null)
+                {
+                    throw new Exception("Failed to verify email status with Auth0");
+                }
+
+
+                // Sync the auth0 email verification status with the user entity
+                user.IsEmailVerified = (bool)isEmailVerified;
+
+                await appContext.SaveChangesAsync();
+
+                return new ServiceResponse<bool?>(true, 200, isEmailVerified, isEmailVerified == true ? "Email is Verified" : "Email is not verified yet. Please check your email for the verification link.");
+
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("Failed to verify email for {Email}", email);
+                throw new Exception("Failed to verify email. Please try again later.");
+            }
+        }
     }
+
+
+
 }

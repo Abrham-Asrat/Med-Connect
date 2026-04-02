@@ -4685,11 +4685,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
+      "projectUniqueName": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
       "projectName": "BackendAPI",
-      "projectPath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
+      "projectPath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
       "packagesPath": "C:\\Users\\Abrish\\.nuget\\packages\\",
-      "outputPath": "D:\\Real-project\\Med-Connect\\BackendAPI\\obj\\",
+      "outputPath": "D:\\Real-project\\Med-Connect\\backendApi\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Abrish\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -5262,10 +5262,14 @@
       ]
     },
     {
-      "code": "NU1900",
+      "code": "NU1902",
       "level": "Warning",
       "warningLevel": 1,
-      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json."
+      "message": "Package 'MimeKit' 2.9.1 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-g7hc-96xr-gvvx",
+      "libraryId": "MimeKit",
+      "targetGraphs": [
+        "net10.0"
+      ]
     }
   ]
 }

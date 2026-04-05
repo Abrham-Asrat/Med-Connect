@@ -12,6 +12,7 @@ using BackendAPI.Source.Helpers.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using BackendAPI.Source.Models.Responses;
 
 namespace BackendAPI.Source.Service
 {
@@ -393,8 +394,53 @@ namespace BackendAPI.Source.Service
         }
 
 
+    //    <Summary>
+    //    Get all doctors in the system
+    //    </Summary>
+
+       public async Task<ServiceResponse<List<DoctorProfileDto>>> GetAllDoctors()
+        {
+            try
+            {
+                List<DoctorProfileDto> doctorUsers = await appContext.Doctors.Include(d=> d.User).Include(d=> d.DoctorSpecialties).ThenInclude(ds=>ds.Specialty).Include(d=> d.Educations).Include(d=> d.Experiences).Select(d=> d.ToDoctorProfileDto(
+                    d.User,
+                    d.DoctorAvailabilities,
+                    d.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds => ds.Specialty!).ToList(),
+                    d.Educations,
+                    d.Experiences
+                )).ToListAsync();
+                return new ServiceResponse<List<DoctorProfileDto>>(true,200, doctorUsers, "Doctors fetched successfully");
+
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("An error occurred while fetching doctors.");
+
+                throw new Exception("An error occurred while fetching doctors");
+            }
+        }
+        
 
 
+        // <Summary>
+        // Get doctors by gender
+        // </Summary>
+
+        public async Task<ServiceResponse<List<DoctorDto>>> GetDoctorsByGenderAsync(Gender gender)
+        {
+            try
+            {
+                var doctorUsers = await appContext.Doctors.Include(d=> d.User).Include(d=> d.DoctorSpecialties).ThenInclude(ds=>ds.Specialty).Where(d=> d.User.Gender == gender).Select(d=> d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
+                
+                return new ServiceResponse<List<DoctorDto>>(true,200, doctorUsers, "Doctors fetched successfully");
+            }
+            catch (System.Exception)
+            {
+                
+                throw;
+            }
+        }
+        
 
     }
 }

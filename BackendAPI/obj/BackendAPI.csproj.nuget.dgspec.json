@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj": {}
+    "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj": {}
   },
   "projects": {
-    "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj": {
+    "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
+        "projectUniqueName": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
         "projectName": "BackendAPI",
-        "projectPath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
+        "projectPath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
         "packagesPath": "C:\\Users\\Abrish\\.nuget\\packages\\",
-        "outputPath": "D:\\Real-project\\Med-Connect\\backendApi\\obj\\",
+        "outputPath": "D:\\Real-project\\Med-Connect\\BackendAPI\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Abrish\\AppData\\Roaming\\NuGet\\NuGet.Config"

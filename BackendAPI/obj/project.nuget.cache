@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "90UbS0i24gI=",
+  "dgSpecHash": "V6gwZLgcwbE=",
   "success": true,
-  "projectFilePath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
+  "projectFilePath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Abrish\\.nuget\\packages\\auth0.aspnetcore.authentication\\1.6.1\\auth0.aspnetcore.authentication.1.6.1.nupkg.sha512",
     "C:\\Users\\Abrish\\.nuget\\packages\\azure.core\\1.47.1\\azure.core.1.47.1.nupkg.sha512",
@@ -93,9 +93,9 @@
       "code": "NU1510",
       "level": "Warning",
       "message": "PackageReference Microsoft.AspNetCore.Authentication.Cookies will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
-      "projectPath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
+      "projectPath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
       "warningLevel": 1,
-      "filePath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
+      "filePath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
       "libraryId": "Microsoft.AspNetCore.Authentication.Cookies",
       "targetGraphs": [
         "net10.0"
@@ -105,9 +105,9 @@
       "code": "NU1902",
       "level": "Warning",
       "message": "Package 'MimeKit' 2.9.1 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-g7hc-96xr-gvvx",
-      "projectPath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
+      "projectPath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
       "warningLevel": 1,
-      "filePath": "D:\\Real-project\\Med-Connect\\backendApi\\BackendAPI.csproj",
+      "filePath": "D:\\Real-project\\Med-Connect\\BackendAPI\\BackendAPI.csproj",
       "libraryId": "MimeKit",
       "targetGraphs": [
         "net10.0"

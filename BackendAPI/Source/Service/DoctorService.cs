@@ -436,11 +436,55 @@ namespace BackendAPI.Source.Service
             }
             catch (System.Exception)
             {
-                
-                throw;
+                logger.LogError("An error occurred while fetching doctors by gender.");
+                throw new Exception("An error occurred while fetching doctors by gender");
+            }
+
+            
+        }
+
+        // <Summary>
+        // Get doctors by specialty name
+        // </Summary>
+        public async Task<ServiceResponse<List<DoctorDto>>> GetDoctorsBySpecialtyAsync(string specialtyName)
+        {
+            try
+            {
+                var doctorUsers = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty).Where(ds => ds.DoctorSpecialties.Where(ds=> ds.Specialty != null).Any(ds=> EF.Functions.Like(ds.Specialty!.SpecialtyName, $"%{specialtyName}%"))).Select(d=> d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
+
+
+                return new ServiceResponse<List<DoctorDto>>(true, 200, doctorUsers, "Doctors fetched successfully");
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("An error occurred while fetching doctors by specialty.");
+                throw new Exception("An error occurred while fetching doctors by specialty");
+            }
+        }
+        // <Summary>
+        // Get doctors by  name
+        // </Summary>
+        public async Task<ServiceResponse<List<DoctorDto>>>GetDoctorsByNameAsync(string doctorName)
+        {
+            try
+            {
+                var doctorUsers = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty).Where(d => d.DoctorSpecialties.Any(ds => EF.Functions.Like(d.User.FirstName + " " + d.User.LastName, $"{doctorName}%"))).Select(d => d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
+
+
+                return new ServiceResponse<List<DoctorDto>>(true, 200, doctorUsers, "Doctors fetched successfully");
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("An error occurred while fetching doctors by specialty.");
+                throw new Exception("An error occurred while fetching doctors by specialty");
             }
         }
         
+        // <Summary>
+        // Get doctor availability for doctor along with the time the are available at that day
+        // </Summary>
+
+       
 
     }
 }

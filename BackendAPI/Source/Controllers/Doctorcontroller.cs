@@ -6,6 +6,7 @@ using BackendAPI.Source.Models.Enums;
 using BackendAPI.Source.Models.Responses;
 using BackendAPI.Source.Service;
 using Microsoft.AspNetCore.Mvc;
+using BackendAPI.Source.Helpers.Default;
 
 namespace BackendAPI.Source.Controllers
 {
@@ -40,6 +41,56 @@ namespace BackendAPI.Source.Controllers
             }
         }
 
-        //
+        //<summary>Get doctor by SpecialtyName</summary>
+
+        [HttpGet("specialty/{specialtyName}")]
+        public async Task<IActionResult> GetDoctorsBySpecialty(string specialtyName)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                 HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
+                  throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
+                }
+                var response = await doctorService.GetDoctorsBySpecialtyAsync(specialtyName);
+
+                if(!response.Success)
+                   throw new Exception(response.Message);
+                
+                return Ok(response);
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("An error occurred while fetching doctors by specialty.");
+                throw new Exception("An error occurred while fetching doctors by specialty.");
+            }
+        }
+   
+       [HttpGet("name/{doctorName}")]
+
+       public async Task<IActionResult> GetDoctorsByName(string doctorName)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                 HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
+                  throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
+                }
+
+                var response = await doctorService.GetDoctorsByNameAsync(doctorName); 
+
+                if(!response.Success)
+                   throw new Exception(response.Message);
+                
+                return Ok(response);
+            }
+            catch (System.Exception)
+            {
+                
+                throw;
+            }
+        }
     }
 }

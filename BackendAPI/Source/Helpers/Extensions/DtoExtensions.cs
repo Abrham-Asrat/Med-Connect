@@ -107,7 +107,20 @@ namespace BackendAPI.Source.Helpers.Extensions
             //    PatientId = PatientId
            };
        }
-   
+      
+        
+
+        // Change to PatientModel
+       public static PatientModel ToPatientModel(this CreatePatientDto dto)
+        {
+            return new PatientModel()
+            {
+                UserId = dto.UserId,
+                MedicalHistory = dto.MedicalHistory,
+                EmergencyContactName = dto.EmergencyContactName,
+                EmergencyContactPhone = dto.EmergencyContactPhone
+            };
+        }
    
    
     }

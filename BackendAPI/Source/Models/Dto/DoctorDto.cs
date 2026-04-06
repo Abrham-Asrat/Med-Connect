@@ -27,7 +27,7 @@ namespace BackendAPI.Source.Models.Dto
         public string? ProfilePicture { get; set; }
 
 
-        // from DoctorModel
+        // from DoctorModel update
         public required string Qualifications { get; set; }
         public required List<string> SpecialtyModel { get; set; }
         public required string Biography { get; set; }

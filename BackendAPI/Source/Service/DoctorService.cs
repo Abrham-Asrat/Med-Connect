@@ -396,7 +396,7 @@ namespace BackendAPI.Source.Service
 
 
     //    <Summary>
-    //    Get all doctors in the system
+    //    Get all doctors in the system some thing big
     //    </Summary>
 
        public async Task<ServiceResponse<List<DoctorProfileDto>>> GetAllDoctors()

@@ -513,6 +513,9 @@ namespace BackendAPI.Source.Service
             }
         }
 
+
+         // Check if doctor exists by doctorId, this is a helper method to be used in other methods to avoid code duplication
+
         public async Task<bool> CheckDoctorExists(Guid doctorId)
         {
             try

@@ -393,6 +393,138 @@ namespace BackendAPI.Source.Service
         }
 
 
+    //    <Summary>
+    //    Get all doctors in the system
+    //    </Summary>
+
+       public async Task<ServiceResponse<List<DoctorProfileDto>>> GetAllDoctors()
+        {
+            try
+            {
+                List<DoctorProfileDto> doctorUsers = await appContext.Doctors.Include(d=> d.User).Include(d=> d.DoctorSpecialties).ThenInclude(ds=>ds.Specialty).Include(d=> d.Educations).Include(d=> d.Experiences).Select(d=> d.ToDoctorProfileDto(
+                    d.User,
+                    d.DoctorAvailabilities,
+                    d.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds => ds.Specialty!).ToList(),
+                    d.Educations,
+                    d.Experiences
+                )).ToListAsync();
+                return new ServiceResponse<List<DoctorProfileDto>>(true,200, doctorUsers, "Doctors fetched successfully");
+
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("An error occurred while fetching doctors.");
+
+                throw new Exception("An error occurred while fetching doctors");
+            }
+        }
+        
+
+
+        // <Summary>
+        // Get doctors by gender
+        // </Summary>
+
+        public async Task<ServiceResponse<List<DoctorDto>>> GetDoctorsByGenderAsync(Gender gender)
+        {
+            try
+            {
+                var doctorUsers = await appContext.Doctors.Include(d=> d.User).Include(d=> d.DoctorSpecialties).ThenInclude(ds=>ds.Specialty).Where(d=> d.User.Gender == gender).Select(d=> d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
+                
+                return new ServiceResponse<List<DoctorDto>>(true,200, doctorUsers, "Doctors fetched successfully");
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("An error occurred while fetching doctors by gender.");
+                throw new Exception("An error occurred while fetching doctors by gender");
+            }
+
+            
+        }
+
+        // <Summary>
+        // Get doctors by specialty name
+        // </Summary>
+        public async Task<ServiceResponse<List<DoctorDto>>> GetDoctorsBySpecialtyAsync(string specialtyName)
+        {
+            try
+            {
+                var doctorUsers = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty).Where(ds => ds.DoctorSpecialties.Where(ds=> ds.Specialty != null).Any(ds=> EF.Functions.Like(ds.Specialty!.SpecialtyName, $"%{specialtyName}%"))).Select(d=> d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
+
+
+                return new ServiceResponse<List<DoctorDto>>(true, 200, doctorUsers, "Doctors fetched successfully");
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("An error occurred while fetching doctors by specialty.");
+                throw new Exception("An error occurred while fetching doctors by specialty");
+            }
+        }
+        // <Summary>
+        // Get doctors by  name
+        // </Summary>
+        public async Task<ServiceResponse<List<DoctorDto>>>GetDoctorsByNameAsync(string doctorName)
+        {
+            try
+            {
+                var doctorUsers = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty).Where(d => d.DoctorSpecialties.Any(ds => EF.Functions.Like(d.User.FirstName + " " + d.User.LastName, $"{doctorName}%"))).Select(d => d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
+
+
+                return new ServiceResponse<List<DoctorDto>>(true, 200, doctorUsers, "Doctors fetched successfully");
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("An error occurred while fetching doctors by specialty.");
+                throw new Exception("An error occurred while fetching doctors by specialty");
+            }
+        }
+        
+        // <Summary>
+        // Get doctor availability for doctor along with the time the are available at that day
+        // </Summary>
+        public async Task<Dictionary<DayOfWeek, List<AppointmentTimeRange>>> GetDoctorAvailabilitiesAsync(Guid doctorId)
+        {
+            try
+            {
+                if(!await CheckDoctorExists(doctorId))
+                {
+                    throw new KeyNotFoundException($"Doctor with id {doctorId} is not found");
+                }
+
+                var dayTimesMap = new Dictionary<DayOfWeek, List<AppointmentTimeRange>>();
+
+                await appContext.DoctorAvailabilities.Where(da => da.DoctorId == doctorId).ForEachAsync(da =>
+                {
+                    if(!dayTimesMap.ContainsKey(da.AvailableDay))
+                        dayTimesMap[da.AvailableDay] = [];
+
+                    dayTimesMap[da.AvailableDay].Add(new AppointmentTimeRange(da.StartTime, da.EndTime));
+                       
+                });
+
+                return dayTimesMap;
+            }
+            catch (System.Exception)
+            {
+                
+                throw;
+            }
+        }
+
+        public async Task<bool> CheckDoctorExists(Guid doctorId)
+        {
+            try
+            {
+                var doctor = await appContext.Doctors.FindAsync(doctorId);
+
+                return doctor != null;
+            }
+            catch (System.Exception)
+            {
+                logger.LogError($"An error occurred while checking if doctor with id {doctorId} exists.");
+                throw;
+            }
+        }
 
 
 

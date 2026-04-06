@@ -188,7 +188,7 @@ namespace BackendAPI.Source.Service
         }
 
 
-        // instead of having separate methods for each type of doctor data (education, experience, etc), we can have a generic method that takes the type as a parameter and uses reflection to query the correct DbSet based on the type. This way, we can reduce code duplication and make it easier to maintain.
+        // instead of having separate methods for each type of doctor data (education, experience, etc), we can have a generic method that takes the type as a parameter and uses reflection to query the correct DbSet based on the type. This way, we can reduce code duplication and make it easier to maintain. this Helper
 
         public async Task<List<EducationModel>> GetDoctorEducationsAsync(Guid doctorId)
         {

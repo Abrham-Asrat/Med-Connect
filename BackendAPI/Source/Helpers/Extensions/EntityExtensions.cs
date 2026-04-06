@@ -164,28 +164,5 @@ namespace BackendAPI.Source.Helpers.Extensions
             };
             
         }
-
-        public static DoctorDto ToDoctorDto(this DoctorModel doctor, UserModel user, ICollection<SpecialtyModel> specialties)
-        {
-            return new DoctorDto
-            {
-                UserId = user.UserId,
-                DoctorId = doctor.DoctorId,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                IsEmailVerified = user.IsEmailVerified,
-                Phone = user.Phone,
-                Gender = user.Gender,
-                DateOfBirth = user.DateOfBirth,
-                Address = user.Address ?? "",
-                SpecialtyModel = specialties.Select(s => s.ToSpecialtyDto()).ToList(),
-                Qualifications = doctor.Qualifications,
-                Biography = doctor.Biography,
-                DoctorStatus = doctor.DoctorStatus,
-
-                ProfilePicture = user.ProfilePicture ?? "",
-            };
-        }
     }
 }

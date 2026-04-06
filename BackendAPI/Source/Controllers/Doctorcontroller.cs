@@ -41,7 +41,7 @@ namespace BackendAPI.Source.Controllers
             }
         }
 
-        //<summary>Get doctor by SpecialtyName</summary>
+        //<summary>Get doctor by SpecialtyName  updated </summary>
 
         [HttpGet("specialty/{specialtyName}")]
         public async Task<IActionResult> GetDoctorsBySpecialty(string specialtyName)

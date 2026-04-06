@@ -25,6 +25,7 @@ namespace BackendAPI.Source.Data
         public DbSet<DoctorSpecialtyModel> DoctorSpecialties { get; set; }
         public DbSet<DoctorPreference> DoctorPreferences { get; set; }
         public DbSet<FileModel> Files { get; set; }
+        public DbSet<PatientModel> Patients { get; set; }
     
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

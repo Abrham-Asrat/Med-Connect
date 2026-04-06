@@ -95,6 +95,7 @@ namespace BackendAPI.Source.Helpers.Extensions
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 ProfilePicture = user.ProfilePicture ?? "",
+                Email = user.Email,
                 Phone = user.Phone,
                 Gender = user.Gender,
                 DateOfBirth = user.DateOfBirth,
@@ -186,6 +187,52 @@ namespace BackendAPI.Source.Helpers.Extensions
                 DoctorStatus = doctor.DoctorStatus,
 
                 ProfilePicture = user.ProfilePicture ?? "",
+            };
+        }
+
+        public static PatientDto ToPatientDto(this PatientModel patient, UserModel user)
+        {
+            return new PatientDto
+            {
+                UserId = user.UserId,
+                PatientId = patient.PatientId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                IsEmailVerified = user.IsEmailVerified,
+                Phone = user.Phone,
+                Gender = user.Gender,
+                DateOfBirth = user.DateOfBirth,
+                ProfilePicture = user.ProfilePicture ?? "",
+                Address = user.Address ?? "",
+                MedicalHistory = patient.MedicalHistory ?? "",
+                EmergencyContactName = patient.EmergencyContactName ?? "",
+                EmergencyContactPhone = patient.EmergencyContactPhone ?? ""
+            };
+
+        }
+
+        // Patient Profile dto 
+        public static PatientProfileDto ToPatientProfileDto(this UserModel user , PatientModel patient)
+        {
+            return new PatientProfileDto
+            {
+                UserId = user.UserId,
+                PatientId = patient.PatientId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Phone = user.Phone, 
+                Role = user.Role,
+                Gender = user.Gender,
+                Address = user.Address ?? "",
+                DateOfBirth = user.DateOfBirth,
+                ProfilePicture = user.ProfilePicture ?? "",
+                MedicalHistory = patient.MedicalHistory ?? "",
+                EmergencyContactName = patient.EmergencyContactName ?? "",
+                EmergencyContactPhone = patient.EmergencyContactPhone ?? ""
+                
+
             };
         }
     }

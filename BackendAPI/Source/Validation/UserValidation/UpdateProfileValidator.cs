@@ -119,16 +119,16 @@ namespace BackendAPI.Source.Validation.UserValidation
               }
             );
 
-            // if (role == Role.Patient)
-            // {
-            //     RuleFor(u => u.EmergencyContactName)
-            //       .NotEmpty()
-            //       .WithMessage("Emergency contact name is required for patients.");
+            if (role == Role.Patient)
+            {
+                RuleFor(u => u.EmergencyContactName)
+                  .NotEmpty()
+                  .WithMessage("Emergency contact name is required for patients.");
 
-            //     RuleFor(u => u.EmergencyContactPhone)
-            //       .NotEmpty()
-            //       .WithMessage("Emergency contact phone is required for patients.");
-            // }
+                RuleFor(u => u.EmergencyContactPhone)
+                  .NotEmpty()
+                  .WithMessage("Emergency contact phone is required for patients.");
+            }
 
             if (role == Role.Doctor)
             {

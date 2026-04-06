@@ -14,6 +14,7 @@ namespace BackendAPI.Source.Models.Dto
         public required Guid UserId { get; init; }
         public required string FirstName { get; init; }
         public required string LastName { get; init; }
+        public required string Email { get; init; }
         public required string ProfilePicture { get; init; }
         public required string Phone { get; init; }
         public required Gender Gender { get; init; }
@@ -74,5 +75,13 @@ namespace BackendAPI.Source.Models.Dto
         public CreateFileDto? Cv { get; set; }
         public List<UpdateEducationDto>? Educations { get; set; }
         public List<UpdateExperienceDto>? Experiences { get; set; }
+    }
+
+    public record PatientProfileDto : ProfileDto
+    {
+        public required Guid PatientId {get;set;}
+         public required string MedicalHistory { get; init; }
+        public required string EmergencyContactName { get; init; }
+        public required string EmergencyContactPhone { get; init; }
     }
 }

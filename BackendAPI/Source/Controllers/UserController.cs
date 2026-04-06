@@ -59,7 +59,7 @@ namespace BackendAPI.Source.Controllers
                 if (!validation.IsValid)
                 {
                     HttpContext.Items[ErrorFieldConstants.FluentValidationErrors] = validation.ToFluentValidationErrorResult();
-                } 
+                }
 
                 var response = await userService.RegisterUser(dto);
 
@@ -79,22 +79,22 @@ namespace BackendAPI.Source.Controllers
             {
 
 
-                 logger.LogError(ex, "Failed to Register User\n\n");
+                logger.LogError(ex, "Failed to Register User\n\n");
                 return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred. Please try again later.", null));
             }
 
         }
 
-       
-    //    <summary>
+
+        //    <summary>
         // Login Controller 
-    //    </Summary>
+        //    </Summary>
         [HttpPost("login")]
         public async Task<IActionResult> LoginUserAsync(LoginUserDto dto)
         {
             try
             {
-                if(!ModelState.IsValid)
+                if (!ModelState.IsValid)
                 {
                     HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
                     throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
@@ -123,15 +123,21 @@ namespace BackendAPI.Source.Controllers
 
                 var UserProfile = response.Data?.Profile;
 
-                foreach(
-                    var field in UserProfile.GetType().GetProperties(
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
-                    )
-                )
+                if (UserProfile != null)
                 {
-                    var value = field.GetValue(UserProfile);
-                    Response.Cookies.Append(field.Name.ToSnakeCase(), value?.ToString() ?? string.Empty, CookiesOptions);
+                    foreach (
+                        var field in UserProfile.GetType().GetProperties(
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+                        )
+                    )
+                    {
+                        var value = field.GetValue(UserProfile);
+                        Response.Cookies.Append(field.Name.ToSnakeCase(), value?.ToString() ?? string.Empty, CookiesOptions);
+                    }
+
                 }
+
+
 
                 return Ok(new ApiResponse<Auth0LoginDto>(true, response.Message ?? "Login successful", response.Data));
             }
@@ -141,7 +147,7 @@ namespace BackendAPI.Source.Controllers
                 return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred. Please try again later.", null));
             }
         }
-   
+
         // Get All Users Controller - Admin Only Access
         [HttpGet("all")]
 
@@ -158,28 +164,28 @@ namespace BackendAPI.Source.Controllers
                 // return Ok(new ApiResponse<List<ProfileDto?>>(true, response.Message ?? "Users retrieved successfully", response.Data));
 
                 return Ok(response);
-               
+
             }
             catch (Exception ex)
             {
                 logger.LogInformation("Failed to get all users");
-                
+
                 throw new Exception("Failed to get all users", ex);
             }
         }
-         // update user Profile Controller 
+        // update user Profile Controller 
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateProfileDto dto)
         {
             try
             {
-                if(!ModelState.IsValid)
+                if (!ModelState.IsValid)
                 {
                     HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
                     throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
                 }
 
-               var validation = await updateProfileValidator.ValidateAsync(dto);
+                var validation = await updateProfileValidator.ValidateAsync(dto);
 
                 if (!validation.IsValid)
                 {
@@ -193,19 +199,19 @@ namespace BackendAPI.Source.Controllers
                     return StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null));
                 }
 
-                return StatusCode(response.StatusCode,response);
+                return StatusCode(response.StatusCode, response);
             }
             catch (System.Exception ex)
             {
                 logger.LogError(ex, "Failed to update user profile for User ID: {UserId}", User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value);
-                
+
                 throw new Exception("Failed to update user profile", ex);
             }
         }
 
         // Delete User Profile Controller
-         
-        [HttpDelete("{userId}")] 
+
+        [HttpDelete("{userId}")]
         public async Task<IActionResult> DeleteUser(Guid userId)
         {
             try
@@ -220,12 +226,12 @@ namespace BackendAPI.Source.Controllers
             }
             catch (System.Exception ex)
             {
-                logger.LogError(ex, "Failed to delete user with ID: {UserId}", userId); 
-                
+                logger.LogError(ex, "Failed to delete user with ID: {UserId}", userId);
+
                 throw new Exception("Failed to delete user", ex);
             }
         }
- 
+
         // Get user profile by user id
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetUserProfile(Guid userId)
@@ -247,7 +253,7 @@ namespace BackendAPI.Source.Controllers
             }
         }
 
-   
+
         // <summary>
         //Endpoint responsible for getting the profile or the currently logged in user 
         // </summary>
@@ -274,7 +280,7 @@ namespace BackendAPI.Source.Controllers
             {
                 logger.LogInformation(ex, "Failed to get user Profile");
                 throw;
-            } 
+            }
         }
 
     }

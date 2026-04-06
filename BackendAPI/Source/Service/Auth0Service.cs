@@ -140,14 +140,22 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
 
       // Parse the response to get the user ID
       var responseBody = searchResponse.Content;
+      if (string.IsNullOrEmpty(responseBody))
+      {
+        throw new Exception("Auth0 returned an empty response during user search.");
+      }
       var users = JArray.Parse(responseBody);
 
-      if (users.Count == 0)
-      {
-        throw new Exception("User not found");
-      }
+    if (users == null || !users.HasValues || users.Count == 0)
+    {
+    throw new Exception("User not found");
+    }
 
-      var userId = users.First["user_id"].ToString(); // Extract user ID
+      var userId = users.First?["user_id"]?.ToString(); // Extract user ID
+      if (string.IsNullOrEmpty(userId))
+      {
+        throw new Exception("User ID not found in Auth0 response.");
+      }
 
       // Call the existing DeleteUserAsync method
       await DeleteUserAsync(userId);
@@ -272,22 +280,22 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
         : Guid.Empty;
 
       var firstName = userMetaData.TryGetProperty("firstName", out var firstNameElement)
-        ? firstNameElement.GetString()
+        ? firstNameElement.GetString() ?? ""
         : "";
       var lastName = userMetaData.TryGetProperty("lastName", out var lastNameElement)
-        ? lastNameElement.GetString()
+        ? lastNameElement.GetString() ?? ""
         : "";
       var role = userMetaData.TryGetProperty("role", out var roleElement)
         ? roleElement.GetString()
         : "";
       var phone = userMetaData.TryGetProperty("phone", out var phoneElement)
-        ? phoneElement.GetString()
+        ? phoneElement.GetString() ?? ""
         : "";
       var gender = userMetaData.TryGetProperty("gender", out var genderElement)
-        ? genderElement.GetString()
+        ? genderElement.GetString() ?? ""
         : "";
       var dateOfBirth = userMetaData.TryGetProperty("dateOfBirth", out var dateOfBirthElement)
-        ? dateOfBirthElement.GetString()
+        ? dateOfBirthElement.GetString() ?? ""
         : "";
 
       return new Auth0ProfileDto

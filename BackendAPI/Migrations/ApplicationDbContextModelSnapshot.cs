@@ -59,12 +59,17 @@ namespace BackendAPI.Migrations
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("PatientModelPatientId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("AppointmentId");
 
                     b.HasIndex("DoctorId");
+
+                    b.HasIndex("PatientModelPatientId");
 
                     b.ToTable("Appointments");
                 });
@@ -262,6 +267,31 @@ namespace BackendAPI.Migrations
                     b.ToTable("Files");
                 });
 
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.PatientModel", b =>
+                {
+                    b.Property<Guid>("PatientId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EmergencyContactName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmergencyContactPhone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MedicalHistory")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("PatientId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Patients");
+                });
+
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.ReviewModel", b =>
                 {
                     b.Property<Guid>("ReviewId")
@@ -281,6 +311,9 @@ namespace BackendAPI.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("PatientModelPatientId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Rating")
                         .HasColumnType("int");
 
@@ -290,6 +323,8 @@ namespace BackendAPI.Migrations
                     b.HasKey("ReviewId");
 
                     b.HasIndex("DoctorId");
+
+                    b.HasIndex("PatientModelPatientId");
 
                     b.ToTable("Reviews");
                 });
@@ -396,13 +431,17 @@ namespace BackendAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BackendAPI.Source.Models.Entities.PatientModel", null)
+                        .WithMany("Appointments")
+                        .HasForeignKey("PatientModelPatientId");
+
                     b.Navigation("Doctor");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.DoctorAvailabilityModel", b =>
                 {
                     b.HasOne("BackendAPI.Source.Models.Entities.DoctorModel", "Doctor")
-                        .WithMany()
+                        .WithMany("DoctorAvailabilities")
                         .HasForeignKey("DoctorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -478,6 +517,17 @@ namespace BackendAPI.Migrations
                     b.Navigation("Doctor");
                 });
 
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.PatientModel", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.ReviewModel", b =>
                 {
                     b.HasOne("BackendAPI.Source.Models.Entities.DoctorModel", "Doctor")
@@ -486,12 +536,18 @@ namespace BackendAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BackendAPI.Source.Models.Entities.PatientModel", null)
+                        .WithMany("Reviews")
+                        .HasForeignKey("PatientModelPatientId");
+
                     b.Navigation("Doctor");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.DoctorModel", b =>
                 {
                     b.Navigation("Appointments");
+
+                    b.Navigation("DoctorAvailabilities");
 
                     b.Navigation("DoctorSpecialties");
 
@@ -505,6 +561,13 @@ namespace BackendAPI.Migrations
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.DoctorPreference", b =>
                 {
                     b.Navigation("Doctor");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.PatientModel", b =>
+                {
+                    b.Navigation("Appointments");
+
+                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.SpecialtyModel", b =>

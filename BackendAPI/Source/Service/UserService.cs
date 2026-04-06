@@ -194,6 +194,7 @@ namespace BackendAPI.Source.Service
             {
                 UserId = user.UserId,
                 FirstName = user.FirstName,
+                Email = user.Email,
                 LastName = user.LastName,
                 ProfilePicture = user.ProfilePicture ?? string.Empty,
                 Phone = user.Phone,

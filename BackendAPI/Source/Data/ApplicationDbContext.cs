@@ -50,6 +50,7 @@ namespace BackendAPI.Source.Data
             // explicit configuration helps avoid silent issues later
             modelBuilder.Entity<UserModel>().HasKey(u => u.UserId);
             modelBuilder.Entity<DoctorModel>().HasKey(d => d.DoctorId);
+            modelBuilder.Entity<PatientModel>().HasKey(p => p.PatientId);
             modelBuilder.Entity<EducationModel>().HasKey(e => e.EducationId);
             modelBuilder.Entity<ExperienceModel>().HasKey(e => e.ExperienceId);
             modelBuilder.Entity<ReviewModel>().HasKey(r => r.ReviewId);

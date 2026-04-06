@@ -62,6 +62,7 @@ namespace BackendAPI.Source.Helpers.Extensions
                 // for user common 
                 UserId = user.UserId,
                 FirstName = user.FirstName,
+                Email = user.Email,
                 LastName = user.LastName,
                 ProfilePicture = user.ProfilePicture ?? "",
                 Phone = user.Phone,

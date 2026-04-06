@@ -13,7 +13,7 @@ namespace BackendAPI.Source.Controllers
         // To Get all patient record in the system 
         // </Summary>
 
-        [HttpGet("all")]
-        public async Task<IActionResult> GetAllPatient([FromBody])
+        // [HttpGet("all")]
+        // public async Task<IActionResult> GetAllPatient([FromBody])
     }
 }

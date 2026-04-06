@@ -29,7 +29,7 @@ namespace BackendAPI.Source.Models.Dto
         public string FirstName { get; init; } = string.Empty;
         public string LastName { get; init; } = string.Empty;
         public Role Role { get; init; }
-        public String Phone { get; init; } = string.Empty;
+        public string Phone { get; init; } = string.Empty;
         public Gender Gender { get; init; }
         public string DateOfBirth { get; init; } = string.Empty;
     }

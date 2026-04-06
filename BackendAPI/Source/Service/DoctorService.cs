@@ -259,7 +259,7 @@ namespace BackendAPI.Source.Service
             }
         }
 
-            public async Task<DoctorProfileDto> UpdateDoctorProfileAsync(UpdateDoctorProfileDto updateProfileDto)
+        public async Task<DoctorProfileDto> UpdateDoctorProfileAsync(UpdateDoctorProfileDto updateProfileDto)
         {
             try
             {

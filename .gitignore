@@ -8,7 +8,6 @@
 # Build results
 **/obj/
 **/bin/
-
 # NuGet
 *.nupkg
 packages/

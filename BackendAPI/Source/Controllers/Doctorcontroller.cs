@@ -67,8 +67,9 @@ namespace BackendAPI.Source.Controllers
             }
         }
    
-       [HttpGet("name/{doctorName}")]
 
+       //<summary>Get doctor by SpecialtyName</summary>
+       [HttpGet("name/{doctorName}")]
        public async Task<IActionResult> GetDoctorsByName(string doctorName)
         {
             try
@@ -92,5 +93,33 @@ namespace BackendAPI.Source.Controllers
                 throw;
             }
         }
+    
+       //<summary>
+       // Get the available dayOfWeek for a doctor along with times are available at for that day
+       // </summary>
+
+       [HttpGet("availabilities/{doctorId}")]
+       public async Task<IActionResult> GetDoctorAvailabilities([FromRoute] Guid doctorId)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
+                    throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
+                }
+
+                var response = await doctorService.GetDoctorAvailabilitiesAsync(doctorId);
+
+                return Ok(response);
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("An error occurred while fetching doctor availabilities.");
+                throw new Exception("An error occurred while fetching doctor availabilities.");
+            }
+        }
+    
+ 
     }
 }

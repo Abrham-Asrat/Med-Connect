@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using BackendAPI.Source.Models.Responses;
+using BackendAPI.Source.Models.Interface;
 
 namespace BackendAPI.Source.Service
 {
@@ -483,6 +484,49 @@ namespace BackendAPI.Source.Service
         // <Summary>
         // Get doctor availability for doctor along with the time the are available at that day
         // </Summary>
+        public async Task<Dictionary<DayOfWeek, List<AppointmentTimeRange>>> GetDoctorAvailabilitiesAsync(Guid doctorId)
+        {
+            try
+            {
+                if(!await CheckDoctorExists(doctorId))
+                {
+                    throw new KeyNotFoundException($"Doctor with id {doctorId} is not found");
+                }
+
+                var dayTimesMap = new Dictionary<DayOfWeek, List<AppointmentTimeRange>>();
+
+                await appContext.DoctorAvailabilities.Where(da => da.DoctorId == doctorId).ForEachAsync(da =>
+                {
+                    if(!dayTimesMap.ContainsKey(da.AvailableDay))
+                        dayTimesMap[da.AvailableDay] = [];
+
+                    dayTimesMap[da.AvailableDay].Add(new AppointmentTimeRange(da.StartTime, da.EndTime));
+                       
+                });
+
+                return dayTimesMap;
+            }
+            catch (System.Exception)
+            {
+                
+                throw;
+            }
+        }
+
+        public async Task<bool> CheckDoctorExists(Guid doctorId)
+        {
+            try
+            {
+                var doctor = await appContext.Doctors.FindAsync(doctorId);
+
+                return doctor != null;
+            }
+            catch (System.Exception)
+            {
+                logger.LogError($"An error occurred while checking if doctor with id {doctorId} exists.");
+                throw;
+            }
+        }
 
        
 

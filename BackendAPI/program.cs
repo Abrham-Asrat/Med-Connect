@@ -175,7 +175,8 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Services.AddTransient<DoctorSpecialtyService>();
   builder.Services.AddTransient<SpecialtyService>();
   builder.Services.AddTransient<FileService>();
-  builder.Services.AddTransient<PatientService>();  
+  builder.Services.AddTransient<PatientService>(); 
+
 
 
 

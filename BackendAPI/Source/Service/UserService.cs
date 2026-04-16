@@ -303,17 +303,17 @@ namespace BackendAPI.Source.Service
                     (
                         new UpdateDoctorProfileDto
                         (
-                            userId, 
-                            updateProfileDto.Specialties,updateProfileDto.Qualifications, updateProfileDto.Biography,
+                            userId,
+                            updateProfileDto.Specialties, updateProfileDto.Qualifications, updateProfileDto.Biography,
                             updateProfileDto.Availabilities,
                             updateProfileDto.DoctorStatus,
                             updateProfileDto.Educations, updateProfileDto.Experiences
-                        )                       
+                        )
                   );
                 }
                 await appContext.SaveChangesAsync();
 
-                return new ServiceResponse<ProfileDto> (true , 200 , updatedProfile , "Profile Update Success");
+                return new ServiceResponse<ProfileDto>(true, 200, updatedProfile, "Profile Update Success");
 
 
 
@@ -322,7 +322,7 @@ namespace BackendAPI.Source.Service
             {
 
                 logger.LogInformation("Error occurred when trying to get all user");
-                throw ;
+                throw;
             }
         }
         // Delete User Service
@@ -402,38 +402,77 @@ namespace BackendAPI.Source.Service
                 }
 
                 if (user.IsEmailVerified)
-                  {
+                {
                     logger.LogInformation("Email is verified for user with email: {Email}", email);
-                    return new ServiceResponse<bool?>(true, 200, true, "Email is verified"); 
-                  }
+                    return new ServiceResponse<bool?>(true, 200, true, "Email is verified");
+                }
                 if (user.Auth0Id == null)
-                   {
+                {
                     throw new KeyNotFoundException("User doesn't have an account.");
-                   }
+                }
 
                 var isEmailVerified = await auth0Service.IsEmailVerified(user.Auth0Id);
 
 
                 if (isEmailVerified == null)
-                   {
+                {
                     logger.LogError("Failed to retrieve email verification status from Auth0 for user with email: {Email}", email);
-                   throw new Exception("Failed to verify email.");
-                   }
-         // Sync the auth0 email verification status with the user entity
-                 user.IsEmailVerified = (bool)isEmailVerified;
+                    throw new Exception("Failed to verify email.");
+                }
+                // Sync the auth0 email verification status with the user entity
+                user.IsEmailVerified = (bool)isEmailVerified;
 
-                 await appContext.SaveChangesAsync();
+                await appContext.SaveChangesAsync();
 
 
                 return new ServiceResponse<bool?>(true, 200, user.IsEmailVerified, "Email verification status retrieved successfully");
-               }
+            }
 
-               catch (System.Exception ex)
-               {
+            catch (System.Exception ex)
+            {
                 logger.LogError(ex, "Failed to check email verification for email: {Email}", email);
 
                 throw new Exception("Failed to check email verification", ex);
-               }
+            }
         }
+
+        // <summary>
+        // Get user by email (used in OTP controller for sending OTP to the correct user)
+        // </summary>
+
+        public async Task<UserModel?> GetUserByEmail(string email)
+        {
+            try
+            {
+
+                if (string.IsNullOrWhiteSpace(email))
+                    return null;
+
+                return await appContext.Users
+                    .FirstOrDefaultAsync(u => u.Email == email);
+            }
+            catch (System.Exception)
+            {
+                logger.LogError("Failed to get user by email: {Email}", email);
+                throw;
+            }
+        }
+
+
+        // Update user (used in OTP controller to update user entity after OTP verification)
+        public async Task UpdateUser(UserModel user)
+        {
+            try
+            {
+                appContext.Users.Update(user);
+                await appContext.SaveChangesAsync();
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to update user with ID: {UserId}", user.UserId);
+                throw new Exception("Failed to update user", ex);
+            }
+        }
+
     }
 }

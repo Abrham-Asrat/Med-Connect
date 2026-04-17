@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Models.Enums;
 
 namespace BackendAPI.Source.Models.Dto
@@ -27,7 +28,7 @@ namespace BackendAPI.Source.Models.Dto
 
     public record CreatePatientDto
     {
-        public Guid UserId { get; set; }
+        public required UserModel User { get; init; }
         public  string? MedicalHistory { get; set; }
         public  string? EmergencyContactName { get; set; }
         public  string? EmergencyContactPhone { get; set; }

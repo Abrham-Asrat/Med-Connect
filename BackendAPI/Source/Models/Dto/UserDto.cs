@@ -67,8 +67,8 @@ namespace BackendAPI.Source.Models.Dto
 
         // Optional patient-specific fields (can be null for doctors)
         public string? MedicalHistory { get; init; }
-        public string? EmergencyContact { get; init; }
-        public string? EmergencyPhone { get; init; }
+        public string? EmergencyContactName { get; init; }
+        public string? EmergencyContactPhone { get; init; }
 
 
         // Optional doctor-specific fields (can be null for patients)

@@ -10,6 +10,8 @@ using BackendAPI.Source.Helpers.Default;
 
 namespace BackendAPI.Source.Controllers
 {
+    [ApiController]
+    [Route("api/doctors")]
     public class DoctorController(DoctorService doctorService , ILogger<DoctorController> logger) : ControllerBase
     {
         [HttpGet("all")]
@@ -34,10 +36,10 @@ namespace BackendAPI.Source.Controllers
                 
              
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                logger.LogError("An error occurred while fetching doctors.");
-                throw;
+                logger.LogError(ex, "An error occurred while fetching doctors.");
+                throw new Exception("An error occurred while fetching doctors.");
             }
         }
 

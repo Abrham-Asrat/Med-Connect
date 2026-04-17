@@ -9,7 +9,7 @@ namespace BackendAPI.Source.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions options) : base(options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
     
         }
@@ -26,6 +26,7 @@ namespace BackendAPI.Source.Data
         public DbSet<DoctorPreference> DoctorPreferences { get; set; }
         public DbSet<FileModel> Files { get; set; }
         public DbSet<PatientModel> Patients { get; set; }
+        public DbSet<Admin> Admins { get; set; }
     
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,6 +58,7 @@ namespace BackendAPI.Source.Data
             modelBuilder.Entity<AppointmentModel>().HasKey(a => a.AppointmentId);
             modelBuilder.Entity<SpecialtyModel>().HasKey(s => s.SpecialtyId);
             modelBuilder.Entity<FileModel>().HasKey(f => f.FileId);
+            modelBuilder.Entity<Admin>().HasKey(a => a.AdminId);
         }
     }
 }

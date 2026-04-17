@@ -1,10 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using BackendAPI.Source.Services;
+
+using BackendAPI.Source.Models.Dto;
+using BackendAPI.Source;
 using BackendAPI.Source.Data;
+using BackendAPI.Source.Services;
 using BackendAPI.Source.Models.Entities;
+using BackendAPI.Source.Models.ViewModel;
 
 namespace BackendAPI.Source.Service
 {
@@ -14,51 +14,37 @@ namespace BackendAPI.Source.Service
      ILogger<AuthService> logger
      )
     {
-        public async Task SendOtp(Guid userId)
+       public async Task SendOtp(Guid userId)
+       {
+        try
         {
-            try
-            {
-                // Generate OTP
-                var otp = new Random().Next(100000, 999999);
+            // Generate OTP
+          var otp = new Random().Next(100000, 999999);
+          UserModel? user = await appContext.Users.FindAsync(userId);
+          
+          logger.LogInformation($"FIRSTNAME : {user?.FirstName}");
 
-                // Store OTP in database with expiration time
-                UserModel? user = await appContext.Users.FindAsync(userId);
+          if (user == null)
+          {
+            logger.LogError("User with that id is not found!");
+            throw new ArgumentException("User with that id is not found!");
+         }
+           appContext.Entry(user).Property(u => u.Otp).CurrentValue = otp;
+           
+           // Generate the Email Template with appropriate model fields
+           
+           var emailBody = await renderingService.RenderRazorPage("Source/Views/WelcomeEmail.cshtml", new WelcomeEmailModel(){Email = user.Email,Name = $"{user.FirstName} {user.LastName}", Otp = otp, SupportEmail = "healthhub.support@gmail.com" });
 
-                logger.LogInformation($"--USER Name-{user?.FirstName}");
+           // Send an OTP message to the users email
+           await emailService.SendEmail(user.Email, $"{user.FirstName} {user.LastName}", "Verify Registration", emailBody );
 
-                if (user == null)
-                {
-                    logger.LogInformation($"--USER NOT FOUND-{userId}");
-                    throw new Exception("User not found");
-                }
-
-                appContext.Entry(user).Property(u => u.Otp).CurrentValue = otp;
-
-            // Generating Email template with appropriate model fields
-            var emailBody = await renderingService.RenderRazorPage(
-        "Source/Views/WelcomeEmail.cshtml",
-        new WelcomeEmailModel()
-        {
-          Email = user.Email,
-          Name = $"{user.FirstName} {user.LastName}",
-          Otp = otp,
-          SupportEmail = "MedConnect.support@gmail.com"
-        });
-
-        // Send OTt message to user's email
-
-        await emailService.SendEmail(user.Email, $"{user.FirstName} {user.LastName}", "Your OTP for MedConnect", emailBody);
-
-        await appContext.SaveChangesAsync();
-
-            }
-            catch (Exception ex)
-            {
-
-               logger.LogInformation($"--ERROR SENDING OTP TO USER-{userId}");
-
-                throw new Exception("Internal Server Error in Otp", ex);
-            }
+         await appContext.SaveChangesAsync();
         }
-    }
+       catch (Exception ex)
+        {
+          logger.LogError(ex, "Failed to send OTP");
+         throw new Exception("Internal Error", ex);
+        }
+     }
+ }
 }

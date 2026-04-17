@@ -115,13 +115,22 @@ namespace BackendAPI.Source.Helpers.Extensions
         {
             return new PatientModel()
             {
-                UserId = dto.UserId,
+                User = dto.User,
+                UserId = dto.User.UserId,
                 MedicalHistory = dto.MedicalHistory,
                 EmergencyContactName = dto.EmergencyContactName,
                 EmergencyContactPhone = dto.EmergencyContactPhone
             };
         }
    
-   
+        /// <summary>
+        /// Maps CreateAdminDto to Admin
+       /// </summary>
+         /// <param name="createAdminDto"></param>
+        /// <returns></returns>
+         public static Admin ToAdmin(this CreateAdminDto createAdminDto)
+          {
+           return new Admin() { User = createAdminDto.User, UserId = createAdminDto.User.UserId };
+         }
     }
 }

@@ -24,7 +24,9 @@ namespace BackendAPI.Source.Service
         DoctorService doctorService,
         Auth0Service auth0Service,
         DoctorSpecialtyService doctorSpecialtyService,
-        SpecialtyService specialtyService
+        SpecialtyService specialtyService,
+        PatientService patientService,
+        AdminService adminService
     )
 
     {
@@ -92,8 +94,19 @@ namespace BackendAPI.Source.Service
 
                 ProfileDto? userProfile = null;
 
+
+               // If the user is registering as a patient, we just need to create a patient profile for them
+
+                if(role == Role.Patient)
+                {
+                    PatientModel patient = await patientService.CreatePatientAsync(registerUserDto.ToCreatePatientDto(addUser.Entity));
+
+                    userProfile = addUser.Entity.ToPatientProfileDto(patient);
+                }
+
+                // If the user is registering as a doctor, we need to create a doctor profile for them
                 // Add Doctor 
-                if (role == Role.Doctor)
+                else if (role == Role.Doctor)
                 {
                     var DoctorCv = await fileService.CreateFileAsync(
                         new CreateFileDto(
@@ -141,6 +154,12 @@ namespace BackendAPI.Source.Service
 
 
                     userProfile = addUser.Entity.ToDoctorProfileDto(doctor, availabilities, specialties, educations, experiences);
+                }
+                else
+                {
+                    var admin = await adminService.CreateAdminAsync(registerUserDto.ToCreateAdminDto(addUser.Entity));
+
+                    userProfile = addUser.Entity.ToProfileDto();
                 }
 
 
@@ -243,15 +262,38 @@ namespace BackendAPI.Source.Service
             {
                 var users = await appContext.Users.ToListAsync();
 
-                List<ProfileDto?> profiles = [];
+                var profiles = new List<ProfileDto?>();
 
                 foreach (UserModel u in users)
                 {
-                    if (u.Role == Role.Doctor)
+                    if (u.Role == Role.Patient)
                     {
-                        profiles.Add(await doctorService.GetDoctorProfileAsync(u.UserId));
+                        try
+                        {
+                            profiles.Add(await patientService.GetPatientProfileAsync(u.UserId));
+                        }
+                        catch (KeyNotFoundException ex)
+                        {
+                            logger.LogWarning(ex, "Patient profile missing for UserId {UserId}. Returning basic user profile.", u.UserId);
+                            profiles.Add(u.ToProfileDto());
+                        }
                     }
-
+                    else if (u.Role == Role.Doctor)
+                    {
+                        try
+                        {
+                            profiles.Add(await doctorService.GetDoctorProfileAsync(u.UserId));
+                        }
+                        catch (KeyNotFoundException ex)
+                        {
+                            logger.LogWarning(ex, "Doctor profile missing for UserId {UserId}. Returning basic user profile.", u.UserId);
+                            profiles.Add(u.ToProfileDto());
+                        }
+                    }
+                    else
+                    {
+                        profiles.Add(u.ToProfileDto());
+                    }
                 }
 
                 return new ServiceResponse<List<ProfileDto?>>(true, 200, profiles, "Successfully retrieved all users");
@@ -259,7 +301,7 @@ namespace BackendAPI.Source.Service
             catch (Exception ex)
             {
                 logger.LogError(ex, "Failed to get all users");
-                throw new Exception("Failed to Get all users from database", ex);
+                throw new Exception("Failed to get all users from database", ex);
             }
         }
 
@@ -378,6 +420,10 @@ namespace BackendAPI.Source.Service
                 {
                     profile = await doctorService.GetDoctorProfileAsync(user.UserId);
                 }
+                else if (user.Role == Role.Patient)
+                {
+                    profile = await patientService.GetPatientProfileAsync(userId);
+                }
 
                 return new ServiceResponse<ProfileDto>(true, 200, profile, "User profile retrieved successfully");
             }
@@ -444,10 +490,6 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-
-                if (string.IsNullOrWhiteSpace(email))
-                    return null;
-
                 return await appContext.Users
                     .FirstOrDefaultAsync(u => u.Email == email);
             }

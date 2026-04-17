@@ -1,7 +1,7 @@
 using MailKit.Net.Smtp;
 using MimeKit;
 
-namespace BackendAPI.Source.Services;
+namespace BackendAPI.Source.Service;
 
 public class EmailService(IConfiguration configuration, ILogger<EmailService> logger)
 {
@@ -20,10 +20,8 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
     {
       var message = new MimeMessage();
 
-     
-
       // Setup the Contents of your email address
-      message.From.Add(new MailboxAddress("MedConnect Inc.", configuration["MAIL_SENDER_EMAIL"]));
+      message.From.Add(new MailboxAddress("MedConnect Inc.", "medconnect271@gmail.com"));
       message.To.Add(new MailboxAddress(toName, toEmail));
       message.Subject = subject;
       message.Body = new TextPart("html") { Text = body };

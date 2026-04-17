@@ -236,5 +236,58 @@ namespace BackendAPI.Source.Helpers.Extensions
 
             };
         }
+        public static CreatePatientDto ToCreatePatientDto(this RegisterUserDto registerUserDto, UserModel user)
+        {
+            return new CreatePatientDto
+            {
+                User = user,
+                EmergencyContactName = registerUserDto.EmergencyContactName,
+                EmergencyContactPhone = registerUserDto.EmergencyContactPhone,
+                MedicalHistory = registerUserDto.MedicalHistory
+           };
+        }
+
+         public static CreateAdminDto ToCreateAdminDto(this RegisterUserDto registerUserDto, UserModel user)
+        {
+             return new CreateAdminDto { User = user };
+        }
+        public static ProfileDto ToProfileDto(this UserModel user)
+        {
+            return new ProfileDto
+            {
+                UserId = user.UserId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                ProfilePicture = user.ProfilePicture ?? "",
+                Phone = user.Phone,
+                Gender = user.Gender,
+                DateOfBirth = user.DateOfBirth,
+                Address = user.Address ?? "",
+                Role = user.Role
+    };
+  }
+
+ public static PatientProfileDto ToPatientProfileDto(this PatientModel patient, UserModel user)
+  {
+    return new PatientProfileDto
+    {
+      UserId = user.UserId,
+      PatientId = patient.PatientId,
+      Address = user.Address ?? "",
+      DateOfBirth = user.DateOfBirth,
+      Email = user.Email,
+      FirstName = user.FirstName,
+      Gender = user.Gender,
+      LastName = user.LastName,
+      Phone = user.Phone,
+      ProfilePicture = user.ProfilePicture ?? "",
+      Role = user.Role,
+      EmergencyContactName = patient.EmergencyContactName ?? "",
+      EmergencyContactPhone = patient.EmergencyContactPhone ?? "",
+      MedicalHistory = patient.MedicalHistory ?? ""
+    };
+  }
+
     }
 }

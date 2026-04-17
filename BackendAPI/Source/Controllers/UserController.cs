@@ -17,7 +17,6 @@ using System.Security.Claims;
 using BackendAPI.Source.Helpers.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
-
 namespace BackendAPI.Source.Controllers
 {
     [ApiController]
@@ -156,21 +155,19 @@ namespace BackendAPI.Source.Controllers
             try
             {
                 var response = await userService.GetAllUsersAsync();
+
                 if (!response.Success)
                 {
                     return StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null));
                 }
-
-                // return Ok(new ApiResponse<List<ProfileDto?>>(true, response.Message ?? "Users retrieved successfully", response.Data));
 
                 return Ok(response);
 
             }
             catch (Exception ex)
             {
-                logger.LogInformation("Failed to get all users");
-
-                throw new Exception("Failed to get all users", ex);
+              logger.LogError(ex, "Failed to get all users");
+              return StatusCode(500, new ApiResponse<object>(false, "Failed to get all users", null));
             }
         }
         // update user Profile Controller 

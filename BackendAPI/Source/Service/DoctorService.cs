@@ -417,7 +417,7 @@ namespace BackendAPI.Source.Service
             {
                 logger.LogError("An error occurred while fetching doctors.");
 
-                throw new Exception("An error occurred while fetching doctors");
+                return new ServiceResponse<List<DoctorProfileDto>>(false, 500, null, "An error occurred while fetching doctors");
             }
         }
         
@@ -438,7 +438,7 @@ namespace BackendAPI.Source.Service
             catch (System.Exception)
             {
                 logger.LogError("An error occurred while fetching doctors by gender.");
-                throw new Exception("An error occurred while fetching doctors by gender");
+               return new ServiceResponse<List<DoctorDto>>(false, 500, null, "An error occurred while fetching doctors by gender"); 
             }
 
             
@@ -459,7 +459,7 @@ namespace BackendAPI.Source.Service
             catch (System.Exception)
             {
                 logger.LogError("An error occurred while fetching doctors by specialty.");
-                throw new Exception("An error occurred while fetching doctors by specialty");
+                return new ServiceResponse<List<DoctorDto>>(false, 500, null, "An error occurred while fetching doctors by specialty");
             }
         }
         // <Summary>
@@ -477,7 +477,7 @@ namespace BackendAPI.Source.Service
             catch (System.Exception)
             {
                 logger.LogError("An error occurred while fetching doctors by specialty.");
-                throw new Exception("An error occurred while fetching doctors by specialty");
+                return new ServiceResponse<List<DoctorDto>>(false, 500, null, "An error occurred while fetching doctors by specialty");
             }
         }
         

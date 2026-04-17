@@ -1,85 +1,97 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using BackendAPI.Source.Service;
-using Microsoft.AspNetCore.Mvc;
 using BackendAPI.Source.Models.Dto;
 using BackendAPI.Source.Models.Responses;
+using BackendAPI.Source.Service;
+using BackendAPI.Source.Services;
+using Microsoft.AspNetCore.Mvc;
 
-namespace BackendAPI.Source.Controllers
+namespace BackendAPI.Source.Controllers;
+
+[ApiController]
+[Route("api")]
+public class OtpController : ControllerBase
 {
-     [ApiController]
-     [Route("api")]
-    public class OtpController(
+    private readonly AuthService _authService;
+    private readonly UserService _userService;
+    private readonly ILogger<OtpController> _logger;
+
+    public OtpController(
         AuthService authService,
         UserService userService,
-        ILogger<OtpController> logger
-    ) : ControllerBase
+        ILogger<OtpController> logger)
     {
-        
-        // Send OTP to the user's email for verification
-        [HttpPost("send-otp")]
-        public async Task<IActionResult> SendOtp([FromBody] SendOtpDto request)
+        _authService = authService;
+        _userService = userService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Sends an OTP to the user's email address
+    /// </summary>
+    /// <param name="email">The email address to send the OTP to</param>
+    /// <returns>Success message if OTP was sent successfully</returns>
+    [HttpPost("send-otp")]
+    public async Task<IActionResult> SendOtp([FromBody] SendOtpDto request)
+    {
+        try
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if(!ModelState.IsValid)
-                  return BadRequest(new ApiResponse<string>(false,"Invalid email address", null));
-            
-              var user = await userService.GetUserByEmail(request.Email);
-                if (user == null)
-                {
-                    return NotFound(new ApiResponse<string>(false,"User not found", null));
-                }
-
-                await authService.SendOtp(user.UserId);
-
-                return Ok(new ApiResponse<string>(true,"OTP sent successfully", null));
+                return BadRequest(new ApiResponse<string>(false, "Invalid email address", null));
             }
-            catch (System.Exception ex)
+
+            var user = await _userService.GetUserByEmail(request.Email);
+            if (user == null)
             {
-               logger.LogError(ex ,"Failed to send OTP for email: {Email}", request.Email);  
-                
-                // return StatusCode(500, new ApiResponse<string>(false,"An error occurred while sending OTP", null));
-               
-               throw new Exception("An error occurred while sending OTP", ex);
+                return NotFound(new ApiResponse<string>(false, "User not found", null));
             }
+
+            await _authService.SendOtp(user.UserId);
+            return Ok(new ApiResponse<string>(true, "OTP sent successfully", null));
         }
-
-        // Verify otp provided by user for authentication
-         [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto request)
+        catch (Exception ex)
         {
-            try
-            {
-                if(!ModelState.IsValid)
-                   return NotFound(new ApiResponse<string>(false,"Invalid OTP", null));
-
-                var user = await userService.GetUserByEmail(request.Email);
-                if (user == null)
-                {
-                    return NotFound(new ApiResponse<string>(false,"User not found", null));
-                }
-
-                if (user.Otp != request.Otp)
-                {
-                    return BadRequest(new ApiResponse<string>(false,"Invalid OTP", null));
-                }
-
-                // Clear the OTP after successful verification
-                user.Otp = null;
-                user.IsEmailVerified = true;
-                await userService.UpdateUser(user);
-
-                return Ok(new ApiResponse<string>(true,"OTP verified successfully", null));
-            }
-            catch (System.Exception ex)
-            {
-                logger.LogError(ex ,"Failed to verify OTP for email: {Email}", request.Email);  
-                
-                return StatusCode(500, new ApiResponse<string>(false,"An error occurred while verifying OTP", null));
-            }
+            _logger.LogError(ex, "Failed to send OTP");
+            return StatusCode(500, new ApiResponse<string>(false, "Failed to send OTP", null));
         }
     }
-}
+
+    /// <summary>
+    /// Verifies the OTP entered by the user
+    /// </summary>
+    /// <param name="request">The OTP verification request containing email and OTP</param>
+    /// <returns>Success message if OTP was verified successfully</returns>
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<string>(false, "Invalid request", null));
+            }
+
+            var user = await _userService.GetUserByEmail(request.Email);
+            if (user == null)
+            {
+                return NotFound(new ApiResponse<string>(false, "User not found", null));
+            }
+
+            if (user.Otp != request.Otp)
+            {
+                return BadRequest(new ApiResponse<string>(false, "Invalid OTP", null));
+            }
+
+            // Clear the OTP after successful verification
+            user.Otp = null;
+            user.IsEmailVerified = true;
+            await _userService.UpdateUser(user);
+
+            return Ok(new ApiResponse<string>(true, "OTP verified successfully", null));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to verify OTP");
+            return StatusCode(500, new ApiResponse<string>(false, "Failed to verify OTP", null));
+        }
+    }
+} 

@@ -166,29 +166,24 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Services.AddSignalR();
 
   // Register Services
-  builder.Services.AddTransient<UserService>();
-  builder.Services.AddTransient<AuthService>();
-  builder.Services.AddTransient<Auth0Service>();
-  builder.Services.AddTransient<EmailService>();
-  builder.Services.AddTransient<RenderingService>();
-  builder.Services.AddTransient<DoctorService>();
-  builder.Services.AddTransient<DoctorSpecialtyService>();
-  builder.Services.AddTransient<SpecialtyService>();
-  builder.Services.AddTransient<FileService>();
-  builder.Services.AddTransient<PatientService>();
-  builder.Services.AddTransient<AdminService>();
-
-
-
-
- 
-
+  builder.Services.AddScoped<UserService>();
+  builder.Services.AddScoped<AuthService>();
+  builder.Services.AddScoped<Auth0Service>();
+  builder.Services.AddScoped<EmailService>();
+  builder.Services.AddScoped<RenderingService>();
+  builder.Services.AddScoped<DoctorService>();
+  builder.Services.AddScoped<DoctorSpecialtyService>();
+  builder.Services.AddScoped<SpecialtyService>();
+  builder.Services.AddScoped<FileService>();
+  builder.Services.AddScoped<PatientService>();
+  builder.Services.AddScoped<AdminService>();
+  builder.Services.AddScoped<IContactService, ContactService>();
 
 
   // Add other providers in the future here!
 
   // This line registers the Lazy<T> type with the DI container to enable lazy loading for services.
-  builder.Services.AddTransient(typeof(Lazy<>), typeof(Lazy<>));
+  builder.Services.AddScoped(typeof(Lazy<>), typeof(Lazy<>));
 
   builder
     .Services.AddControllers()
@@ -254,10 +249,9 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);
   builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Debug);
 
-  // Close and Flush Serilog when the application exits
+  
   AppDomain.CurrentDomain.ProcessExit += (s, e) => Log.CloseAndFlush();
 
-  //----------------------------------------
 }
 
 var app = builder.Build();

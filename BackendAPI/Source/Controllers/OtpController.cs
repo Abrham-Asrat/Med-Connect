@@ -65,33 +65,29 @@ public class OtpController : ControllerBase
     {
         try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<string>(false, "Invalid request", null));
-            }
-
             var user = await _userService.GetUserByEmail(request.Email);
-            if (user == null)
-            {
-                return NotFound(new ApiResponse<string>(false, "User not found", null));
-            }
 
-            if (user.Otp != request.Otp)
+            if (user == null)
+                return NotFound(new ApiResponse<string>(false, "User not found", null));
+
+            // Only check if the OTP matches
+            if (user.Otp == null || user.Otp != request.Otp)
             {
                 return BadRequest(new ApiResponse<string>(false, "Invalid OTP", null));
             }
 
-            // Clear the OTP after successful verification
+            // Success: Clear the OTP and verify the email
             user.Otp = null;
             user.IsEmailVerified = true;
+
             await _userService.UpdateUser(user);
 
-            return Ok(new ApiResponse<string>(true, "OTP verified successfully", null));
+            return Ok(new ApiResponse<string>(true, "Email verified successfully!", null));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to verify OTP");
-            return StatusCode(500, new ApiResponse<string>(false, "Failed to verify OTP", null));
+            return StatusCode(500, new ApiResponse<string>(false, "Internal error during verification", null));
         }
     }
-} 
+}

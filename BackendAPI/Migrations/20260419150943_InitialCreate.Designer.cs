@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BackendAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260406192441_PatentEntitiy")]
-    partial class PatentEntitiy
+    [Migration("20260419150943_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,21 +25,30 @@ namespace BackendAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("BackendAPI.Source.Models.Entities.AppointmentModel", b =>
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Admin", b =>
+                {
+                    b.Property<Guid>("AdminId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("AdminId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Admins");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Appointment", b =>
                 {
                     b.Property<Guid>("AppointmentId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("AppointmentDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("AppointmentReason")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("AppointmentStatus")
-                        .HasColumnType("int");
+                    b.Property<DateOnly>("AppointmentDate")
+                        .HasColumnType("date");
 
                     b.Property<TimeOnly>("AppointmentTime")
                         .HasColumnType("time");
@@ -62,8 +71,8 @@ namespace BackendAPI.Migrations
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("PatientModelPatientId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -72,7 +81,7 @@ namespace BackendAPI.Migrations
 
                     b.HasIndex("DoctorId");
 
-                    b.HasIndex("PatientModelPatientId");
+                    b.HasIndex("PatientId");
 
                     b.ToTable("Appointments");
                 });
@@ -295,15 +304,73 @@ namespace BackendAPI.Migrations
                     b.ToTable("Patients");
                 });
 
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Payment", b =>
+                {
+                    b.Property<Guid>("PaymentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("PaymentProvider")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReceiverEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("ReceiverId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReceiverName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("SenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SenderName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TransactionReference")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("PaymentId");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("Payments");
+                });
+
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.ReviewModel", b =>
                 {
                     b.Property<Guid>("ReviewId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -314,20 +381,25 @@ namespace BackendAPI.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("PatientModelPatientId")
+                    b.Property<Guid>("PatientId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
+                    b.Property<string>("ReviewText")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<decimal>("StarRating")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.HasKey("ReviewId");
 
                     b.HasIndex("DoctorId");
 
-                    b.HasIndex("PatientModelPatientId");
+                    b.HasIndex("PatientId");
 
                     b.ToTable("Reviews");
                 });
@@ -426,19 +498,34 @@ namespace BackendAPI.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("BackendAPI.Source.Models.Entities.AppointmentModel", b =>
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Admin", b =>
                 {
-                    b.HasOne("BackendAPI.Source.Models.Entities.DoctorModel", "Doctor")
-                        .WithMany("Appointments")
-                        .HasForeignKey("DoctorId")
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BackendAPI.Source.Models.Entities.PatientModel", null)
-                        .WithMany("Appointments")
-                        .HasForeignKey("PatientModelPatientId");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Appointment", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.DoctorModel", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.PatientModel", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.Navigation("Doctor");
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.DoctorAvailabilityModel", b =>
@@ -469,7 +556,7 @@ namespace BackendAPI.Migrations
                     b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Cv");
@@ -525,10 +612,25 @@ namespace BackendAPI.Migrations
                     b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Payment", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId");
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId");
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.ReviewModel", b =>
@@ -536,20 +638,22 @@ namespace BackendAPI.Migrations
                     b.HasOne("BackendAPI.Source.Models.Entities.DoctorModel", "Doctor")
                         .WithMany("Reviews")
                         .HasForeignKey("DoctorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("BackendAPI.Source.Models.Entities.PatientModel", null)
+                    b.HasOne("BackendAPI.Source.Models.Entities.PatientModel", "Patient")
                         .WithMany("Reviews")
-                        .HasForeignKey("PatientModelPatientId");
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.Navigation("Doctor");
+
+                    b.Navigation("Patient");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.DoctorModel", b =>
                 {
-                    b.Navigation("Appointments");
-
                     b.Navigation("DoctorAvailabilities");
 
                     b.Navigation("DoctorSpecialties");
@@ -568,8 +672,6 @@ namespace BackendAPI.Migrations
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.PatientModel", b =>
                 {
-                    b.Navigation("Appointments");
-
                     b.Navigation("Reviews");
                 });
 

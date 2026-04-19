@@ -403,20 +403,28 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                List<DoctorProfileDto> doctorUsers = await appContext.Doctors.Include(d=> d.User).Include(d=> d.DoctorSpecialties).ThenInclude(ds=>ds.Specialty).Include(d=> d.Educations).Include(d=> d.Experiences).Select(d=> d.ToDoctorProfileDto(
+                var doctors = await appContext.Doctors
+                    .AsNoTracking()
+                    .Include(d => d.User)
+                    .Include(d => d.DoctorAvailabilities)
+                    .Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty)
+                    .Include(d => d.Educations)
+                    .Include(d => d.Experiences)
+                    .ToListAsync();
+
+                var doctorUsers = doctors.Select(d => d.ToDoctorProfileDto(
                     d.User,
                     d.DoctorAvailabilities,
                     d.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds => ds.Specialty!).ToList(),
                     d.Educations,
                     d.Experiences
-                )).ToListAsync();
-                return new ServiceResponse<List<DoctorProfileDto>>(true,200, doctorUsers, "Doctors fetched successfully");
+                )).ToList();
 
+                return new ServiceResponse<List<DoctorProfileDto>>(true, 200, doctorUsers, "Doctors fetched successfully");
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                logger.LogError("An error occurred while fetching doctors.");
-
+                logger.LogError(ex, "An error occurred while fetching doctors.");
                 return new ServiceResponse<List<DoctorProfileDto>>(false, 500, null, "An error occurred while fetching doctors");
             }
         }

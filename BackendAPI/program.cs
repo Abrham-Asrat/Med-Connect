@@ -13,6 +13,8 @@ using Newtonsoft.Json.Converters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 // using Microsoft.AspNetCore.Authentication.Cookies;
 using BackendAPI.Source.Services;
+using BackendAPI.Source.Service.PaymentService;
+using BackendAPI.Source.Service.PaymentProviders;
 
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -178,6 +180,9 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Services.AddScoped<PatientService>();
   builder.Services.AddScoped<AdminService>();
   builder.Services.AddScoped<IContactService, ContactService>();
+  builder.Services.AddScoped<IPaymentService, PaymentService>();
+  builder.Services.AddScoped<IPaymentProviderFactory, PaymentProviderFactory>();  
+  builder.Services.AddScoped<IPaymentProvider, ChapaPaymentProvider>(); // Register Chapa as a payment provider implementation
 
 
   // Add other providers in the future here!

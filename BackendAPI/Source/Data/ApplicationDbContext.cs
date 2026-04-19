@@ -62,6 +62,43 @@ namespace BackendAPI.Source.Data
             modelBuilder.Entity<Admin>().HasKey(a => a.AdminId);
 
             modelBuilder.Entity<Payment>().HasKey(a=> a.PaymentId);
+
+            // Configure foreign key delete behaviors to avoid multiple cascade paths
+            modelBuilder.Entity<PatientModel>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<DoctorModel>()
+                .HasOne(d => d.User)
+                .WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Patient)
+                .WithMany()
+                .HasForeignKey(a => a.PatientId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.Doctor)
+                .WithMany()
+                .HasForeignKey(a => a.DoctorId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ReviewModel>()
+                .HasOne(r => r.Patient)
+                .WithMany(p => p.Reviews)
+                .HasForeignKey(r => r.PatientId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ReviewModel>()
+                .HasOne(r => r.Doctor)
+                .WithMany(d => d.Reviews)
+                .HasForeignKey(r => r.DoctorId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

@@ -29,17 +29,15 @@ namespace BackendAPI.Source.Controllers
                     response = await doctorService.GetAllDoctors();
                 }
 
-                if(!response.Success)
-                   throw new Exception(response.Message);
+                if (!response.Success)
+                    return StatusCode(response.StatusCode, response);
 
                 return Ok(response);
-                
-             
             }
             catch (System.Exception ex)
             {
                 logger.LogError(ex, "An error occurred while fetching doctors.");
-                throw new Exception("An error occurred while fetching doctors.");
+                return Problem(detail: "An error occurred while fetching doctors.", statusCode: 500);
             }
         }
 

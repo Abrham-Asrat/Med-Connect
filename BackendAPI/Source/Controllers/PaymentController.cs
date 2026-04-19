@@ -58,18 +58,29 @@ namespace BackendAPI.Source.Controllers
             }
         }
 
-        [HttpPost("charge")]
+         [HttpPost("charge")]
         public async Task<IActionResult> ChargeCustomer(ChargeRequest chargeRequest)
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
+                    return BadRequest(new ApiResponse<ChargeResponse>(false, ErrorMessages.ModelValidationError, null));
+                }
+
                 var result = await paymentService.ChargeAsync(chargeRequest);
                 return Ok(new ApiResponse<ChargeResponse>(result.Status, result.Message, result));
+            }
+            catch (ArgumentException ex)
+            {
+                logger.LogError(ex, "Invalid argument when charging customer");
+                return BadRequest(new ApiResponse<ChargeResponse>(false, ex.Message, null));
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error charging customer");
-                throw;
+                return StatusCode(500, new ApiResponse<ChargeResponse>(false, "An error occurred while processing your payment", null));
             }
         }
 

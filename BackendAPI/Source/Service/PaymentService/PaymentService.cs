@@ -125,29 +125,54 @@ namespace BackendAPI.Source.Service.PaymentService
             }
         }
 
-        public async Task<ChargeResponse> ChargeAsync(IChargeRequest charge)
+          public async Task<ChargeResponse> ChargeAsync(IChargeRequest charge)
         {
             try
             {
-                IPaymentProvider provider = paymentProviderFactory.GetProvider(
-                  charge.PaymentProvider.ConvertToEnum<PaymentProvider>()
-                );
-                var result = await provider.ChargeAsync(
-                  new ChapaCharge
-                  {
-                      Amount = charge.Amount,
-                      Currency = charge.Currency.ConvertToEnum<PaymentCurrency>(),
-                      PhoneNumber = charge.PhoneNumber,
-                      PaymentProvider = charge.PaymentProvider.ConvertToEnum<PaymentProvider>(),
-                      PaymentMethod = charge.PaymentMethod.ConvertToChapaPaymentMethod()
+                logger.LogInformation("Starting charge request: Amount={Amount}, Currency={Currency}, Provider={Provider}, Method={Method}", 
+                    charge.Amount, charge.Currency, charge.PaymentProvider, charge.PaymentMethod);
 
-                  }
-                );
+                var providerEnum = charge.PaymentProvider.ConvertToEnum<PaymentProvider>();
+                logger.LogInformation("Converted payment provider to enum: {ProviderEnum}", providerEnum);
+
+                IPaymentProvider provider = paymentProviderFactory.GetProvider(providerEnum);
+                logger.LogInformation("Got payment provider: {ProviderType}", provider.GetType().Name);
+
+                var currencyEnum = charge.Currency.ConvertToEnum<PaymentCurrency>();
+                logger.LogInformation("Converted currency to enum: {CurrencyEnum}", currencyEnum);
+
+                var paymentMethodEnum = charge.PaymentMethod.ToLowerInvariant().ConvertToChapaPaymentMethod();
+                logger.LogInformation("Converted payment method to enum: {MethodEnum}", paymentMethodEnum);
+
+                var chapaCharge = new ChapaCharge
+                {
+                    Amount = charge.Amount,
+                    Currency = currencyEnum,
+                    PhoneNumber = charge.PhoneNumber,
+                    PaymentProvider = providerEnum,
+                    PaymentMethod = paymentMethodEnum
+                };
+
+                logger.LogInformation("Calling provider.ChargeAsync with: {@ChapaCharge}", chapaCharge);
+                
+                var result = await provider.ChargeAsync(chapaCharge);
+                
+                logger.LogInformation("Charge request completed successfully: Status={Status}, RefId={RefId}", 
+                    result.Status, result.RefId);
+                
                 return (ChargeResponse)result;
             }
             catch (System.Exception ex)
             {
-                logger.LogError(ex, "Error charging");
+                logger.LogError(ex, "Error charging - Exception Type: {ExceptionType}, Message: {Message}", 
+                    ex.GetType().Name, ex.Message);
+                
+                if (ex.InnerException != null)
+                {
+                    logger.LogError("Inner Exception: {InnerExceptionType} - {InnerMessage}", 
+                        ex.InnerException.GetType().Name, ex.InnerException.Message);
+                }
+                
                 throw;
             }
         }

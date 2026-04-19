@@ -54,20 +54,49 @@ public class ChapaPaymentProvider(AppConfig appConfig, ILogger<ChapaPaymentProvi
       );
 
       var response = await restClient.ExecuteAsync(request);
-      var data = JsonSerializer.Deserialize<JsonElement>(
-        response.Content ?? "null",
-        new JsonSerializerOptions { WriteIndented = true }
-      );
+      
+      logger.LogInformation("Chapa API Response: Status={StatusCode}, Content={Content}", 
+        response.StatusCode, response.Content);
 
       if (!response.IsSuccessStatusCode)
       {
+        logger.LogWarning("Chapa API error during transfer: Status={StatusCode}, Content={Content}", 
+          response.StatusCode, response.Content);
+        
+        string errorMessage = "Unknown error occurred";
+        try
+        {
+          var errorData = JsonSerializer.Deserialize<JsonElement>(
+            response.Content ?? "{}",
+            new JsonSerializerOptions { WriteIndented = true }
+          );
+          errorMessage = errorData.TryGetProperty("message", out var msgProp) 
+            ? msgProp.GetString() ?? errorMessage 
+            : response.Content ?? errorMessage;
+        }
+        catch
+        {
+          errorMessage = response.Content ?? response.ErrorMessage ?? "Failed to initialize payment";
+        }
+
         return new TransferResponseInner
         {
           IsSuccessful = false,
-          Message = JToken.Parse(data.GetProperty("message").ToString() ?? "No content"),
+          Message = errorMessage,
           TransactionReference = "null"
         };
       }
+
+      if (string.IsNullOrEmpty(response.Content))
+      {
+        logger.LogError("Chapa API returned empty content");
+        throw new Exception("Chapa API returned empty response");
+      }
+
+      var data = JsonSerializer.Deserialize<JsonElement>(
+        response.Content,
+        new JsonSerializerOptions { WriteIndented = true }
+      );
 
       var status = data.GetProperty("status").GetString();
 
@@ -91,6 +120,15 @@ public class ChapaPaymentProvider(AppConfig appConfig, ILogger<ChapaPaymentProvi
     {
       if (charge is not ChapaCharge chapaCharge)
         throw new InvalidOperationException("Charge type must be of type ChapaCharge");
+
+      if (string.IsNullOrEmpty(appConfig.ChapaSecretKey))
+      {
+        logger.LogError("Chapa Secret Key is not configured");
+        throw new Exception("Chapa payment provider is not properly configured. Missing secret key.");
+      }
+
+      logger.LogInformation("Initializing Chapa charge for amount: {Amount} {Currency}, Method: {Method}", 
+        chapaCharge.Amount, chapaCharge.Currency, chapaCharge.PaymentMethod);
 
       var restClient = new RestClient();
       restClient.AddDefaultHeader("Authorization", $"Bearer {appConfig.ChapaSecretKey}");
@@ -118,7 +156,10 @@ public class ChapaPaymentProvider(AppConfig appConfig, ILogger<ChapaPaymentProvi
 
       if (!response.IsSuccessStatusCode)
       {
-        throw new Exception(response.ErrorMessage);
+        var errorMessage = response.ErrorMessage ?? response.Content ?? $"HTTP {response.StatusCode} - Unknown error";
+        logger.LogError("Chapa API error: Status={StatusCode}, ErrorMessage={ErrorMessage}, Content={Content}", 
+          response.StatusCode, response.ErrorMessage, response.Content);
+        throw new Exception($"Chapa API error: {errorMessage}");
       }
       var content = JsonSerializer.Deserialize<JsonElement>(response.Content ?? "");
       if (

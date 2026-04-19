@@ -33,10 +33,11 @@ public static class PaymentMethodExtensions
 
   public static ChapaPaymentMethod ConvertToChapaPaymentMethod(this string value)
   {
-    if (ChapaPaymentMethodsReverse.ContainsKey(value) == false)
+    var normalizedValue = value.ToLowerInvariant();
+    if (ChapaPaymentMethodsReverse.ContainsKey(normalizedValue) == false)
       throw new ArgumentException(
         $"Invalid payment method. Valid payment methods are {string.Join(", ", ChapaPaymentMethods.Values)}"
       );
-    return ChapaPaymentMethodsReverse[value];
+    return ChapaPaymentMethodsReverse[normalizedValue];
   }
 }

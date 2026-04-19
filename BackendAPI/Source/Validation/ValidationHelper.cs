@@ -115,8 +115,20 @@ namespace BackendAPI.Source.Validation
             return Enum.TryParse<Role>(roleString, true, out _);
         }
 
+          public static bool BeAValidDateTimeString(string? date)
+  {
+    if (date == null)
+      return false;
+    return DateTime.TryParse(date, out _);
+  }
 
 
+ public static bool BeAValidAppointmentType(string? appointmentTypeString)
+  {
+    if (appointmentTypeString == null)
+      return false;
+    return Enum.TryParse<AppointmentType>(appointmentTypeString, out _);
+  }
 
     }
 }

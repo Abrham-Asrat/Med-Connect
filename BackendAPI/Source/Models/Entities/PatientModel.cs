@@ -18,7 +18,7 @@ namespace BackendAPI.Source.Models.Entities
         public string? EmergencyContactPhone {get;set;}
 
         public UserModel? User { get; set; }
-        public virtual ICollection<AppointmentModel> Appointments { get; set; } = new HashSet<AppointmentModel>(); 
+     
         public virtual ICollection<ReviewModel> Reviews{ get; set; } = new HashSet<ReviewModel>(); 
 
 

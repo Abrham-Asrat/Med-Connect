@@ -528,7 +528,92 @@ namespace BackendAPI.Source.Service
             }
         }
 
-       
+         /// <summary>
+  /// Gets a doctor with doctorId and returns it with User, DoctorSpecialities and Speciality fields Populated
+  /// </summary>
+  /// <param name="doctorId"></param>
+  /// <returns>Populated Doctor Model</returns>
+  public async Task<ServiceResponse<DoctorModel>> GetDoctorAsync(Guid doctorId)
+  {
+    try
+    {
+      var doctor = await appContext
+        .Doctors.Include(d => d.User)
+        .Include(d => d.DoctorSpecialties)
+        .ThenInclude(ds => ds.Specialty)
+        .SingleOrDefaultAsync(d => d.DoctorId == doctorId);
+
+      if (doctor == null)
+      {
+        return new ServiceResponse<DoctorModel>(false, 404, null, "Doctor not found");
+      }
+
+      return new ServiceResponse<DoctorModel>(true, 200, doctor, "Doctor found");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError($"Failed to get doctor by id {ex}");
+      throw;
+    }
+  }
+
+
+/// <summary>
+  /// To Check if a doctor is available at the appointmentDay and Time
+  /// </summary>
+  /// <param name="doctorId"></param>
+  /// <param name="appointmentDay"></param>
+  /// <param name="appointmentTime"></param>
+  /// <param name="appointmentTimeSpan"></param>
+  /// <returns>True if he/she is available, otherwise false.</returns>
+  public async Task<bool> CheckDoctorAvailabilityAsync(
+    Guid doctorId,
+    DayOfWeek appointmentDay,
+    TimeOnly appointmentTime,
+    TimeSpan appointmentTimeSpan
+  )
+  {
+    try
+    {
+      var result = await appContext.DoctorAvailabilities.ToListAsync();
+      return result.Any(da =>
+        da.DoctorId == doctorId
+        && da.AvailableDay == appointmentDay
+        && da.StartTime <= appointmentTime
+        && appointmentTime.Add(appointmentTimeSpan) <= da.EndTime
+      );
+    }
+    catch (Exception ex)
+    {
+      logger.LogError($"{ex}: Failed to Check doctor availability");
+      throw;
+    }
+  }
+
+   /// <summary>
+  /// Checks if a doctor exists
+  /// </summary>
+  /// <param name="doctorId"></param>
+  /// <returns>True if doctor exists, otherwise False </returns>
+  public async Task<bool> CheckDoctorExistsAsync(Guid doctorId)
+  {
+    try
+    {
+      var doctor = await appContext.Doctors.FindAsync(doctorId);
+      return doctor != null;
+    }
+    catch (Exception ex)
+    {
+      logger.LogError($"Failed to check if doctor exists {ex}");
+      throw;
+    }
+  }
+
+   public async Task<bool> UserExistsAsync(Guid userId)
+  {
+    return await appContext.Doctors.AnyAsync(d => d.UserId == userId);
+  }
+
 
     }
 }

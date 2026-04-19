@@ -97,16 +97,7 @@ namespace BackendAPI.Source.Helpers.Extensions
            };
        }
 
-       public static ReviewModel ToReviewModel(this CreateReviewDto dto, Guid doctorId, Guid userId)
-       {
-           return new ReviewModel()
-           {
-               Comment = dto.Comment,
-               Rating = dto.Rating,
-               DoctorId = doctorId,
-            //    PatientId = PatientId
-           };
-       }
+      
       
         
 
@@ -132,5 +123,51 @@ namespace BackendAPI.Source.Helpers.Extensions
           {
            return new Admin() { User = createAdminDto.User, UserId = createAdminDto.User.UserId };
          }
+
+           public static CreatePaymentDto ToCreatePaymentDto(
+    this TransferRequestDto transferRequestDto,
+    Guid senderId,
+    bool isSuccessful
+  )
+  {
+    return new CreatePaymentDto
+    {
+      Amount = transferRequestDto.Amount,
+      ReceiverId = transferRequestDto.ReceiverId,
+      SenderId = senderId,
+      PaymentProvider = transferRequestDto.PaymentProvider,
+      PaymentStatus = isSuccessful ? PaymentStatus.Success : PaymentStatus.Failed,
+      SenderName = transferRequestDto.SenderName,
+      SenderEmail = transferRequestDto.SenderEmail,
+      ReceiverName = transferRequestDto.ReceiverName,
+      ReceiverEmail = transferRequestDto.ReceiverEmail,
+      PaymentType = PaymentType.Transfer
+    };
+  }
+
+  public static Payment ToPayment(
+    this CreatePaymentDto createPaymentDto,
+    string transactionReference
+  )
+  {
+    return new Payment
+    {
+      Amount = createPaymentDto.Amount,
+      SenderId = createPaymentDto.SenderId,
+      SenderName = createPaymentDto.SenderName,
+      SenderEmail = createPaymentDto.SenderEmail,
+      ReceiverId = createPaymentDto.ReceiverId,
+      ReceiverName = createPaymentDto.ReceiverName,
+      ReceiverEmail = createPaymentDto.ReceiverEmail,
+      PaymentProvider = createPaymentDto.PaymentProvider,
+      PaymentStatus = PaymentStatus.Pending,
+      TransactionReference = transactionReference,
+      PaymentType = createPaymentDto.PaymentType
+    };
+  }
+
     }
+
+
+
 }

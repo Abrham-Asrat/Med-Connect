@@ -20,13 +20,14 @@ namespace BackendAPI.Source.Data
         public DbSet<ExperienceModel> Experiences { get; set; }
         public DbSet<ReviewModel> Reviews { get; set; }
         public DbSet<DoctorAvailabilityModel> DoctorAvailabilities { get; set; }
-        public DbSet<AppointmentModel> Appointments { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
         public DbSet<SpecialtyModel> Specializations { get; set; }
         public DbSet<DoctorSpecialtyModel> DoctorSpecialties { get; set; }
         public DbSet<DoctorPreference> DoctorPreferences { get; set; }
         public DbSet<FileModel> Files { get; set; }
         public DbSet<PatientModel> Patients { get; set; }
         public DbSet<Admin> Admins { get; set; }
+        public DbSet<Payment> Payments { get; set; }
     
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -55,10 +56,12 @@ namespace BackendAPI.Source.Data
             modelBuilder.Entity<EducationModel>().HasKey(e => e.EducationId);
             modelBuilder.Entity<ExperienceModel>().HasKey(e => e.ExperienceId);
             modelBuilder.Entity<ReviewModel>().HasKey(r => r.ReviewId);
-            modelBuilder.Entity<AppointmentModel>().HasKey(a => a.AppointmentId);
+            modelBuilder.Entity<Appointment>().HasKey(a => a.AppointmentId);
             modelBuilder.Entity<SpecialtyModel>().HasKey(s => s.SpecialtyId);
             modelBuilder.Entity<FileModel>().HasKey(f => f.FileId);
             modelBuilder.Entity<Admin>().HasKey(a => a.AdminId);
+
+            modelBuilder.Entity<Payment>().HasKey(a=> a.PaymentId);
         }
     }
 }

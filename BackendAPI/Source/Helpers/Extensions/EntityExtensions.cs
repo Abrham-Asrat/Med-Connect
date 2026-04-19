@@ -289,5 +289,78 @@ namespace BackendAPI.Source.Helpers.Extensions
     };
   }
 
+  
+  public static AppointmentDto ToAppointmentDto(
+    this Appointment appointment,
+    DoctorModel doctor,
+    PatientModel patient,
+    UserModel doctorUser,
+    UserModel patientUser,
+    ICollection<SpecialtyModel> specialties
+  )
+  {
+    return new AppointmentDto
+    {
+      AppointmentId = appointment.AppointmentId,
+      Doctor = doctor.ToDoctorDto(doctorUser, specialties),
+      Patient = patient.ToPatientDto(patientUser),
+      AppointmentDate = appointment.AppointmentDate,
+      AppointmentTime = appointment.AppointmentTime,
+      AppointmentType = appointment.AppointmentType,
+    };
+  }
+
+  public static AppointmentDto ToAppointmentDto(
+    this Appointment appointment,
+    PatientModel patient,
+    UserModel patientUser
+  )
+  {
+    return new AppointmentDto
+    {
+      AppointmentId = appointment.AppointmentId,
+      Patient = patient.ToPatientDto(patientUser),
+      AppointmentDate = appointment.AppointmentDate,
+      AppointmentTime = appointment.AppointmentTime,
+      AppointmentType = appointment.AppointmentType,
+    };
+  }
+
+  public static AppointmentDto ToAppointmentDto(
+    this Appointment appointment,
+    DoctorModel doctor,
+    UserModel doctorUser,
+    ICollection<SpecialtyModel> specialties
+  )
+  {
+    return new AppointmentDto
+    {
+      AppointmentId = appointment.AppointmentId,
+      Doctor = doctor.ToDoctorDto(doctorUser, specialties),
+      AppointmentDate = appointment.AppointmentDate,
+      AppointmentTime = appointment.AppointmentTime,
+      AppointmentType = appointment.AppointmentType,
+    };
+  }
+
+
+  public static PaymentDto ToPaymentDto(this Payment payment)
+  {
+    return new PaymentDto
+    {
+      PaymentId = payment.PaymentId,
+      SenderId = payment.SenderId,
+      ReceiverId = payment.ReceiverId,
+      Amount = payment.Amount,
+      PaymentStatus = payment.PaymentStatus,
+      PaymentProvider = payment.PaymentProvider,
+      SenderName = payment.SenderEmail,
+      SenderEmail = payment.SenderEmail,
+      ReceiverName = payment.ReceiverName,
+      ReceiverEmail = payment.ReceiverEmail,
+      PaymentType = payment.PaymentType
+    };
+  }
+
     }
 }

@@ -78,5 +78,51 @@ namespace BackendAPI.Source.Service
               throw;
             }
         }
+
+         public async Task<ServiceResponse<PatientModel>> GetPatientAsync(Guid patientId)
+  {
+    try
+    {
+      var patient = await appContext
+        .Patients.Include(p => p.User)
+        .SingleOrDefaultAsync(p => p.PatientId == patientId);
+      if (patient == null)
+      {
+        return new ServiceResponse<PatientModel>
+        {
+          Data = null,
+          Message = "Patient Not Found.",
+          StatusCode = 404,
+          Success = false
+        };
+      }
+      return new ServiceResponse<PatientModel>(true, 200, patient, "Patient found.");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to Get Patient");
+      throw;
+    }
+  }
+
+   public async Task<bool> CheckPatientExistsAsync(Guid patientId)
+  {
+    try
+    {
+      var patient = await appContext.Patients.FindAsync(patientId);
+      return patient != null;
+    }
+    catch (Exception ex)
+    {
+      logger.LogError($"Failed to check if patient exists {ex}");
+      throw;
+    }
+  }
+
+   public async Task<bool> UserExistsAsync(Guid userId)
+  {
+    return await appContext.Patients.AnyAsync(p => p.UserId == userId);
+  }
+
     }
 }

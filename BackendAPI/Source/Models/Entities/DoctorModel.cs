@@ -37,7 +37,7 @@ namespace BackendAPI.Source.Models.Entities
 
         public virtual ICollection<DoctorSpecialtyModel> DoctorSpecialties { get; set; } = new HashSet<DoctorSpecialtyModel>();
 
-        public virtual ICollection<AppointmentModel> Appointments { get; set; } = new HashSet<AppointmentModel>();
+       
 
         public virtual ICollection<DoctorAvailabilityModel> DoctorAvailabilities { get; set; } = new HashSet<DoctorAvailabilityModel>();
         public virtual ICollection<EducationModel> Educations { get; set; } = new HashSet<EducationModel>();

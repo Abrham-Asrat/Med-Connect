@@ -175,6 +175,33 @@ namespace BackendAPI.Source.Helpers.Extensions
       StarRating = createReviewDto.StarRating
     };
   }
+
+  public static Blog ToBlog(this CreateBlogDto createBlogDto)
+  {
+    return new Blog
+    {
+      AuthorId = createBlogDto.AuthorId,
+      Content = createBlogDto.Content,
+      Title = createBlogDto.Title,
+      ImageId = createBlogDto.ImageId,
+    };
+  }
+
+  public static BlogComment ToBlogComment(this CreateBlogCommentDto createBlogCommentDto)
+  {
+    return new BlogComment
+    {
+      BlogId = createBlogCommentDto.BlogId,
+      CommentText = createBlogCommentDto.CommentText,
+      SenderId = createBlogCommentDto.SenderId
+    };
+  }
+
+  public static BlogLike ToBlogLike(this CreateBlogLikeDto createBlogLikeDto)
+  {
+    return new BlogLike { BlogId = createBlogLikeDto.BlogId, UserId = createBlogLikeDto.UserId };
+  }
+
   
 }
 

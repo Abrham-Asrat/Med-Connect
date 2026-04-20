@@ -501,5 +501,67 @@ namespace BackendAPI.Source.Helpers.Extensions
     };
   }
 
+    public static BlogDto ToBlogDto(
+    this Blog blog,
+    UserModel author,
+    ICollection<BlogLike> blogLikes,
+    ICollection<Tag> tags
+  )
+  {
+    return new BlogDto
+    {
+      Author = author.ToBlogProfileDto(),
+      AuthorId = author.UserId,
+      BlogId = blog.BlogId,
+      BlogLikes = blogLikes
+        .Select(bl =>
+          bl.ToBlogLikeDto(
+            bl.User ?? throw new Exception("You forgot to include user when querying blogLikes.")
+          )
+        )
+        .ToList(),
+      Content = blog.Content,
+      Title = blog.Title,
+      ImageId = blog.ImageId,
+      ImageUrl = blog.Image?.Url,
+      CreatedAt = blog.CreatedAt,
+      Tags = tags.Select(t => t.TagName).ToList()
+    };
+  }
+
+  public static IProfileDto ToBlogProfileDto(this UserModel user)
+  {
+    return new BlogProfileDto
+    {
+      Email = user.Email,
+      FirstName = user.FirstName,
+      LastName = user.LastName,
+      UserId = user.UserId,
+      ProfilePicture = user.ProfilePicture ?? ""
+    };
+  }
+
+   public static BlogCommentDto ToBlogCommentDto(this BlogComment blogComment, UserModel sender)
+  {
+    return new BlogCommentDto
+    {
+      BlogCommentId = blogComment.BlogCommentId,
+      BlogId = blogComment.BlogId,
+      CommentText = blogComment.CommentText,
+      SenderId = blogComment.SenderId,
+      Sender = sender.ToBlogProfileDto()
+    };
+  }
+
+  public static BlogLikeDto ToBlogLikeDto(this BlogLike blogLike, UserModel liker)
+  {
+    return new BlogLikeDto(
+      blogLike.BlogLikeId,
+      blogLike.UserId,
+      blogLike.BlogId,
+      liker.ToBlogProfileDto()
+    );
+  }
+
     }
 }

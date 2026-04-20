@@ -17,6 +17,7 @@ using BackendAPI.Source.Service.PaymentService;
 using BackendAPI.Source.Service.PaymentProviders;
 using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Service.ReviewService;
+using BackendAPI.Source.Service.BlogService;
 
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -187,6 +188,7 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Services.AddScoped<IPaymentProvider, ChapaPaymentProvider>(); // Register Chapa as a payment provider implementation
   builder.Services.AddScoped<AppointmentService>();
   builder.Services.AddScoped<IReviewService, ReviewService>();
+  builder.Services.AddScoped<IBlogService, BlogService>();
 
 
   // Add other providers in the future here!

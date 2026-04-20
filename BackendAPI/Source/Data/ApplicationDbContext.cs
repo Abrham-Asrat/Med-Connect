@@ -28,6 +28,11 @@ namespace BackendAPI.Source.Data
         public DbSet<PatientModel> Patients { get; set; }
         public DbSet<Admin> Admins { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<Blog> Blogs { get; set; }
+        public DbSet<BlogComment> BlogComments { get; set; }
+        public DbSet<BlogLike> BlogLikes { get; set; }
+        public DbSet<BlogTag> BlogTags { get; set; }
+        public DbSet<Tag> Tags { get; set; }
     
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -62,6 +67,13 @@ namespace BackendAPI.Source.Data
             modelBuilder.Entity<Admin>().HasKey(a => a.AdminId);
 
             modelBuilder.Entity<Payment>().HasKey(a=> a.PaymentId);
+            modelBuilder.Entity<Blog>().HasKey(b => b.BlogId);
+            modelBuilder.Entity<BlogComment>().HasKey(bc => bc.BlogCommentId);
+            modelBuilder.Entity<BlogLike>().HasKey(bl => bl.BlogLikeId);
+            modelBuilder.Entity<Tag>().HasKey(bt => bt.TagId);
+            modelBuilder.Entity<BlogTag>().HasKey(bt => new { bt.BlogId, bt.TagId });
+
+
 
             // Configure foreign key delete behaviors to avoid multiple cascade paths
             modelBuilder.Entity<PatientModel>()
@@ -98,6 +110,32 @@ namespace BackendAPI.Source.Data
                 .HasOne(r => r.Doctor)
                 .WithMany(d => d.Reviews)
                 .HasForeignKey(r => r.DoctorId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Configure BlogComment relationships to avoid multiple cascade paths
+            modelBuilder.Entity<BlogComment>()
+                .HasOne(bc => bc.Blog)
+                .WithMany(b => b.BlogComments)
+                .HasForeignKey(bc => bc.BlogId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<BlogComment>()
+                .HasOne(bc => bc.Sender)
+                .WithMany(u => u.BlogComments)
+                .HasForeignKey(bc => bc.SenderId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // Configure BlogLike relationships to avoid multiple cascade paths
+            modelBuilder.Entity<BlogLike>()
+                .HasOne(bl => bl.Blog)
+                .WithMany(b => b.BlogLikes)
+                .HasForeignKey(bl => bl.BlogId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<BlogLike>()
+                .HasOne(bl => bl.User)
+                .WithMany(u => u.BlogLikes)
+                .HasForeignKey(bl => bl.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }

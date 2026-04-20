@@ -53,5 +53,9 @@ namespace BackendAPI.Source.Models.Entities
         // Optional: Track last login from token
         public DateTime? LastLogin { get; set; }
 
+        public virtual ICollection<Blog> Blogs { get; set; } = new HashSet<Blog>();
+        public virtual ICollection<BlogComment> BlogComments { get; set; } = new HashSet<BlogComment>();
+        public virtual ICollection<BlogLike> BlogLikes { get; set; } = new HashSet<BlogLike>(); 
+
     }
 }

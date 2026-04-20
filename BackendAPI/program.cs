@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using BackendAPI.Source.Services;
 using BackendAPI.Source.Service.PaymentService;
 using BackendAPI.Source.Service.PaymentProviders;
+using BackendAPI.Source.Models.Entities;
+using BackendAPI.Source.Service.ReviewService;
 
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -183,6 +185,8 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Services.AddScoped<IPaymentService, PaymentService>();
   builder.Services.AddScoped<IPaymentProviderFactory, PaymentProviderFactory>();  
   builder.Services.AddScoped<IPaymentProvider, ChapaPaymentProvider>(); // Register Chapa as a payment provider implementation
+  builder.Services.AddScoped<AppointmentService>();
+  builder.Services.AddScoped<IReviewService, ReviewService>();
 
 
   // Add other providers in the future here!

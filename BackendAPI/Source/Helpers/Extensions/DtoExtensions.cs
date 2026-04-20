@@ -124,10 +124,7 @@ namespace BackendAPI.Source.Helpers.Extensions
            return new Admin() { User = createAdminDto.User, UserId = createAdminDto.User.UserId };
          }
 
-           public static CreatePaymentDto ToCreatePaymentDto(
-    this TransferRequestDto transferRequestDto,
-    Guid senderId,
-    bool isSuccessful
+           public static CreatePaymentDto ToCreatePaymentDto( this TransferRequestDto transferRequestDto, Guid senderId, bool isSuccessful
   )
   {
     return new CreatePaymentDto
@@ -166,8 +163,19 @@ namespace BackendAPI.Source.Helpers.Extensions
     };
   }
 
-    }
+    
 
-
+  public static ReviewModel ToReview(this CreateReviewDto createReviewDto)
+  {
+    return new ReviewModel
+    {
+      ReviewText = createReviewDto.ReviewText,
+      DoctorId = createReviewDto.DoctorId,
+      PatientId = createReviewDto.PatientId,
+      StarRating = createReviewDto.StarRating
+    };
+  }
+  
+}
 
 }

@@ -362,5 +362,144 @@ namespace BackendAPI.Source.Helpers.Extensions
     };
   }
 
+    public static ReviewDto ToReviewDto(this ReviewModel review)
+  {
+    return new ReviewDto
+    {
+      ReviewId = review.ReviewId,
+      DoctorId = review.DoctorId,
+      PatientId = review.PatientId,
+      StarRating = review.StarRating,
+      ReviewText = review.ReviewText,
+      CreatedAt = review.CreatedAt,
+      UpdatedAt = review.UpdatedAt,
+      IsEdited = review.HasBeenUpdated(),
+      Doctor = review.Doctor != null ? new ReviewProfileDto
+      {
+        Id = review.Doctor.User.UserId,
+        UserId = review.Doctor.User.UserId,
+        FirstName = review.Doctor.User.FirstName,
+        LastName = review.Doctor.User.LastName,
+        Email = review.Doctor.User.Email,
+        ProfilePicture = review.Doctor.User.ProfilePicture ?? ""
+      } : null,
+      Patient = review.Patient != null ? new ReviewProfileDto
+      {
+        Id = review.Patient.User.UserId,
+        UserId = review.Patient.User.UserId,
+        FirstName = review.Patient.User.FirstName,
+        LastName = review.Patient.User.LastName,
+        Email = review.Patient.User.Email,
+        ProfilePicture = review.Patient.User.ProfilePicture ?? ""
+      } : null
+    };
+  }
+
+   public static ReviewSummaryDto ToReviewSummaryDto(this ReviewModel review)
+  {
+    return new ReviewSummaryDto
+    {
+      ReviewId = review.ReviewId,
+      StarRating = review.StarRating,
+      ReviewText = review.ReviewText,
+      CreatedAt = review.CreatedAt,
+      UpdatedAt = review.UpdatedAt,
+      IsEdited = review.HasBeenUpdated(),
+      PatientName = review.GetPatientFullName(),
+      PatientProfilePicture = review.Patient?.User?.ProfilePicture ?? ""
+    };
+  }
+
+  public static DoctorReviewStatsDto ToDoctorReviewStatsDto(
+    this ICollection<ReviewModel> reviews,
+    DoctorModel doctor,
+    UserModel doctorUser
+  )
+  {
+    if (!reviews.Any())
+    {
+      return new DoctorReviewStatsDto
+      {
+        DoctorId = doctor.DoctorId,
+        DoctorName = $"{doctorUser.FirstName} {doctorUser.LastName}",
+        AverageRating = 0,
+        TotalReviews = 0,
+        FiveStarReviews = 0,
+        FourStarReviews = 0,
+        ThreeStarReviews = 0,
+        TwoStarReviews = 0,
+        OneStarReviews = 0,
+        ZeroStarReviews = 0,
+        RecentReviews = new List<ReviewSummaryDto>()
+      };
+    }
+
+    var averageRating = reviews.Average(r => r.StarRating);
+    var totalReviews = reviews.Count;
+    var fiveStarReviews = reviews.Count(r => r.StarRating == 5);
+    var fourStarReviews = reviews.Count(r => r.StarRating == 4);
+    var threeStarReviews = reviews.Count(r => r.StarRating == 3);
+    var twoStarReviews = reviews.Count(r => r.StarRating == 2);
+    var oneStarReviews = reviews.Count(r => r.StarRating == 1);
+    var zeroStarReviews = reviews.Count(r => r.StarRating == 0);
+
+    var recentReviews = reviews
+      .OrderByDescending(r => r.CreatedAt)
+      .Take(5)
+      .Select(r => r.ToReviewSummaryDto())
+      .ToList();
+
+    return new DoctorReviewStatsDto
+    {
+      DoctorId = doctor.DoctorId,
+      DoctorName = $"{doctorUser.FirstName} {doctorUser.LastName}",
+      AverageRating = Math.Round(averageRating, 1),
+      TotalReviews = totalReviews,
+      FiveStarReviews = fiveStarReviews,
+      FourStarReviews = fourStarReviews,
+      ThreeStarReviews = threeStarReviews,
+      TwoStarReviews = twoStarReviews,
+      OneStarReviews = oneStarReviews,
+      ZeroStarReviews = zeroStarReviews,
+      RecentReviews = recentReviews
+    };
+  }
+
+  public static PatientReviewHistoryDto ToPatientReviewHistoryDto(
+    this ICollection<ReviewModel> reviews,
+    PatientModel patient,
+    UserModel patientUser
+  )
+  {
+    if (!reviews.Any())
+    {
+      return new PatientReviewHistoryDto
+      {
+        PatientId = patient.PatientId,
+        PatientName = $"{patientUser.FirstName} {patientUser.LastName}",
+        TotalReviewsPosted = 0,
+        AverageRatingGiven = 0,
+        Reviews = new List<ReviewSummaryDto>()
+      };
+    }
+
+    var totalReviewsPosted = reviews.Count;
+    var averageRatingGiven = reviews.Average(r => r.StarRating);
+
+    var reviewSummaries = reviews
+      .OrderByDescending(r => r.CreatedAt)
+      .Select(r => r.ToReviewSummaryDto())
+      .ToList();
+
+    return new PatientReviewHistoryDto
+    {
+      PatientId = patient.PatientId,
+      PatientName = $"{patientUser.FirstName} {patientUser.LastName}",
+      TotalReviewsPosted = totalReviewsPosted,
+      AverageRatingGiven = Math.Round(averageRatingGiven, 1),
+      Reviews = reviewSummaries
+    };
+  }
+
     }
 }

@@ -18,6 +18,8 @@ using BackendAPI.Source.Service.PaymentProviders;
 using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Service.ReviewService;
 using BackendAPI.Source.Service.BlogService;
+using BackendAPI.Source.Service.ChatService;
+using BackendAPI.Source.Hubs;
 
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -189,6 +191,11 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Services.AddScoped<AppointmentService>();
   builder.Services.AddScoped<IReviewService, ReviewService>();
   builder.Services.AddScoped<IBlogService, BlogService>();
+  builder.Services.AddScoped<IChatService, ChatService>();
+
+  builder.Services.AddSingleton<UserConnection>(); // Register UserConnection as a singleton since it manages state across connections
+
+
 
 
   // Add other providers in the future here!

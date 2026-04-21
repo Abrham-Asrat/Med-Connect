@@ -203,6 +203,18 @@ namespace BackendAPI.Source.Helpers.Extensions
   }
 
   
+  public static Message ToMessage(this CreateMessageDto createMessageDto , Guid conversationId)
+  {
+    return new Message
+    {
+      MessageText = createMessageDto.MessageText,
+      SenderId = createMessageDto.SenderId,
+      ConversationId = createMessageDto.ConversationId
+    };
+  }
+
+
+  
 }
 
 }

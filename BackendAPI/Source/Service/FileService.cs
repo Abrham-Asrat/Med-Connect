@@ -7,6 +7,8 @@ using BackendAPI.Source.Models.Dto;
 using BackendAPI.Source.Models.Entities;
 using Microsoft.Extensions.Logging;
 using BackendAPI.Source.Helpers.Extensions;
+using BackendAPI.Source.Helpers.Default;
+using Microsoft.EntityFrameworkCore.Storage;
 
 
 
@@ -33,7 +35,61 @@ namespace BackendAPI.Source.Service
             throw;
            }
         }
-        
+
+
+          public async Task<FileModel> CreateFileAsync(
+    CreateFileDto createFileDto,
+    Guid assocId,
+    DiscriminatorTypes entityType
+  )
+  {
+    using IDbContextTransaction transaction = await appContext.Database.BeginTransactionAsync();
+    try
+    {
+      var file = await appContext.Files.AddAsync(createFileDto.ToFileModel());
+      await appContext.SaveChangesAsync();
+
+      // estabilish an association between the file and the EntityType
+      await CreateFileAssociationAsync(file.Entity.FileId, assocId, entityType);
+
+      await transaction.CommitAsync();
+
+      return file.Entity;
+    }
+    catch (Exception ex)
+    {
+      await transaction.RollbackAsync();
+
+      logger.LogError($"{ex}: An error occured trying to create a file");
+      throw;
+    }
+  }
+         public async Task<MessageFileAssociation> CreateFileAssociationAsync(
+    Guid fileId,
+    Guid assocId,
+    DiscriminatorTypes entityType
+  )
+  {
+    try
+    {
+      MessageFileAssociation fa = entityType switch
+      {
+        DiscriminatorTypes.Message
+          => new MessageFileAssociation { FileId = fileId, MessageId = assocId },
+        _ => throw new ArgumentException($"Unsupported Discriminator Type: {entityType}")
+      };
+
+      await appContext.MessageFileAssociations.AddAsync(fa);
+      await appContext.SaveChangesAsync();
+
+      return fa;
+    }
+    catch (Exception ex)
+    {
+      logger.LogError($"{ex}: Error occurred while creating file association");
+      throw;
+    }
+  }
 
     }
 }

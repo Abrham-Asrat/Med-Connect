@@ -516,5 +516,20 @@ namespace BackendAPI.Source.Service
             }
         }
 
+
+         public virtual async Task<bool> UserExistsAsync(Guid userId)
+  {
+    try
+    {
+      var result = await appContext.Users.FindAsync(userId);
+      return result != null;
+    }
+    catch (System.Exception ex)
+    {
+    logger.LogError(ex, "An error occurred while trying to check if user exists."); 
+      throw;
+    }
+  }
+
     }
 }

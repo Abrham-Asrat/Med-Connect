@@ -563,5 +563,42 @@ namespace BackendAPI.Source.Helpers.Extensions
     );
   }
 
+    public static MessageDto ToMessageDto(
+    this Message message,
+    ICollection<FileModel>? files
+  )
+  {
+    return new MessageDto(
+      message.MessageId,
+      message.SenderId,
+      message.MessageText,
+      files != null ? files.Select(f => f.ToFileDto()).ToList() : []
+    );
+  }
+
+   public static IProfileDto ToConversationProfileDto(this UserModel user)
+  {
+    return new ConversationProfileDto
+    {
+      Email = user.Email,
+      FirstName = user.FirstName,
+      LastName = user.LastName,
+      UserId = user.UserId,
+      ProfilePicture = user.ProfilePicture ?? ""
+    };
+  }
+
+   public static IConversationDto ToConversationDto(
+    this Conversation conversation,
+    ICollection<UserModel> participants
+  )
+  {
+    return new ConversationDtoBase
+    {
+      ConversationId = conversation.ConversationId,
+      Participants = participants.Select(u => u.ToConversationProfileDto()).ToList()
+    };
+  }
+
     }
 }

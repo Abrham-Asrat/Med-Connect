@@ -33,6 +33,15 @@ namespace BackendAPI.Source.Data
         public DbSet<BlogLike> BlogLikes { get; set; }
         public DbSet<BlogTag> BlogTags { get; set; }
         public DbSet<Tag> Tags { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<ConversationMembershipModel> ConversationMemberships { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+
+        public DbSet<MessageFileAssociation> MessageFileAssociations { get; set; }
+
+
+
     
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -72,6 +81,13 @@ namespace BackendAPI.Source.Data
             modelBuilder.Entity<BlogLike>().HasKey(bl => bl.BlogLikeId);
             modelBuilder.Entity<Tag>().HasKey(bt => bt.TagId);
             modelBuilder.Entity<BlogTag>().HasKey(bt => new { bt.BlogId, bt.TagId });
+            modelBuilder.Entity<Conversation>().HasKey(c => c.ConversationId);
+            modelBuilder.Entity<Message>().HasKey(m => m.MessageId);
+            modelBuilder.Entity<ConversationMembershipModel>()
+                .HasKey(cm => new { cm.ConversationId, cm.UserId });
+            modelBuilder.Entity<Notification>().HasKey(n => n.NotificationId);
+            modelBuilder.Entity<MessageFileAssociation>().HasKey(fa => fa.FileAssociationId);
+            
 
 
 
@@ -137,6 +153,9 @@ namespace BackendAPI.Source.Data
                 .WithMany(u => u.BlogLikes)
                 .HasForeignKey(bl => bl.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            // Configure ConversationMembershipModel relationships to avoid multiple cascade paths
+          
         }
     }
 }

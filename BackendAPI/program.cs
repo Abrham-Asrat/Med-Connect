@@ -20,6 +20,7 @@ using BackendAPI.Source.Service.ReviewService;
 using BackendAPI.Source.Service.BlogService;
 using BackendAPI.Source.Service.ChatService;
 using BackendAPI.Source.Hubs;
+using BackendAPI.Source.Filters.Error;
 
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -193,6 +194,9 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Services.AddScoped<IBlogService, BlogService>();
   builder.Services.AddScoped<IChatService, ChatService>();
 
+  // Register Global Exception Filter
+  builder.Services.AddScoped<GlobalExceptionFilter>();
+
   builder.Services.AddSingleton<UserConnection>(); // Register UserConnection as a singleton since it manages state across connections
 
 
@@ -204,7 +208,11 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Services.AddScoped(typeof(Lazy<>), typeof(Lazy<>));
 
   builder
-    .Services.AddControllers()
+    .Services.AddControllers(options =>
+    {
+      // Register Global Exception Filter
+      options.Filters.Add<GlobalExceptionFilter>();
+    })
     .AddNewtonsoftJson(options =>
     {
       options.SerializerSettings.ReferenceLoopHandling = Newtonsoft

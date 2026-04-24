@@ -9,7 +9,6 @@ using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Helpers;
 using BackendAPI.Source.Models.Enums;
 using Microsoft.Identity.Client;
-using Microsoft.OpenApi.Extensions;
 
 namespace BackendAPI.Source.Helpers.Extensions
 {
@@ -126,7 +125,7 @@ namespace BackendAPI.Source.Helpers.Extensions
         {
             return new DoctorAvailabilityDto
             (
-                doctorAvailability.AvailableDay.GetDisplayName(),
+                doctorAvailability.AvailableDay.ToString(),
                 doctorAvailability.StartTime.ToString(),
                 doctorAvailability.EndTime.ToString()
 

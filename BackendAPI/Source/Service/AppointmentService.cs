@@ -10,7 +10,6 @@ using BackendAPI.Source.Service.PaymentService;
 
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Extensions;
 
 namespace BackendAPI.Source.Service;
 
@@ -70,8 +69,7 @@ public class AppointmentService(
         createAppointmentDto.AppointmentType.ConvertToEnum<AppointmentType>();
 
       DayOfWeek appointmentDay = appointmentDate
-        .DayOfWeek.GetDisplayName()
-        .ConvertToEnum<DayOfWeek>();
+        .DayOfWeek;
 
       // Create the appointment
       Appointment appointmentData = new Appointment
@@ -416,9 +414,7 @@ public class AppointmentService(
 
       var doctorId = editAppointmentDto.DoctorId?.ConvertToGuid();
       var appointmentDate = editAppointmentDto.AppointmentDate?.ConvertTo<DateOnly>();
-      DayOfWeek? appointmentDay = appointmentDate
-        ?.DayOfWeek.GetDisplayName()
-        .ConvertToEnum<DayOfWeek>();
+      DayOfWeek? appointmentDay = appointmentDate?.DayOfWeek;
       var appointmentTime = TimeOnly.TryParse(editAppointmentDto.AppointmentTime, out var appTime)
         ? appTime
         : (TimeOnly?)null;
@@ -448,8 +444,7 @@ public class AppointmentService(
 
       bool isDoctorAvailable = await doctorService.CheckDoctorAvailabilityAsync(
         doctorId ?? appointment.DoctorId,
-        appointmentDay
-          ?? appointment.AppointmentDate.DayOfWeek.GetDisplayName().ConvertToEnum<DayOfWeek>(),
+        appointmentDay ?? appointment.AppointmentDate.DayOfWeek,
         appointmentTime ?? appointment.AppointmentTime,
         appointment.AppointmentTimeSpan
       );

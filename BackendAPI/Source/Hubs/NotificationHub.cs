@@ -67,7 +67,7 @@ public class NotificationHub(ApplicationDbContext appContext, UserConnection use
         throw new FormatException("The connectionId is missing or empty.");
       }
     }
-    catch (System.Exception ex)
+    catch (System.Exception)
     {
       throw;
     }

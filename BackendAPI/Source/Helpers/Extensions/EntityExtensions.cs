@@ -358,6 +358,7 @@ namespace BackendAPI.Source.Helpers.Extensions
       ReceiverName = payment.ReceiverName,
       ReceiverEmail = payment.ReceiverEmail,
       PaymentType = payment.PaymentType
+      
     };
   }
 
@@ -375,22 +376,22 @@ namespace BackendAPI.Source.Helpers.Extensions
       IsEdited = review.HasBeenUpdated(),
       Doctor = review.Doctor != null ? new ReviewProfileDto
       {
-        Id = review.Doctor.User.UserId,
-        UserId = review.Doctor.User.UserId,
-        FirstName = review.Doctor.User.FirstName,
-        LastName = review.Doctor.User.LastName,
-        Email = review.Doctor.User.Email,
-        ProfilePicture = review.Doctor.User.ProfilePicture ?? ""
-      } : null,
+        Id = review.Doctor.User?.UserId ?? Guid.Empty,
+        UserId = review.Doctor.User?.UserId ?? Guid.Empty,
+        FirstName = review.Doctor.User?.FirstName ?? "",
+        LastName = review.Doctor.User?.LastName ?? "",
+        Email = review.Doctor.User?.Email ?? "",
+        ProfilePicture = review.Doctor.User?.ProfilePicture ?? ""
+      } : new ReviewProfileDto { Id = Guid.Empty, UserId = Guid.Empty },
       Patient = review.Patient != null ? new ReviewProfileDto
       {
-        Id = review.Patient.User.UserId,
-        UserId = review.Patient.User.UserId,
-        FirstName = review.Patient.User.FirstName,
-        LastName = review.Patient.User.LastName,
-        Email = review.Patient.User.Email,
-        ProfilePicture = review.Patient.User.ProfilePicture ?? ""
-      } : null
+        Id = review.Patient.User?.UserId ?? Guid.Empty,
+        UserId = review.Patient.User?.UserId ?? Guid.Empty,
+        FirstName = review.Patient.User?.FirstName ?? "",
+        LastName = review.Patient.User?.LastName ?? "",
+        Email = review.Patient.User?.Email ?? "",
+        ProfilePicture = review.Patient.User?.ProfilePicture ?? ""
+      } : new ReviewProfileDto { Id = Guid.Empty, UserId = Guid.Empty }
     };
   }
 

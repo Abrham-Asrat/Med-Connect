@@ -58,7 +58,7 @@ public class AppointmentController(
 
       return StatusCode(response.StatusCode, response);
     }
-    catch (Exception ex)
+    catch (Exception)
     {
       throw;
     }

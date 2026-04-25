@@ -27,7 +27,7 @@ public class OtpController : ControllerBase
     /// <summary>
     /// Sends an OTP to the user's email address
     /// </summary>
-    /// <param name="email">The email address to send the OTP to</param>
+    /// <param name="request">The OTP request containing email address</param>
     /// <returns>Success message if OTP was sent successfully</returns>
     [HttpPost("send-otp")]
     public async Task<IActionResult> SendOtp([FromBody] SendOtpDto request)

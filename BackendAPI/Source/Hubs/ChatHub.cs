@@ -43,7 +43,7 @@ namespace BackendAPI.Source.Hubs
         _logger.LogInformation("Headers: {Headers}", string.Join(", ", httpContext.Request.Headers.Select(h => $"{h.Key}={h.Value}")));
         _logger.LogInformation("Connection ID: {ConnectionId}", Context.ConnectionId);
         _logger.LogInformation("User: {User}", httpContext.User?.Identity?.Name);
-        _logger.LogInformation("User Claims: {Claims}", string.Join(", ", httpContext.User?.Claims.Select(c => $"{c.Type}={c.Value}")));
+        _logger.LogInformation("User Claims: {Claims}", string.Join(", ", httpContext.User?.Claims?.Select(c => $"{c.Type}={c.Value}") ?? Array.Empty<string>()));
 
         // Try to get user ID from Authorization header first
         var authHeader = httpContext.Request.Headers["Authorization"].ToString();
@@ -53,11 +53,11 @@ namespace BackendAPI.Source.Hubs
           _logger.LogInformation("Found Bearer token: {Token}", token);
           
           // Try to get user ID from token claims
-          var userIdClaim = httpContext.User.FindFirst("sub")?.Value;
+          var userIdClaim = httpContext.User?.FindFirst("sub")?.Value;
           if (!string.IsNullOrEmpty(userIdClaim))
           {
             // Check if this is a client credentials token
-            var grantType = httpContext.User.FindFirst("gt")?.Value;
+            var grantType = httpContext.User?.FindFirst("gt")?.Value;
             if (grantType == "client-credentials")
             {
               _logger.LogWarning("Client credentials token detected. This token type is not supported for chat connections.");

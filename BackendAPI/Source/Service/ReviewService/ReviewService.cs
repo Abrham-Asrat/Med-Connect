@@ -39,9 +39,9 @@ public class ReviewService(
       // Include doctor and patient profiles in the response
       var reviewWithProfiles = await appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .FirstOrDefaultAsync(r => r.ReviewId == review.Entity.ReviewId);
 
       return reviewWithProfiles?.ToReviewDto() ?? 
@@ -90,9 +90,9 @@ public class ReviewService(
       // Include doctor and patient profiles in the response
       var updatedReview = await appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .FirstOrDefaultAsync(r => r.ReviewId == review.ReviewId);
 
       return updatedReview?.ToReviewDto() ?? 
@@ -116,9 +116,9 @@ public class ReviewService(
 
       var reviews = await appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .Where(r => r.DoctorId == doctorId)
         .OrderByDescending(r => r.CreatedAt)
         .ToListAsync();
@@ -143,9 +143,9 @@ public class ReviewService(
 
       var reviews = await appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .Where(r => r.PatientId == patientId)
         .OrderByDescending(r => r.CreatedAt)
         .ToListAsync();
@@ -165,9 +165,9 @@ public class ReviewService(
     {
       var review = await appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .FirstOrDefaultAsync(r => r.ReviewId == reviewId);
 
       if (review == default)
@@ -188,9 +188,9 @@ public class ReviewService(
     {
       var reviews = await appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .OrderByDescending(r => r.CreatedAt)
         .ToListAsync();
 
@@ -216,13 +216,13 @@ public class ReviewService(
 
       var reviews = await appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .Where(r => r.DoctorId == doctorId)
         .ToListAsync();
 
-      return reviews.ToDoctorReviewStatsDto(doctor, doctor.User);
+      return reviews.ToDoctorReviewStatsDto(doctor, doctor.User!);
     }
     catch (Exception ex)
     {
@@ -244,13 +244,13 @@ public class ReviewService(
 
       var reviews = await appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .Where(r => r.PatientId == patientId)
         .ToListAsync();
 
-      return reviews.ToPatientReviewHistoryDto(patient, patient.User);
+      return reviews.ToPatientReviewHistoryDto(patient, patient.User!);
     }
     catch (Exception ex)
     {
@@ -265,9 +265,9 @@ public class ReviewService(
     {
       var query = appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .AsQueryable();
 
       // Apply filters
@@ -301,8 +301,8 @@ public class ReviewService(
       query = searchDto.SortBy?.ToLower() switch
       {
         "rating" => searchDto.SortDescending ? query.OrderByDescending(r => r.StarRating) : query.OrderBy(r => r.StarRating),
-        "patientname" => searchDto.SortDescending ? query.OrderByDescending(r => r.Patient.User.LastName) : query.OrderBy(r => r.Patient.User.LastName),
-        "doctorname" => searchDto.SortDescending ? query.OrderByDescending(r => r.Doctor.User.LastName) : query.OrderBy(r => r.Doctor.User.LastName),
+        "patientname" => searchDto.SortDescending ? query.OrderByDescending(r => r.Patient!.User!.LastName) : query.OrderBy(r => r.Patient!.User!.LastName),
+        "doctorname" => searchDto.SortDescending ? query.OrderByDescending(r => r.Doctor!.User!.LastName) : query.OrderBy(r => r.Doctor!.User!.LastName),
         _ => searchDto.SortDescending ? query.OrderByDescending(r => r.CreatedAt) : query.OrderBy(r => r.CreatedAt)
       };
 
@@ -331,9 +331,9 @@ public class ReviewService(
 
       var reviews = await appContext.Reviews
         .Include(r => r.Doctor)
-        .ThenInclude(d => d.User)
+        .ThenInclude(d => d!.User)
         .Include(r => r.Patient)
-        .ThenInclude(p => p.User)
+        .ThenInclude(p => p!.User)
         .Where(r => r.DoctorId == doctorId)
         .OrderByDescending(r => r.CreatedAt)
         .Take(count)

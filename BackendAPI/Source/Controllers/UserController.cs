@@ -151,6 +151,7 @@ namespace BackendAPI.Source.Controllers
         // Get All Users Controller - Admin Only Access
         [HttpGet("all")]
         // [Authorize(Roles = "Admin")] // Only admins can view all users
+        // desipine 
         public async Task<IActionResult> GetAllUsers()
         {
             try

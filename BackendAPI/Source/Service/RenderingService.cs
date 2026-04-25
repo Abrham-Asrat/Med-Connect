@@ -4,7 +4,7 @@ using MiniRazor;
 
 namespace BackendAPI.Source.Services;
 
-public class RenderingService(FileService fileService)
+public class RenderingService
 {
   public async Task<string> RenderRazorPage(string filePath, object viewModel)
   {

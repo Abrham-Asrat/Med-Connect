@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BackendAPI.Source.Service;
 
 public class AppointmentService(
-  IPaymentService paymentService,
+  // IPaymentService paymentService, // TODO: Will be used when payment integration is complete
   ApplicationDbContext appContext,
   DoctorService doctorService,
   PatientService patientService,
@@ -152,8 +152,8 @@ public class AppointmentService(
         Data = appointment.Entity.ToAppointmentDto(
           doctor.Data,
           patient.Data,
-          doctor.Data.User,
-          patient.Data.User,
+          doctor.Data.User!,
+          patient.Data.User!,
           specialities
         ),
         Message = "Appointment created successfully",
@@ -216,8 +216,8 @@ public class AppointmentService(
           a.ToAppointmentDto(
             a.Doctor,
             a.Patient,
-            a.Doctor.User,
-            a.Patient.User,
+            a.Doctor.User!,
+            a.Patient.User!,
             a.Doctor.DoctorSpecialties.Where(ds => ds.Specialty != null)
               .Select(ds => ds.Specialty!)
               .ToList()
@@ -367,7 +367,7 @@ public class AppointmentService(
         .Appointments.Where(ap => ap.DoctorId == doctorId)
         .Include(ap => ap.Patient)
         .ThenInclude(p => p.User) // populate user
-        .Select(ap => ap.ToAppointmentDto(ap.Patient, ap.Patient.User))
+        .Select(ap => ap.ToAppointmentDto(ap.Patient, ap.Patient.User!))
         .ToListAsync();
 
       return result;
@@ -477,8 +477,8 @@ public class AppointmentService(
         Data = appointment.ToAppointmentDto(
           appointment.Doctor,
           appointment.Patient,
-          appointment.Doctor.User,
-          appointment.Patient.User,
+          appointment.Doctor.User!,
+          appointment.Patient.User!,
           appointment
             .Doctor.DoctorSpecialties.Where(ds => ds.Specialty != null)
             .Select(ds => ds.Specialty!)

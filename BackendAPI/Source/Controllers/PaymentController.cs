@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using BackendAPI.Source.Models.Responses;
 using BackendAPI.Source.Service.PaymentService;
@@ -38,18 +39,23 @@ namespace BackendAPI.Source.Controllers
                     throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
                 }
 
-                var userId = Request.Cookies[CookieDefaults.Profile.UserId]?.ToString();
+                // Get user ID from JWT token claims (secure)
+                var userId = User.FindFirst("sub")?.Value ?? 
+                             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    throw new ArgumentException("Either you haven't logged in or the cookie for userId is missing.");
+                    logger.LogWarning("Unauthorized transfer attempt: User ID not found in JWT token");
+                    throw new UnauthorizedAccessException("User not authenticated. Valid JWT token required.");
                 }
 
                 if (!Guid.TryParse(userId, out var senderId))
                 {
-                    throw new FormatException("Invalid userId format. Please login again.");
+                    logger.LogError("Invalid user ID format in JWT token: {UserId}", userId);
+                    throw new FormatException("Invalid user ID format. Please login again.");
                 }
 
+                logger.LogInformation("Transfer initiated by user: {UserId}", senderId);
                 var result = await paymentService.TransferAsync(transferRequestDto, senderId);
                 return Ok(result);
             }

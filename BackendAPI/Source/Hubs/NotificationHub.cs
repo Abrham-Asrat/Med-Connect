@@ -1,10 +1,8 @@
-using AutoMapper;
 using BackendAPI.Source.Data;
 using BackendAPI.Source.Helpers.Default;
 using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Models.Enums;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 public class NotificationHub(ApplicationDbContext appContext, UserConnection userConnection) : Hub
 {
@@ -12,7 +10,16 @@ public class NotificationHub(ApplicationDbContext appContext, UserConnection use
 
   public override async Task OnConnectedAsync()
   {
-    _senderId = "74d501f1-b888-41cc-acb9-230eaa17698e";
+    // Get user ID from JWT token claims
+    _senderId = Context.UserIdentifier ?? 
+                Context.User?.FindFirst("sub")?.Value ??
+                Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+    if (string.IsNullOrWhiteSpace(_senderId))
+    {
+      throw new UnauthorizedAccessException("User not authenticated. Valid JWT token required.");
+    }
+
     userConnection.AddConnection(_senderId, Context.ConnectionId);
     await base.OnConnectedAsync();
   }

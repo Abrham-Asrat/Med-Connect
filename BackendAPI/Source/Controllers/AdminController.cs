@@ -1,16 +1,19 @@
+using BackendAPI.Source.Data;
 using BackendAPI.Source.Models.Dto;
 using BackendAPI.Source.Models.Enums;
 using BackendAPI.Source.Models.Responses;
 using BackendAPI.Source.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BackendAPI.Source.Controllers
 {
     [ApiController]
     [Route("api/admin")]
-    [Authorize] // All admin endpoints require authentication
+    [Authorize(Policy = "AdminOnly")] // Only admins can access
     public class AdminController(
+        ApplicationDbContext appContext,
         DoctorService doctorService,
         UserService userService,
         ILogger<AdminController> logger) : ControllerBase
@@ -236,21 +239,60 @@ namespace BackendAPI.Source.Controllers
         [HttpGet("stats")]
         [ProducesResponseType(typeof(ApiResponse<object>), 200)]
         [ProducesResponseType(typeof(ApiResponse<object>), 401)]
+        [ProducesResponseType(typeof(ApiResponse<object>), 403)]
         public async Task<IActionResult> GetSystemStats()
         {
             try
             {
-                // TODO: Implement actual statistics gathering
+                // Get total doctors count
+                var totalDoctors = await appContext.Doctors.CountAsync();
+                
+                // Get verified doctors count
+                var verifiedDoctors = await appContext.Doctors.CountAsync(d => d.IsVerified);
+                
+                // Get pending (unverified) doctors count
+                var pendingDoctors = await appContext.Doctors.CountAsync(d => !d.IsVerified);
+                
+                // Get total patients count
+                var totalPatients = await appContext.Patients.CountAsync();
+                
+                // Get total appointments count
+                var totalAppointments = await appContext.Appointments.CountAsync();
+                
+                // Get total reviews count
+                var totalReviews = await appContext.Reviews.CountAsync();
+                
+                // Get total users count
+                var totalUsers = await appContext.Users.CountAsync();
+                
+                // Get appointments by status
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var upcomingAppointments = await appContext.Appointments
+                    .CountAsync(a => a.AppointmentDate >= today);
+                    
+                var todaysAppointments = await appContext.Appointments
+                    .CountAsync(a => a.AppointmentDate == today);
+                
+                // Get recent registrations (last 7 days)
+                var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
+                var recentRegistrations = await appContext.Users
+                    .CountAsync(u => u.CreatedAt >= sevenDaysAgo);
+                
                 var stats = new
                 {
-                    TotalDoctors = 0,
-                    VerifiedDoctors = 0,
-                    PendingDoctors = 0,
-                    TotalPatients = 0,
-                    TotalAppointments = 0,
-                    TotalReviews = 0
+                    TotalDoctors = totalDoctors,
+                    VerifiedDoctors = verifiedDoctors,
+                    PendingDoctors = pendingDoctors,
+                    TotalPatients = totalPatients,
+                    TotalAppointments = totalAppointments,
+                    TotalReviews = totalReviews,
+                    TotalUsers = totalUsers,
+                    UpcomingAppointments = upcomingAppointments,
+                    TodaysAppointments = todaysAppointments,
+                    RecentRegistrations = recentRegistrations
                 };
 
+                logger.LogInformation("Admin statistics retrieved successfully");
                 return Ok(new ApiResponse<object>(true, "System statistics retrieved successfully", stats));
             }
             catch (Exception ex)

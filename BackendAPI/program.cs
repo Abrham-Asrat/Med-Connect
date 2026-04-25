@@ -21,6 +21,8 @@ using BackendAPI.Source.Service.BlogService;
 using BackendAPI.Source.Service.ChatService;
 using BackendAPI.Source.Hubs;
 using BackendAPI.Source.Filters.Error;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Diagnostics;
 
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -77,6 +79,27 @@ var builder = WebApplication.CreateBuilder(args);
       options.UseSqlServer(connectionString);
     }
   );
+
+  // Health Checks
+  builder.Services.AddHealthChecks()
+    .AddCheck("API", () => HealthCheckResult.Healthy("API is running"))
+    .AddAsyncCheck("Database", async (cancellationToken) =>
+    {
+      try
+      {
+        using var scope = builder.Services.BuildServiceProvider().CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var canConnect = await dbContext.Database.CanConnectAsync(cancellationToken);
+        
+        return canConnect 
+          ? HealthCheckResult.Healthy("Database connection successful")
+          : HealthCheckResult.Unhealthy("Database connection failed");
+      }
+      catch (Exception ex)
+      {
+        return HealthCheckResult.Unhealthy($"Database check failed: {ex.Message}");
+      }
+    });
 
 
 
@@ -152,7 +175,29 @@ var builder = WebApplication.CreateBuilder(args);
     };
     });
 
-  // Configure Authorization
+  // Configure Authorization Policies
+  builder.Services.AddAuthorization(options =>
+  {
+    // Admin-only policy
+    options.AddPolicy("AdminOnly", policy =>
+      policy.RequireRole("Admin"));
+
+    // Doctor-only policy
+    options.AddPolicy("DoctorOnly", policy =>
+      policy.RequireRole("Doctor"));
+
+    // Patient-only policy
+    options.AddPolicy("PatientOnly", policy =>
+      policy.RequireRole("Patient"));
+
+    // Admin or Doctor policy
+    options.AddPolicy("AdminOrDoctor", policy =>
+      policy.RequireRole("Admin", "Doctor"));
+
+    // Any authenticated user policy
+    options.AddPolicy("AuthenticatedUser", policy =>
+      policy.RequireAuthenticatedUser());
+  });
 
 
   // Register Validation Services
@@ -293,7 +338,48 @@ var app = builder.Build();
   app.UseAuthentication();
   app.UseAuthorization();
   app.UseSerilogRequestLogging(); // Enable Serilog Request Logging
+  
+  // Map SignalR Hubs for real-time communication
+  app.MapHub<ChatHub>("/chatHub");
+  app.MapHub<NotificationHub>("/notificationHub");
+  
   app.MapControllers();
+
+  // Health Check Endpoints
+  app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+  {
+    ResponseWriter = async (context, report) =>
+    {
+      var result = new
+      {
+        status = report.Status.ToString(),
+        uptime = DateTime.UtcNow - Process.GetCurrentProcess().StartTime,
+        checks = report.Entries.Select(e => new
+        {
+          component = e.Key,
+          status = e.Value.Status.ToString(),
+          description = e.Value.Description,
+          duration = e.Value.Duration.ToString()
+        })
+      };
+
+      context.Response.ContentType = "application/json";
+      var json = System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions 
+      { 
+        WriteIndented = true 
+      });
+      await context.Response.WriteAsync(json);
+    }
+  });
+
+  // Simple health check (just returns status code)
+  app.MapHealthChecks("/health/simple");
+
+  // Ready check (for load balancers)
+  app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+  {
+    Predicate = _ => true
+  });
 
 
   if (app.Environment.IsDevelopment())

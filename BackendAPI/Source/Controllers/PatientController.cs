@@ -4,11 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using BackendAPI.Source.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BackendAPI.Source.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // All patient endpoints require authentication
     public class PatientController(PatientService patientService , ILogger<PatientController> logger): ControllerBase
     {
         // <Summary>

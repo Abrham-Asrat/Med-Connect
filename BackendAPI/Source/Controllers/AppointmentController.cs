@@ -10,6 +10,7 @@ using BackendAPI.Source.Validation.AppointmentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using BackendAPI.Source.Helpers.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 
 
@@ -18,6 +19,7 @@ namespace BackendAPI.Source.Controllers
 
 [ApiController]
 [Route("api/appointments")]
+[Authorize] // All appointment endpoints require authentication
 public class AppointmentController(
   AppointmentService appointmentService,
   ILogger<AppointmentController> logger,

@@ -622,6 +622,213 @@ namespace BackendAPI.Source.Service
     return await appContext.Doctors.AnyAsync(d => d.UserId == userId);
   }
 
+  /// <summary>
+  /// Approves a doctor's registration, marking them as verified and active
+  /// </summary>
+  /// <param name="doctorId">The ID of the doctor to approve</param>
+  /// <param name="adminNotes">Optional notes from the admin</param>
+  /// <returns>DoctorApprovalResponse with the updated status</returns>
+  public async Task<ServiceResponse<DoctorApprovalResponse>> ApproveDoctorAsync(Guid doctorId, string? adminNotes = null)
+  {
+    try
+    {
+      var doctor = await appContext.Doctors.FindAsync(doctorId);
+      
+      if (doctor == null)
+      {
+        return new ServiceResponse<DoctorApprovalResponse>(false, 404, null, "Doctor not found");
+      }
+
+      if (doctor.IsVerified)
+      {
+        return new ServiceResponse<DoctorApprovalResponse>(false, 400, null, "Doctor is already verified");
+      }
+
+      doctor.IsVerified = true;
+      doctor.DoctorStatus = DoctorStatus.Active;
+      
+      await appContext.SaveChangesAsync();
+
+      var response = new DoctorApprovalResponse
+      {
+        DoctorId = doctor.DoctorId,
+        IsVerified = doctor.IsVerified,
+        DoctorStatus = doctor.DoctorStatus,
+        Message = "Doctor approved successfully"
+      };
+
+      return new ServiceResponse<DoctorApprovalResponse>(true, 200, response, "Doctor approved successfully");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to approve doctor with ID: {DoctorId}", doctorId);
+      return new ServiceResponse<DoctorApprovalResponse>(false, 500, null, "An error occurred while approving the doctor");
+    }
+  }
+
+  /// <summary>
+  /// Rejects a doctor's registration with a reason
+  /// </summary>
+  /// <param name="doctorId">The ID of the doctor to reject</param>
+  /// <param name="reason">The reason for rejection</param>
+  /// <returns>DoctorApprovalResponse with the updated status</returns>
+  public async Task<ServiceResponse<DoctorApprovalResponse>> RejectDoctorAsync(Guid doctorId, string reason)
+  {
+    try
+    {
+      if (string.IsNullOrWhiteSpace(reason))
+      {
+        return new ServiceResponse<DoctorApprovalResponse>(false, 400, null, "Rejection reason is required");
+      }
+
+      var doctor = await appContext.Doctors.FindAsync(doctorId);
+      
+      if (doctor == null)
+      {
+        return new ServiceResponse<DoctorApprovalResponse>(false, 404, null, "Doctor not found");
+      }
+
+      if (doctor.IsVerified)
+      {
+        return new ServiceResponse<DoctorApprovalResponse>(false, 400, null, "Cannot reject an already verified doctor");
+      }
+
+      doctor.IsVerified = false;
+      doctor.DoctorStatus = DoctorStatus.Inactive;
+      
+      await appContext.SaveChangesAsync();
+
+      var response = new DoctorApprovalResponse
+      {
+        DoctorId = doctor.DoctorId,
+        IsVerified = doctor.IsVerified,
+        DoctorStatus = doctor.DoctorStatus,
+        Message = $"Doctor rejected. Reason: {reason}"
+      };
+
+      return new ServiceResponse<DoctorApprovalResponse>(true, 200, response, "Doctor rejected successfully");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to reject doctor with ID: {DoctorId}", doctorId);
+      return new ServiceResponse<DoctorApprovalResponse>(false, 500, null, "An error occurred while rejecting the doctor");
+    }
+  }
+
+  /// <summary>
+  /// Gets all pending (unverified) doctors waiting for approval
+  /// </summary>
+  /// <returns>List of pending doctors</returns>
+  public async Task<ServiceResponse<List<PendingDoctorDto>>> GetPendingDoctorsAsync()
+  {
+    try
+    {
+      var pendingDoctors = await appContext.Doctors
+        .Where(d => !d.IsVerified)
+        .Include(d => d.User)
+        .Include(d => d.DoctorSpecialties)
+          .ThenInclude(ds => ds.Specialty)
+        .Include(d => d.Cv)
+        .ToListAsync();
+
+      var pendingDoctorDtos = pendingDoctors.Select(d => new PendingDoctorDto
+      {
+        DoctorId = d.DoctorId,
+        UserId = d.UserId,
+        FirstName = d.User.FirstName,
+        LastName = d.User.LastName,
+        Email = d.User.Email,
+        Qualifications = d.Qualifications,
+        Biography = d.Biography,
+        Specialties = d.DoctorSpecialties
+          .Where(ds => ds.Specialty != null)
+          .Select(ds => ds.Specialty!.SpecialtyName)
+          .ToList(),
+        RegisteredAt = d.User.CreatedAt,
+        CvUrl = d.Cv?.Url
+      }).ToList();
+
+      return new ServiceResponse<List<PendingDoctorDto>>(true, 200, pendingDoctorDtos, "Pending doctors retrieved successfully");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to get pending doctors");
+      return new ServiceResponse<List<PendingDoctorDto>>(false, 500, null, "An error occurred while retrieving pending doctors");
+    }
+  }
+
+  /// <summary>
+  /// Gets all verified doctors
+  /// </summary>
+  /// <returns>List of verified doctors</returns>
+  public async Task<ServiceResponse<List<DoctorProfileDto>>> GetVerifiedDoctorsAsync()
+  {
+    try
+    {
+      var doctors = await appContext.Doctors
+        .Where(d => d.IsVerified)
+        .AsNoTracking()
+        .Include(d => d.User)
+        .Include(d => d.DoctorAvailabilities)
+        .Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty)
+        .Include(d => d.Educations)
+        .Include(d => d.Experiences)
+        .ToListAsync();
+
+      var doctorUsers = doctors.Select(d => d.ToDoctorProfileDto(
+        d.User,
+        d.DoctorAvailabilities,
+        d.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds => ds.Specialty!).ToList(),
+        d.Educations,
+        d.Experiences
+      )).ToList();
+
+      return new ServiceResponse<List<DoctorProfileDto>>(true, 200, doctorUsers, "Verified doctors fetched successfully");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "An error occurred while fetching verified doctors.");
+      return new ServiceResponse<List<DoctorProfileDto>>(false, 500, null, "An error occurred while fetching verified doctors");
+    }
+  }
+
+  /// <summary>
+  /// Updates doctor status (Active, Inactive, OnLeave, Retired)
+  /// </summary>
+  /// <param name="doctorId">The ID of the doctor</param>
+  /// <param name="status">The new status</param>
+  /// <returns>Service response with updated doctor status</returns>
+  public async Task<ServiceResponse<DoctorApprovalResponse>> UpdateDoctorStatusAsync(Guid doctorId, DoctorStatus status)
+  {
+    try
+    {
+      var doctor = await appContext.Doctors.FindAsync(doctorId);
+      
+      if (doctor == null)
+      {
+        return new ServiceResponse<DoctorApprovalResponse>(false, 404, null, "Doctor not found");
+      }
+
+      doctor.DoctorStatus = status;
+      await appContext.SaveChangesAsync();
+
+      var response = new DoctorApprovalResponse
+      {
+        DoctorId = doctor.DoctorId,
+        IsVerified = doctor.IsVerified,
+        DoctorStatus = doctor.DoctorStatus,
+        Message = $"Doctor status updated to {status}"
+      };
+
+      return new ServiceResponse<DoctorApprovalResponse>(true, 200, response, "Doctor status updated successfully");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to update doctor status for ID: {DoctorId}", doctorId);
+      return new ServiceResponse<DoctorApprovalResponse>(false, 500, null, "An error occurred while updating doctor status");
+    }
+  }
+
 
     }
 }

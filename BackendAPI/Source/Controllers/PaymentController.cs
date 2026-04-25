@@ -14,11 +14,13 @@ using BackendAPI.Source.Helpers;
 using BackendAPI.Source.Config;
 using BackendAPI.Source.Models.Interface.Payments;
 using BackendAPI.Source.Helpers.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BackendAPI.Source.Controllers
 {
     [ApiController]
     [Route("api/payments")]
+    [Authorize] // All payment endpoints require authentication
     public partial class PaymentController(
         IPaymentService paymentService,
         ILogger<PaymentController> logger,

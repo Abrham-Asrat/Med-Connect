@@ -90,4 +90,42 @@ namespace BackendAPI.Source.Models.Dto
 
     public record DoctorSchedules(Dictionary<DateOnly, List<DoctorSchedule>> Data);
 
+    // DTO for approving a doctor
+    public record ApproveDoctorDto
+    {
+        public Guid DoctorId { get; set; }
+        public string? AdminNotes { get; set; }
+    }
+
+    // DTO for rejecting a doctor
+    public record RejectDoctorDto
+    {
+        public Guid DoctorId { get; set; }
+        public required string Reason { get; set; }
+    }
+
+    // DTO for doctor approval status response
+    public record DoctorApprovalResponse
+    {
+        public Guid DoctorId { get; set; }
+        public bool IsVerified { get; set; }
+        public DoctorStatus DoctorStatus { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+
+    // DTO for pending doctors list
+    public record PendingDoctorDto
+    {
+        public Guid DoctorId { get; set; }
+        public Guid UserId { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Qualifications { get; set; } = string.Empty;
+        public string Biography { get; set; } = string.Empty;
+        public List<string> Specialties { get; set; } = new();
+        public DateTime RegisteredAt { get; set; }
+        public string? CvUrl { get; set; }
+    }
+
 }

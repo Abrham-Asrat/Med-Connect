@@ -2,9 +2,11 @@ using System.ComponentModel.DataAnnotations;
 using BackendAPI.Source.Service;
 using BackendAPI.Source.Service.ChatService;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/conversations")]
+[Authorize] // All chat endpoints require authentication
 public class ChatController(
   UserService userService,
   IChatService chatService,

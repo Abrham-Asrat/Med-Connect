@@ -6,12 +6,14 @@ using BackendAPI.Source.Models.Enums;
 using BackendAPI.Source.Models.Responses;
 using BackendAPI.Source.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using BackendAPI.Source.Helpers.Default;
 
 namespace BackendAPI.Source.Controllers
 {
     [ApiController]
     [Route("api/doctors")]
+    [Authorize] // All doctor endpoints require authentication
     public class DoctorController(DoctorService doctorService , ILogger<DoctorController> logger) : ControllerBase
     {
         [HttpGet("all")]

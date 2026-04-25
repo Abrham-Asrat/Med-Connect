@@ -21,7 +21,6 @@ namespace BackendAPI.Source.Controllers
 {
     [ApiController]
     [Route("api/[controller]")] // Standardized REST route: /api/users
-    // [Authorize] // 🔒 ALL endpoints require valid Auth0 token
     public class UserController(
         UserService userService,
         // AppConfig appConfig ,
@@ -38,6 +37,7 @@ namespace BackendAPI.Source.Controllers
         // / </summary>
 
         [HttpPost("Register")]
+        [AllowAnonymous] // Registration should be public
         [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 201)]
         [ProducesResponseType(typeof(ApiResponse<object>), 400)]
         [ProducesResponseType(typeof(ApiResponse<object>), 409)]
@@ -89,6 +89,7 @@ namespace BackendAPI.Source.Controllers
         // Login Controller 
         //    </Summary>
         [HttpPost("login")]
+        [AllowAnonymous] // Login should be public
         public async Task<IActionResult> LoginUserAsync(LoginUserDto dto)
         {
             try
@@ -149,7 +150,7 @@ namespace BackendAPI.Source.Controllers
 
         // Get All Users Controller - Admin Only Access
         [HttpGet("all")]
-
+        // [Authorize(Roles = "Admin")] // Only admins can view all users
         public async Task<IActionResult> GetAllUsers()
         {
             try
@@ -172,6 +173,7 @@ namespace BackendAPI.Source.Controllers
         }
         // update user Profile Controller 
         [HttpPut("profile")]
+        [Authorize] // Must be authenticated to update profile
         public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateProfileDto dto)
         {
             try
@@ -207,8 +209,8 @@ namespace BackendAPI.Source.Controllers
         }
 
         // Delete User Profile Controller
-
         [HttpDelete("{userId}")]
+        [Authorize] // Must be authenticated to delete user
         public async Task<IActionResult> DeleteUser(Guid userId)
         {
             try
@@ -231,6 +233,7 @@ namespace BackendAPI.Source.Controllers
 
         // Get user profile by user id
         [HttpGet("{userId}")]
+        [Authorize] // Must be authenticated to view user profile
         public async Task<IActionResult> GetUserProfile(Guid userId)
         {
             try

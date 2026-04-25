@@ -7,9 +7,11 @@ using BackendAPI.Source.Service;
 using BackendAPI.Source.Service.BlogService;
 using BackendAPI.Source.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/blogs")]
+[Authorize] // All blog endpoints require authentication
 public class BlogController : ControllerBase
 {
   private readonly IBlogService _blogService;

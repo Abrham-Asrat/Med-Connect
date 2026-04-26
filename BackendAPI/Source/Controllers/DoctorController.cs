@@ -62,10 +62,13 @@ namespace BackendAPI.Source.Controllers
                 
                 return Ok(response);
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                logger.LogError("An error occurred while fetching doctors by specialty.");
-                throw new Exception("An error occurred while fetching doctors by specialty.");
+                logger.LogError(ex, 
+                    "Failed to fetch doctors by specialty '{Specialty}'. Error: {ExceptionType} - {Message}", 
+                    specialtyName, ex.GetType().Name, ex.Message);
+                
+                throw new Exception($"Failed to fetch doctors by specialty '{specialtyName}': {ex.Message}", ex);
             }
         }
    
@@ -89,10 +92,13 @@ namespace BackendAPI.Source.Controllers
                 
                 return Ok(response);
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                logger.LogError(ex, 
+                    "Failed to search doctors by name '{DoctorName}'. Error: {ExceptionType} - {Message}", 
+                    doctorName, ex.GetType().Name, ex.Message);
                 
-                throw;
+                throw new Exception($"Failed to search doctors by name '{doctorName}': {ex.Message}", ex);
             }
         }
     
@@ -115,10 +121,13 @@ namespace BackendAPI.Source.Controllers
 
                 return Ok(response);
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                logger.LogError("An error occurred while fetching doctor availabilities.");
-                throw new Exception("An error occurred while fetching doctor availabilities.");
+                logger.LogError(ex, 
+                    "Failed to fetch availabilities for doctor ID '{DoctorId}'. Error: {ExceptionType} - {Message}", 
+                    doctorId, ex.GetType().Name, ex.Message);
+                
+                throw new Exception($"Failed to fetch availabilities for doctor {doctorId}: {ex.Message}", ex);
             }
         }
     

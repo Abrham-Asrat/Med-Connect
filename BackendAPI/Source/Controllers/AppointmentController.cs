@@ -58,9 +58,13 @@ public class AppointmentController(
 
       return StatusCode(response.StatusCode, response);
     }
-    catch (Exception)
+    catch (Exception ex)
     {
-      throw;
+      logger.LogError(ex, 
+          "Failed to create appointment. Error: {ExceptionType} - {Message}", 
+          ex.GetType().Name, ex.Message);
+      
+      throw new Exception($"Failed to create appointment: {ex.Message}", ex);
     }
   }
 

@@ -156,6 +156,49 @@ namespace BackendAPI.Source.Data
 
             // Configure ConversationMembershipModel relationships to avoid multiple cascade paths
           
+
+            // Add indexes for frequently queried fields
+            modelBuilder.Entity<UserModel>()
+                .HasIndex(u => u.Email)
+                .IsUnique()
+                .HasDatabaseName("IX_Users_Email");
+
+            modelBuilder.Entity<UserModel>()
+                .HasIndex(u => u.Phone)
+                .IsUnique()
+                .HasDatabaseName("IX_Users_Phone");
+
+            modelBuilder.Entity<UserModel>()
+                .HasIndex(u => u.Auth0Id)
+                .IsUnique()
+                .HasDatabaseName("IX_Users_Auth0Id");
+
+            modelBuilder.Entity<Appointment>()
+                .HasIndex(a => a.DoctorId)
+                .HasDatabaseName("IX_Appointments_DoctorId");
+
+            modelBuilder.Entity<Appointment>()
+                .HasIndex(a => a.PatientId)
+                .HasDatabaseName("IX_Appointments_PatientId");
+
+            modelBuilder.Entity<Appointment>()
+                .HasIndex(a => new { a.DoctorId, a.AppointmentDate, a.AppointmentTime })
+                .HasDatabaseName("IX_Appointments_Doctor_Date_Time");
+
+            modelBuilder.Entity<Payment>()
+                .HasIndex(p => p.TransactionReference)
+                .IsUnique()
+                .HasDatabaseName("IX_Payments_TransactionReference");
+
+            modelBuilder.Entity<DoctorModel>()
+                .HasIndex(d => d.UserId)
+                .IsUnique()
+                .HasDatabaseName("IX_Doctors_UserId");
+
+            modelBuilder.Entity<PatientModel>()
+                .HasIndex(p => p.UserId)
+                .IsUnique()
+                .HasDatabaseName("IX_Patients_UserId");
         }
     }
 }

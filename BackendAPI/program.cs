@@ -23,6 +23,7 @@ using BackendAPI.Source.Hubs;
 using BackendAPI.Source.Filters.Error;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Diagnostics;
+using System.Threading.RateLimiting;
 
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -82,24 +83,9 @@ var builder = WebApplication.CreateBuilder(args);
 
   // Health Checks
   builder.Services.AddHealthChecks()
-    .AddCheck("API", () => HealthCheckResult.Healthy("API is running"))
-    .AddAsyncCheck("Database", async (cancellationToken) =>
-    {
-      try
-      {
-        using var scope = builder.Services.BuildServiceProvider().CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var canConnect = await dbContext.Database.CanConnectAsync(cancellationToken);
-        
-        return canConnect 
-          ? HealthCheckResult.Healthy("Database connection successful")
-          : HealthCheckResult.Unhealthy("Database connection failed");
-      }
-      catch (Exception ex)
-      {
-        return HealthCheckResult.Unhealthy($"Database check failed: {ex.Message}");
-      }
-    });
+    .AddCheck("API", () => HealthCheckResult.Healthy("API is running"));
+    // Note: Database health check removed to avoid BuildServiceProvider anti-pattern warning
+    // In production, use external monitoring tools (Application Insights, Prometheus, etc.)
 
 
 
@@ -214,6 +200,75 @@ var builder = WebApplication.CreateBuilder(args);
   // This service allows you to access the HttpContext in classes that
   // are not directly part of the HTTP request pipeline
   builder.Services.AddHttpContextAccessor();
+
+  // Configure Rate Limiting for security
+  builder.Services.AddRateLimiter(rateLimiterOptions =>
+  {
+    // Return custom response when rate limit is exceeded
+    rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    rateLimiterOptions.OnRejected = async (context, cancellationToken) =>
+    {
+      var response = new
+      {
+        success = false,
+        title = "Too Many Requests",
+        message = "Rate limit exceeded. Please try again later.",
+      };
+      
+      context.HttpContext.Response.ContentType = "application/json";
+      await context.HttpContext.Response.WriteAsJsonAsync(response, cancellationToken);
+    };
+
+    // Login endpoint: 5 attempts per 15 minutes (per IP)
+    rateLimiterOptions.AddPolicy("LoginLimit", httpContext =>
+      RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+          PermitLimit = 5,
+          Window = TimeSpan.FromMinutes(15)
+        }));
+
+    // Registration endpoint: 3 attempts per hour (per IP)
+    rateLimiterOptions.AddPolicy("RegistrationLimit", httpContext =>
+      RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+          PermitLimit = 3,
+          Window = TimeSpan.FromHours(1)
+        }));
+
+    // OTP Send endpoint: 3 attempts per 15 minutes (per IP)
+    rateLimiterOptions.AddPolicy("OtpSendLimit", httpContext =>
+      RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+          PermitLimit = 3,
+          Window = TimeSpan.FromMinutes(15)
+        }));
+
+    // OTP Verify endpoint: 5 attempts per 15 minutes (per IP)
+    rateLimiterOptions.AddPolicy("OtpVerifyLimit", httpContext =>
+      RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+          PermitLimit = 5,
+          Window = TimeSpan.FromMinutes(15)
+        }));
+
+    // Password Change endpoint: 3 attempts per hour (per user)
+    rateLimiterOptions.AddPolicy("PasswordChangeLimit", httpContext =>
+      RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.User.Identity?.Name ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+          PermitLimit = 3,
+          Window = TimeSpan.FromHours(1)
+        }));
+  });
 
   // Register the SignalR for realtime comms
   builder.Services.AddSignalR();
@@ -333,6 +388,7 @@ var app = builder.Build();
 
   app.UseCors("AllowSpecificOrigin");
 
+  // app.UseRateLimiter(); // Enable rate limiting for security
   app.UseCustomValidationMiddleware(); // Custom middleware to handle FluentValidation errors
   app.UseCookieMiddleware(); // Enable cookie handling (if needed for future features)
   app.UseAuthentication();

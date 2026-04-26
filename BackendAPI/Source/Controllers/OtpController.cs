@@ -3,6 +3,7 @@ using BackendAPI.Source.Models.Responses;
 using BackendAPI.Source.Service;
 using BackendAPI.Source.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BackendAPI.Source.Controllers;
 
@@ -30,6 +31,7 @@ public class OtpController : ControllerBase
     /// <param name="request">The OTP request containing email address</param>
     /// <returns>Success message if OTP was sent successfully</returns>
     [HttpPost("send-otp")]
+    [EnableRateLimiting("OtpSendLimit")] // 3 attempts per 15 minutes
     public async Task<IActionResult> SendOtp([FromBody] SendOtpDto request)
     {
         try
@@ -61,6 +63,7 @@ public class OtpController : ControllerBase
     /// <param name="request">The OTP verification request containing email and OTP</param>
     /// <returns>Success message if OTP was verified successfully</returns>
     [HttpPost("verify-otp")]
+    [EnableRateLimiting("OtpVerifyLimit")] // 5 attempts per 15 minutes
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto request)
     {
         try

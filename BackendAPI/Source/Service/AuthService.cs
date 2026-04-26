@@ -4,6 +4,7 @@ using BackendAPI.Source.Services;
 using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Models.ViewModel;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace BackendAPI.Source.Service
 {
@@ -39,8 +40,8 @@ namespace BackendAPI.Source.Service
                     throw new ArgumentException("User not found.");
                 }
 
-                // 2. Generate a 6-digit random OTP
-                var otp = new Random().Next(100000, 999999);
+                // 2. Generate a 6-digit random OTP using cryptographically secure random number generator
+                var otp = RandomNumberGenerator.GetInt32(100000, 999999);
                 
                 // 3. Update the user entity directly
                 user.Otp = otp;

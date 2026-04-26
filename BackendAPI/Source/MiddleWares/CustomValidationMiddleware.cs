@@ -219,11 +219,13 @@ internal static class ExceptionHandler
     httpContext.Response.ContentType = System.Net.Mime.MediaTypeNames.Application.ProblemJson;
     httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
+    var env = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+    
     var errorResponse = new
     {
       title = "Internal server error",
-      message = ex.Message,
-      errors = ex.Message
+      message = env.IsDevelopment() ? ex.Message : "An internal error occurred. Please try again later.",
+      errors = env.IsDevelopment() ? ex.Message : null
     };
 
     await httpContext.Response.WriteAsync(

@@ -177,7 +177,47 @@ namespace BackendAPI.Source.Service.PaymentService
             }
         }
 
-        public Task<IVerifyResponse> VerifyAsync(IVerifyRequest verifyRequest) =>
-          throw new NotImplementedException();
+        public async Task<IVerifyResponse> VerifyAsync(IVerifyRequest verifyRequest)
+        {
+            try
+            {
+                logger.LogInformation("Verifying payment transaction: {TransactionReference}", 
+                    verifyRequest.TransactionReference);
+
+                // Find the payment provider from the transaction
+                // For now, we'll use Chapa as default (can be enhanced to detect provider from transaction)
+                IPaymentProvider provider = paymentProviderFactory.GetProvider(PaymentProvider.Chapa);
+                
+                var verifyResponse = await provider.VerifyAsync(verifyRequest);
+                
+                if (verifyResponse.Success)
+                {
+                    // Update payment status in database
+                    var payment = await appContext.Payments.FirstOrDefaultAsync(p => 
+                        p.TransactionReference == verifyRequest.TransactionReference);
+                    
+                    if (payment != null)
+                    {
+                        payment.PaymentStatus = PaymentStatus.Success;
+                        await appContext.SaveChangesAsync();
+                        logger.LogInformation("Payment verified and status updated to Success: {TransactionReference}", 
+                            verifyRequest.TransactionReference);
+                    }
+                    else
+                    {
+                        logger.LogWarning("Payment record not found for transaction: {TransactionReference}", 
+                            verifyRequest.TransactionReference);
+                    }
+                }
+                
+                return verifyResponse;
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Error verifying payment transaction: {TransactionReference}", 
+                    verifyRequest.TransactionReference);
+                throw;
+            }
+        }
     }
 }

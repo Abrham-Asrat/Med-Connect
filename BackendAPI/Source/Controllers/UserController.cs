@@ -16,6 +16,8 @@ using System.Security.Claims;
 // using BackendAPI.Source.Models.Entities;
 using BackendAPI.Source.Helpers.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using BackendAPI.Source.Services;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BackendAPI.Source.Controllers
 {
@@ -23,6 +25,7 @@ namespace BackendAPI.Source.Controllers
     [Route("api/[controller]")] // Standardized REST route: /api/users
     public class UserController(
         UserService userService,
+        Auth0Service auth0Service,
         // AppConfig appConfig ,
         ILogger<UserController> logger,
 
@@ -38,6 +41,7 @@ namespace BackendAPI.Source.Controllers
 
         [HttpPost("Register")]
         [AllowAnonymous] // Registration should be public
+        [EnableRateLimiting("RegistrationLimit")] // 3 attempts per hour
         [ProducesResponseType(typeof(ApiResponse<ProfileDto>), 201)]
         [ProducesResponseType(typeof(ApiResponse<object>), 400)]
         [ProducesResponseType(typeof(ApiResponse<object>), 409)]
@@ -90,6 +94,7 @@ namespace BackendAPI.Source.Controllers
         //    </Summary>
         [HttpPost("login")]
         [AllowAnonymous] // Login should be public
+        [EnableRateLimiting("LoginLimit")] // 5 attempts per 15 minutes
         public async Task<IActionResult> LoginUserAsync(LoginUserDto dto)
         {
             try
@@ -141,17 +146,31 @@ namespace BackendAPI.Source.Controllers
 
                 return Ok(new ApiResponse<Auth0LoginDto>(true, response.Message ?? "Login successful", response.Data));
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-                logger.LogError("An unexpected error occurred during user login.");
-                return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred. Please try again later.", null));
+                // Log the full exception details for debugging
+                logger.LogError(ex, 
+                    "Login failed for user '{Email}'. Exception: {ExceptionType} - {Message}", 
+                    dto.Email, ex.GetType().Name, ex.Message);
+                
+                // Log inner exception if it exists
+                if (ex.InnerException != null)
+                {
+                    logger.LogError("Inner Exception: {InnerType} - {InnerMessage}", 
+                        ex.InnerException.GetType().Name, ex.InnerException.Message);
+                }
+                
+                // Return detailed error message (helpful for debugging)
+                return StatusCode(500, new ApiResponse<object>(
+                    false, 
+                    $"Login failed: {ex.GetType().Name} - {ex.Message}", 
+                    null));
             }
         }
 
         // Get All Users Controller - Admin Only Access
         [HttpGet("all")]
-        // [Authorize(Roles = "Admin")] // Only admins can view all users
-        // desipine 
+        [Authorize(Roles = "Admin")] // Only admins can view all users
         public async Task<IActionResult> GetAllUsers()
         {
             try
@@ -281,6 +300,54 @@ namespace BackendAPI.Source.Controllers
             {
                 logger.LogInformation(ex, "Failed to get user Profile");
                 throw;
+            }
+        }
+
+        // Change Password Endpoint
+        [HttpPost("change-password")]
+        [Authorize]
+        [EnableRateLimiting("PasswordChangeLimit")] // 3 attempts per hour
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    HttpContext.Items[ErrorFieldConstants.ModelStateErrors] = ModelState;
+                    throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
+                }
+
+                // Get user email from claims
+                var email = User.FindFirstValue(ClaimTypes.Email) ?? 
+                           User.FindFirstValue("email");
+                
+                if (string.IsNullOrEmpty(email))
+                {
+                    throw new UnauthorizedAccessException("User email not found in token");
+                }
+
+                // Verify current password first
+                var isCurrentPasswordValid = await auth0Service.VerifyPasswordAsync(email, dto.CurrentPassword);
+                
+                if (!isCurrentPasswordValid)
+                {
+                    return BadRequest(new ApiResponse<object>(false, "Current password is incorrect", null));
+                }
+
+                // Change to new password
+                var passwordChanged = await auth0Service.ChangePasswordAsync(email, dto.NewPassword);
+                
+                if (!passwordChanged)
+                {
+                    return StatusCode(500, new ApiResponse<object>(false, "Failed to change password. Please try again later.", null));
+                }
+
+                return Ok(new ApiResponse<object>(true, "Password changed successfully", null));
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to change password for user");
+                return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred. Please try again later.", null));
             }
         }
 

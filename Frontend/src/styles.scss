@@ -1,0 +1,112 @@
+// =============================================
+// Med-Connect Main Styles
+// =============================================
+
+// Google Fonts (must be first - this is CSS import, not Sass)
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+// Bootstrap Icons CSS (CSS import, not Sass)
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+// Bootstrap SCSS with overrides
+$primary: #078930;
+$secondary: #007BFF;
+$warning: #FCD116;
+$danger: #DA121A;
+$success: #078930;
+$info: #007BFF;
+$light: #F8F9FA;
+$dark: #1A1A1A;
+$font-family-sans-serif: 'Inter', system-ui, -apple-system, sans-serif;
+$font-family-monospace: 'JetBrains Mono', monospace;
+$border-radius: 0.5rem;
+$border-radius-lg: 0.75rem;
+$btn-font-weight: 700;
+$input-focus-border-color: #078930;
+
+@import 'bootstrap/scss/bootstrap';
+
+// Your custom styles below
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: $light;
+  color: $dark;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: $light;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $primary;
+  border-radius: 3px;
+}
+
+a {
+  color: $secondary;
+  text-decoration: none;
+  &:hover {
+    color: #0056b3;  
+    text-decoration: underline;
+  }
+}
+
+// Ethiopian Green gradient
+.bg-gradient-green {
+  background: linear-gradient(135deg, #078930, #056B24);  
+}
+
+// Status badges
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+
+  &-confirmed,
+  &-completed,
+  &-approved {
+    background: #E8F5EC;  // lighten($primary, 55%)
+    color: #078930;
+  }
+  &-pending {
+    background: #FFF8E1;  // lighten($warning, 35%)
+    color: #B8960F;       // darken($warning, 20%)
+  }
+  &-cancelled,
+  &-rejected {
+    background: #FFEBEE;  // lighten($danger, 35%)
+    color: #DA121A;
+  }
+}
+
+// Pulse animations
+.pulse-green {
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% { box-shadow: 0 0 0 0 rgba($primary, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba($primary, 0); }
+  100% { box-shadow: 0 0 0 0 rgba($primary, 0); }
+}
+
+// Card hover
+.card-hover {
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 24px rgba($primary, 0.12);
+  }
+}

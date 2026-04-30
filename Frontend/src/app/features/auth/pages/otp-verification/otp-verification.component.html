@@ -1,0 +1,161 @@
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light p-4">
+  <div class="w-100" style="max-width: 440px;">
+    
+    <div class="text-center mb-4">
+      <i class="bi bi-heart-pulse text-primary" style="font-size: 48px;"></i>
+      <h4 class="text-primary mt-2">Med-Connect</h4>
+    </div>
+
+    <div class="card shadow">
+      <div class="card-body p-4 text-center">
+
+        <!-- Icon -->
+        <div class="mb-3">
+          @if (!isVerified()) {
+            <div class="rounded-circle bg-primary-light d-inline-flex align-items-center justify-content-center"
+                 style="width: 80px; height: 80px;">
+              <i class="bi bi-envelope-check text-primary" style="font-size: 36px;"></i>
+            </div>
+          } @else {
+            <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center"
+                 style="width: 80px; height: 80px; animation: pulse-green 2s infinite;">
+              <i class="bi bi-check-lg text-white" style="font-size: 40px;"></i>
+            </div>
+          }
+        </div>
+
+        <h4 class="text-primary mb-2">
+          @if (!isVerified()) {
+            Verify Your Email
+          } @else {
+            Email Verified!
+          }
+        </h4>
+        
+        <p class="text-medium mb-4">
+          @if (!isVerified()) {
+            We've sent a 6-digit code to<br>
+            <strong class="text-dark">{{ email() }}</strong>
+          } @else {
+            {{ successMessage() }}
+          }
+        </p>
+
+        <!-- Success State -->
+        @if (isVerified()) {
+          <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ successMessage() }}
+          </div>
+          <a routerLink="/auth/login" class="btn btn-primary w-100">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Go to Login
+          </a>
+        }
+
+        <!-- Error Message -->
+        @if (errorMessage() && !isVerified()) {
+          <div class="alert mb-3 d-flex align-items-center gap-2"
+               [class.alert-danger]="!isLocked()"
+               [class.alert-warning]="isLocked()">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <!-- Success Toast -->
+        @if (successMessage() && !isVerified()) {
+          <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ successMessage() }}
+          </div>
+        }
+
+        @if (!isVerified()) {
+          <!-- OTP Input Boxes -->
+          <div class="otp-container mb-4">
+            <input
+              id="otp1" type="text" inputmode="numeric" maxlength="1"
+              class="otp-input" [class.filled]="otp1()"
+              (input)="onOtpInput($event, 1)" (keydown)="onKeyDown($event, 1)"
+              [disabled]="isLoading() || isLocked()">
+            <input
+              id="otp2" type="text" inputmode="numeric" maxlength="1"
+              class="otp-input" [class.filled]="otp2()"
+              (input)="onOtpInput($event, 2)" (keydown)="onKeyDown($event, 2)"
+              [disabled]="isLoading() || isLocked()">
+            <input
+              id="otp3" type="text" inputmode="numeric" maxlength="1"
+              class="otp-input" [class.filled]="otp3()"
+              (input)="onOtpInput($event, 3)" (keydown)="onKeyDown($event, 3)"
+              [disabled]="isLoading() || isLocked()">
+            <input
+              id="otp4" type="text" inputmode="numeric" maxlength="1"
+              class="otp-input" [class.filled]="otp4()"
+              (input)="onOtpInput($event, 4)" (keydown)="onKeyDown($event, 4)"
+              [disabled]="isLoading() || isLocked()">
+            <input
+              id="otp5" type="text" inputmode="numeric" maxlength="1"
+              class="otp-input" [class.filled]="otp5()"
+              (input)="onOtpInput($event, 5)" (keydown)="onKeyDown($event, 5)"
+              [disabled]="isLoading() || isLocked()">
+            <input
+              id="otp6" type="text" inputmode="numeric" maxlength="1"
+              class="otp-input" [class.filled]="otp6()"
+              (input)="onOtpInput($event, 6)" (keydown)="onKeyDown($event, 6)"
+              [disabled]="isLoading() || isLocked()">
+          </div>
+
+          <!-- Timer & Resend -->
+          <div class="mb-3">
+            @if (!canResend()) {
+              <p class="text-medium mb-0">
+                <i class="bi bi-clock me-1"></i>
+                Resend code in 
+                <strong class="text-primary">{{ formatTime(timer()) }}</strong>
+              </p>
+            } @else {
+              <p class="text-medium mb-0">Didn't receive the code?</p>
+            }
+          </div>
+
+          <button class="btn btn-link text-primary p-0" 
+                  [class.resend-active]="canResend()"
+                  (click)="resendOTP()"
+                  [disabled]="(!canResend() && timer() > 0) || isLoading()">
+            @if (isLoading()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+              Sending...
+            } @else {
+              <i class="bi bi-arrow-repeat me-1"></i>
+              Resend Code
+            }
+          </button>
+
+          <hr class="my-4">
+
+          <!-- Verify Button -->
+          <button class="btn btn-primary w-100 py-2 fw-bold"
+                  (click)="verifyOTP()"
+                  [disabled]="!isOtpComplete() || isLoading() || isLocked()">
+            @if (isLoading()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+              Verifying...
+            } @else {
+              <i class="bi bi-shield-check me-2"></i>
+              Verify Email
+            }
+          </button>
+        }
+
+      </div>
+    </div>
+
+    <!-- Back to Login -->
+    <div class="text-center mt-3">
+      <a routerLink="/auth/login" class="text-medium text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>Back to Login
+      </a>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,173 @@
+<div class="container-fluid p-4">
+  
+  <!-- Welcome Card -->
+  <div class="welcome-card rounded-4 p-4 text-white mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h4 class="mb-1">{{ getGreeting() }}, {{ user()?.firstName || 'Patient' }}! 👋</h4>
+        <p class="mb-2 opacity-75">How are you feeling today?</p>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-light btn-sm rounded-pill mood-btn active">
+            <i class="bi bi-emoji-smile me-1"></i> Great
+          </button>
+          <button class="btn btn-outline-light btn-sm rounded-pill mood-btn">
+            <i class="bi bi-emoji-neutral me-1"></i> Okay
+          </button>
+          <button class="btn btn-outline-light btn-sm rounded-pill mood-btn">
+            <i class="bi bi-emoji-frown me-1"></i> Not Well
+          </button>
+        </div>
+      </div>
+      <div class="col-md-4 text-end d-none d-md-block">
+        <i class="bi bi-heart-pulse" style="font-size: 80px; opacity: 0.3;"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100"><div class="card-body">
+        <p class="text-medium mb-0" style="font-size:13px">Upcoming</p>
+        <h3 class="text-primary mb-0">{{ upcomingAppointments() }}</h3>
+      </div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100"><div class="card-body">
+        <p class="text-medium mb-0" style="font-size:13px">Completed</p>
+        <h3 class="text-primary mb-0">{{ completedAppointments() }}</h3>
+      </div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card pending h-100"><div class="card-body">
+        <p class="text-medium mb-0" style="font-size:13px">Total</p>
+        <h3 class="text-primary mb-0">{{ totalAppointments() }}</h3>
+      </div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100"><div class="card-body">
+        <p class="text-medium mb-0" style="font-size:13px">Favorites</p>
+        <h3 class="text-primary mb-0">5 ⭐</h3>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      
+      <!-- Quick Actions -->
+      <div class="card mb-4"><div class="card-body">
+        <h5 class="text-primary mb-3">Quick Actions</h5>
+        <div class="row g-3">
+          <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/doctors">
+            <i class="bi bi-search text-primary fs-4 d-block mb-1"></i>
+            <small>Find Dr</small>
+          </div>
+          <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2">
+            <i class="bi bi-calendar-plus text-primary fs-4 d-block mb-1"></i>
+            <small>Book</small>
+          </div>
+          <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/chat">
+            <i class="bi bi-chat-dots text-primary fs-4 d-block mb-1"></i>
+            <small>Chat</small>
+          </div>
+          <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2">
+            <i class="bi bi-file-medical text-primary fs-4 d-block mb-1"></i>
+            <small>Records</small>
+          </div>
+          <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2">
+            <i class="bi bi-wallet2 text-primary fs-4 d-block mb-1"></i>
+            <small>Pay</small>
+          </div>
+          <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2">
+            <i class="bi bi-telephone text-danger fs-4 d-block mb-1"></i>
+            <small class="text-danger">Emergency</small>
+          </div>
+        </div>
+      </div></div>
+
+      <!-- Upcoming Appointments -->
+      <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="text-primary mb-0"><i class="bi bi-calendar-check me-2"></i>Upcoming Appointments</h5>
+          <a class="btn btn-outline-primary btn-sm">See All</a>
+        </div>
+        <div class="card-body">
+          @for (apt of appointments(); track apt.id) {
+            <div class="appointment-card card mb-3" [class.pending]="apt.status === 'pending'">
+              <div class="card-body">
+                <div class="row align-items-center">
+                  <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center"
+                           style="width:48px;height:48px;font-size:20px">
+                        {{ apt.doctorName.split(' ')[1]?.charAt(0) || 'D' }}
+                      </div>
+                      <div>
+                        <h6 class="mb-0">{{ apt.doctorName }}</h6>
+                        <small class="text-medium">{{ apt.specialty }}</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3 mt-2 mt-md-0">
+                    <small class="text-medium"><i class="bi bi-calendar me-1"></i>{{ apt.date }}</small><br>
+                    <small class="text-medium"><i class="bi bi-clock me-1"></i>{{ apt.time }}</small><br>
+                    <small>{{ apt.type === 'Online' ? '💻 Online' : '🏥 In-Person' }}</small>
+                  </div>
+                  <div class="col-md-2 mt-2 mt-md-0">
+                    <span class="badge rounded-pill px-3 py-2" [ngClass]="getStatusClass(apt.status)">
+                      {{ apt.status === 'confirmed' ? 'Confirmed' : 'Pending' }}
+                    </span>
+                  </div>
+                  <div class="col-md-3 mt-2 mt-md-0 text-md-end">
+                    @if (apt.status === 'confirmed' && apt.type === 'Online') {
+                      <button class="btn btn-primary btn-sm" (click)="joinCall(apt.meetingLink!)">
+                        <i class="bi bi-camera-video me-1"></i> Join
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      
+      <!-- Health Tip -->
+      <div class="card mb-4"><div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-lightbulb text-warning fs-5"></i>
+          <h6 class="text-primary mb-0">Health Tip</h6>
+        </div>
+        <h6>Stay Hydrated!</h6>
+        <p class="text-medium" style="font-size:14px">Drinking 8 glasses of water daily helps maintain healthy blood pressure.</p>
+        <small class="text-medium">— Dr. Sarah Johnson, Cardiology</small>
+      </div></div>
+
+      <!-- Recommended Doctors -->
+      <div class="card mb-4">
+        <div class="card-header bg-white"><h6 class="text-primary mb-0">⭐ Recommended For You</h6></div>
+        <div class="card-body">
+          @for (doc of recommendedDoctors(); track doc.id) {
+            <div class="doctor-card card mb-2"><div class="card-body py-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:44px;height:44px">{{ doc.name.split(' ')[1]?.charAt(0) || 'D' }}</div>
+                <div>
+                  <h6 class="mb-0" style="font-size:14px">{{ doc.name }}</h6>
+                  <small class="text-medium">{{ doc.specialty }}</small>
+                  <div>⭐{{ doc.rating }} <small class="text-medium">({{ doc.reviewCount }})</small> <small class="text-primary fw-bold ms-1">{{ doc.fee }} ETB</small></div>
+                </div>
+              </div>
+            </div></div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

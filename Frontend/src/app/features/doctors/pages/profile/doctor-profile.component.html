@@ -1,0 +1,193 @@
+<div class="container-fluid p-0">
+  
+  <!-- Profile Header -->
+  <div class="profile-header text-white p-4 p-md-5">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="d-flex align-items-center gap-4">
+            <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width:100px;height:100px;font-size:36px;font-weight:700">SJ</div>
+            <div>
+              <h3 class="mb-1">Dr. {{ doctor.firstName }} {{ doctor.lastName }}</h3>
+              <p class="mb-1 opacity-90">{{ doctor.specialty }}</p>
+              <div class="d-flex align-items-center gap-3">
+                <span class="star-filled">{{ getStars(doctor.rating) }}</span>
+                <span>{{ doctor.rating }} ({{ doctor.reviewCount }} reviews)</span>
+              </div>
+              <div class="mt-2">
+                <span class="badge bg-white text-primary me-2"><i class="bi bi-shield-check me-1"></i>Verified</span>
+                <span class="badge bg-white text-primary me-2">{{ doctor.experience }}+ yrs exp</span>
+                <span class="badge bg-white text-primary">{{ doctor.patientCount }}+ patients</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <div class="d-flex gap-2 justify-content-md-end">
+            <button class="btn btn-outline-light btn-sm"><i class="bi bi-share me-1"></i>Share</button>
+            <button class="btn btn-warning btn-sm"><i class="bi bi-heart me-1"></i>Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container py-4">
+    <div class="row g-4">
+      <!-- Main Content -->
+      <div class="col-lg-8">
+        
+        <!-- Tabs -->
+        <div class="d-flex gap-4 mb-4 border-bottom">
+          <a class="text-decoration-none pb-2 cursor-pointer" [class.tab-active]="activeTab() === 'about'" (click)="activeTab.set('about')">About</a>
+          <a class="text-decoration-none pb-2 cursor-pointer text-medium" [class.tab-active]="activeTab() === 'reviews'" (click)="activeTab.set('reviews')">Reviews ({{ doctor.reviewCount }})</a>
+          <a class="text-decoration-none pb-2 cursor-pointer text-medium" [class.tab-active]="activeTab() === 'availability'" (click)="activeTab.set('availability')">Availability</a>
+        </div>
+
+        <!-- ABOUT TAB -->
+        @if (activeTab() === 'about') {
+          <div class="card mb-4"><div class="card-body">
+            <h5 class="text-primary mb-3">About Dr. {{ doctor.firstName }}</h5>
+            <p>{{ doctor.bio }}</p>
+            
+            <h6 class="text-primary mt-4">Education & Training</h6>
+            <ul>
+              @for (edu of doctor.education; track edu) { <li class="mb-1">{{ edu }}</li> }
+            </ul>
+
+            <h6 class="text-primary mt-4">Languages</h6>
+            <div class="d-flex gap-2">
+              @for (lang of doctor.languages; track lang) { <span class="badge bg-primary-light text-primary px-3 py-2">{{ lang }}</span> }
+            </div>
+
+            <h6 class="text-primary mt-4">Professional Memberships</h6>
+            <ul>
+              @for (m of doctor.memberships; track m) { <li>{{ m }}</li> }
+            </ul>
+
+            <h6 class="text-primary mt-4">Awards & Recognition</h6>
+            <ul>
+              @for (a of doctor.awards; track a) { <li class="text-warning-dark"><i class="bi bi-trophy me-1"></i>{{ a }}</li> }
+            </ul>
+
+            <h6 class="text-primary mt-4">Clinic Information</h6>
+            <div class="bg-light rounded p-3">
+              <p class="mb-1"><strong>{{ doctor.clinic.name }}</strong></p>
+              <p class="mb-1 text-medium">{{ doctor.clinic.address }}</p>
+              <p class="mb-1 text-medium"><i class="bi bi-telephone me-1"></i>{{ doctor.clinic.phone }}</p>
+              <p class="mb-0 text-medium"><i class="bi bi-clock me-1"></i>{{ doctor.clinic.hours }}</p>
+            </div>
+          </div></div>
+        }
+
+        <!-- REVIEWS TAB -->
+        @if (activeTab() === 'reviews') {
+          <div class="card mb-4"><div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-4 text-center">
+                <h1 class="text-primary display-4 fw-bold">{{ doctor.rating }}</h1>
+                <div class="star-filled mb-1">{{ getStars(doctor.rating) }}</div>
+                <small class="text-medium">{{ doctor.reviewCount }} reviews</small>
+              </div>
+              <div class="col-md-8">
+                @for (i of [5,4,3,2,1]; track i) {
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <small style="width:60px">{{ i }} star</small>
+                    <div class="rating-bar flex-grow-1"><div class="rating-bar-fill" [style.width.%]="i===5?70:i===4?20:i===3?7:i===2?2:1"></div></div>
+                    <small style="width:30px">{{ i===5?112:i===4?35:i===3?5:i===2?2:1 }}</small>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            @for (r of showAllReviews() ? reviews() : reviews().slice(0, 3); track r.id) {
+              <div class="review-card card mb-3"><div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <strong>{{ r.patient }}</strong>
+                  <div>
+                    <span class="star-filled">{{ getStars(r.rating) }}</span>
+                    <small class="text-medium ms-2">{{ r.date }}</small>
+                  </div>
+                </div>
+                <p class="mt-2 mb-2">{{ r.text }}</p>
+                <div class="d-flex align-items-center gap-3">
+                  @if (r.verified) { <small class="text-primary"><i class="bi bi-shield-check me-1"></i>Verified Visit</small> }
+                  <small class="text-medium"><i class="bi bi-hand-thumbs-up me-1"></i>{{ r.helpful }} found helpful</small>
+                </div>
+              </div></div>
+            }
+            @if (reviews().length > 3) {
+              <button class="btn btn-outline-primary btn-sm w-100" (click)="showAllReviews.set(!showAllReviews())">
+                {{ showAllReviews() ? 'Show Less' : 'Show All ' + reviews().length + ' Reviews' }}
+              </button>
+            }
+          </div></div>
+        }
+
+        <!-- AVAILABILITY TAB -->
+        @if (activeTab() === 'availability') {
+          <div class="card"><div class="card-body">
+            <h5 class="text-primary mb-3">Available Time Slots</h5>
+            <div class="d-flex gap-2 overflow-auto pb-3 mb-3">
+              @for (d of availableDates(); track d.date) {
+                <div class="text-center p-2 rounded-3 flex-shrink-0" style="cursor:pointer; min-width:70px"
+                     [class.bg-primary]="selectedDate() === d.date" [class.text-white]="selectedDate() === d.date"
+                     [class.bg-light]="selectedDate() !== d.date" (click)="selectDate(d.date)">
+                  <small>{{ d.day }}</small><br><strong>{{ d.dayNum }}</strong><br><small>{{ d.month }}</small>
+                </div>
+              }
+            </div>
+            <h6 class="mb-2"><i class="bi bi-sun me-1"></i>Morning</h6>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              @for (slot of morningSlots; track slot) {
+                <span class="badge rounded-pill p-2 px-3 time-slot" [class.selected]="selectedTime()===slot" [class.booked]="isBooked(slot)" [class.bg-light]="!isBooked(slot)&&selectedTime()!==slot" (click)="selectTime(slot)">{{ slot }}</span>
+              }
+            </div>
+            <h6 class="mb-2"><i class="bi bi-sunset me-1"></i>Afternoon</h6>
+            <div class="d-flex flex-wrap gap-2">
+              @for (slot of afternoonSlots; track slot) {
+                <span class="badge rounded-pill p-2 px-3 time-slot" [class.selected]="selectedTime()===slot" [class.booked]="isBooked(slot)" [class.bg-light]="!isBooked(slot)&&selectedTime()!==slot" (click)="selectTime(slot)">{{ slot }}</span>
+              }
+            </div>
+          </div></div>
+        }
+      </div>
+
+      <!-- Sidebar Booking Card -->
+      <div class="col-lg-4">
+        <div class="card booking-card shadow">
+          <div class="card-body">
+            <h6 class="text-primary mb-3">Book Appointment</h6>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-medium">Online Consultation</span>
+              <strong class="text-primary">{{ doctor.onlineFee }} ETB</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-3">
+              <span class="text-medium">In-Person Visit</span>
+              <strong class="text-primary">{{ doctor.inPersonFee }} ETB</strong>
+            </div>
+            <hr>
+            <p class="text-medium mb-1"><i class="bi bi-calendar-check me-1"></i>Next Available</p>
+            <strong class="text-primary">Today, 4:30 PM</strong>
+            <button class="btn btn-primary w-100 mt-3 fw-bold" routerLink="/patient/book-appointment">
+              <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+            </button>
+            <button class="btn btn-outline-primary w-100 mt-2">
+              <i class="bi bi-chat-dots me-2"></i>Send Message
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card mt-3"><div class="card-body text-center">
+          <div class="row">
+            <div class="col-4"><h5 class="text-primary mb-0">97%</h5><small class="text-medium">Satisfaction</small></div>
+            <div class="col-4"><h5 class="text-primary mb-0">{{ doctor.patientCount }}+</h5><small class="text-medium">Patients</small></div>
+            <div class="col-4"><h5 class="text-primary mb-0">{{ doctor.experience }}</h5><small class="text-medium">Years Exp</small></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</div>

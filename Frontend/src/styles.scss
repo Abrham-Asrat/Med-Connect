@@ -110,3 +110,75 @@ a {
     box-shadow: 0 4px 24px rgba($primary, 0.12);
   }
 }
+
+
+// =============================================
+// Sidebar & Mobile Navigation (with transitions)
+// =============================================
+
+.sidebar {
+  width: 280px;
+  min-height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1020;
+  overflow-y: auto;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-content {
+  margin-left: 280px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Overlay fade animation
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// Mobile sidebar slide animation
+@media (max-width: 991.98px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.show {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+// Nav link hover animation
+.sidebar .nav-link {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateX(4px);
+  }
+}
+
+// Mobile hamburger icon rotate
+.hamburger-icon {
+  transition: transform 0.3s ease;
+  
+  &.open {
+    transform: rotate(90deg);
+  }
+}

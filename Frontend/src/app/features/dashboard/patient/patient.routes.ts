@@ -16,6 +16,11 @@ export const PATIENT_ROUTES: Routes = [
         loadComponent: () => import('../../doctors/pages/search/search')
           .then(m => m.DoctorSearchComponent)
       },
+      {
+  path: 'doctors/:id',
+  loadComponent: () => import('../../doctors/pages/profile/doctor-profile.component')
+    .then(m => m.DoctorProfileComponent)
+},
 
       {
         path: 'book-appointment',

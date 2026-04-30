@@ -47,6 +47,8 @@ export const routes: Routes = [
     loadComponent: () => import('./features/errors/pages/server-error/server-error')
       .then(m => m.ServerError)
   },
+
+  { path: 'maintenance', loadComponent: () => import('./features/errors/pages/maintenance/maintenance.component').then(m => m.MaintenanceComponent) },
   
   // Redirect unknown paths
   { path: '**', redirectTo: '404' }

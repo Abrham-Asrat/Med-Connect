@@ -36,7 +36,10 @@ import { NotificationBellComponent } from '../../../shared/components/notificati
       <div class="main-content flex-grow-1 d-flex flex-column">
         <nav class="navbar navbar-light bg-white shadow-sm px-3 py-2">
           <div class="d-flex align-items-center w-100">
-            <button (click)="toggleSidebar()" class="btn btn-link text-primary d-lg-none p-0 me-2"><i class="bi bi-list fs-4"></i></button>
+            <!-- Mobile toggle button with animation -->
+<button (click)="toggleSidebar()" class="btn btn-link text-primary d-lg-none p-0 me-2">
+  <i class="bi fs-4" [class.bi-list]="!sidebarOpen()" [class.bi-x-lg]="sidebarOpen()"></i>
+</button>
             <span class="h5 text-primary mb-0 d-lg-none">Admin Panel</span>
             <div class="ms-auto">
               <app-notification-bell [count]="12"></app-notification-bell>
@@ -47,20 +50,29 @@ import { NotificationBellComponent } from '../../../shared/components/notificati
       </div>
     </div>
 
-    @if (sidebarOpen()) {
-      <div class="sidebar-overlay d-lg-none" (click)="toggleSidebar()">
-        <aside class="sidebar bg-primary d-flex flex-column show" (click)="$event.stopPropagation()">
-          <div class="p-3 text-center border-bottom border-white border-opacity-25"><span class="h5 text-white">Admin Panel</span></div>
-          <nav class="nav flex-column p-3 flex-grow-1">
-            <a routerLink="/admin/dashboard" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1">Dashboard</a>
-            <a routerLink="/admin/verification" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1">Doctor Approvals</a>
-          </nav>
-          <div class="p-3 border-top border-white border-opacity-25">
-            <button (click)="logout()" class="btn btn-outline-light btn-sm w-100">Logout</button>
-          </div>
-        </aside>
+   @if (sidebarOpen()) {
+  <div class="sidebar-overlay d-lg-none" (click)="toggleSidebar()">
+    <aside class="sidebar bg-primary d-flex flex-column show" (click)="$event.stopPropagation()">
+      <div class="p-3 text-center border-bottom border-white border-opacity-25 d-flex justify-content-between align-items-center">
+        <span class="h5 text-white mb-0"><i class="bi bi-shield-check me-2"></i>Admin</span>
+        <button class="btn btn-link text-white p-0" (click)="toggleSidebar()">
+          <i class="bi bi-x-lg fs-5"></i>
+        </button>
       </div>
-    }
+      <nav class="nav flex-column p-3 flex-grow-1">
+        <a routerLink="/admin/dashboard" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+        <a routerLink="/admin/verification" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-person-check me-2"></i>Doctor Approvals</a>
+        <a routerLink="/admin/doctors" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-people me-2"></i>Doctors</a>
+        <a routerLink="/admin/patients" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-people-fill me-2"></i>Patients</a>
+        <a routerLink="/admin/finance" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-graph-up me-2"></i>Finance</a>
+        <a routerLink="/admin/moderation" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-shield me-2"></i>Moderation</a>
+      </nav>
+      <div class="p-3 border-top border-white border-opacity-25">
+        <button (click)="logout()" class="btn btn-outline-light btn-sm w-100">Logout</button>
+      </div>
+    </aside>
+  </div>
+}
   `
 })
 export class AdminLayoutComponent {

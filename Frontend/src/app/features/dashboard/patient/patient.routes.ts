@@ -39,7 +39,7 @@ export const PATIENT_ROUTES: Routes = [
        { path: 'notifications', loadComponent: () => import('../../notifications/pages/notifications/notifications.component').then(m => m.NotificationsComponent) },
        { path: 'appointments', loadComponent: () => import('../../appointments/pages/my-appointments/my-appointments.component').then(m => m.MyAppointmentsComponent) },
       { path: 'settings', loadComponent: () => import('../../settings/pages/settings/settings.component').then(m => m.SettingsComponent) },
-      { path: 'ai-assistant', loadComponent: () => import('../../ai-assistant/pages/ai-assistant/ai-assistant.component').then(m => m.AIAssistantComponent) },
+      
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

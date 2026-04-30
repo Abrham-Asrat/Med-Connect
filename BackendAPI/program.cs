@@ -89,21 +89,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 
-  builder.Services.AddCors(
-    (options) =>
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
     {
-      options.AddPolicy(
-        "AllowSpecificOrigin",
-        b =>
-        {
-          var config = new AppConfig(builder.Configuration);
-          Log.Logger.Information($"\n\nALlowedOrigins: {config.AllowedOrigins}");
-
-          b.WithOrigins(config.AllowedOrigins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
-        }
-      );
-    }
-  );
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
   /*
       Add Services to the Container
@@ -386,7 +381,7 @@ var app = builder.Build();
 
 
 
-  app.UseCors("AllowSpecificOrigin");
+  app.UseCors("AllowAngular");
 
   // app.UseRateLimiter(); // Enable rate limiting for security
   app.UseCustomValidationMiddleware(); // Custom middleware to handle FluentValidation errors

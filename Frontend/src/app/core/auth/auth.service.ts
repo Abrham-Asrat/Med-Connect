@@ -12,11 +12,9 @@ export class AuthService {
   private router = inject(Router);
   private apiUrl = environment.apiUrl;
 
-  // State with Signals
   private currentUserSignal = signal<User | null>(null);
   private tokenSignal = signal<string | null>(localStorage.getItem('token'));
 
-  // Computed values
   readonly currentUser = computed(() => this.currentUserSignal());
   readonly token = computed(() => this.tokenSignal());
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
@@ -29,52 +27,92 @@ export class AuthService {
   private loadUserFromStorage(): void {
     const userStr = localStorage.getItem('user');
     if (userStr) {
-      try {
-        this.currentUserSignal.set(JSON.parse(userStr));
-      } catch {
-        this.logout();
-      }
+      try { this.currentUserSignal.set(JSON.parse(userStr)); }
+      catch { this.logout(); }
     }
   }
 
-  login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/user/login`, credentials)
+  // ✅ POST /api/User/login
+ login(credentials: LoginRequest): Observable<any> {
+    return this.http.post(`${this.apiUrl}/User/login`, credentials)
       .pipe(tap(response => {
-        if (response.success) this.setSession(response);
+        console.log('Raw login response:', JSON.stringify(response, null, 2));
+        if (response) {
+          this.setSession(response);
+        }
       }));
   }
 
+  // ✅ POST /api/User/Register
   register(data: RegisterRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/user/register`, data);
+    return this.http.post(`${this.apiUrl}/User/Register`, data);
   }
 
+  // ✅ POST /api/verify-otp
   verifyOTP(email: string, otp: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/user/verify-otp`, { email, otp });
+    return this.http.post(`${this.apiUrl}/verify-otp`, { email, otp: Number(otp) });
   }
 
+  // ✅ POST /api/send-otp
   resendOTP(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/user/resend-otp`, { email });
+    return this.http.post(`${this.apiUrl}/send-otp`, { email });
+  }
+
+  // ✅ GET /api/User/profile/me
+  getProfile(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/User/profile/me`);
+  }
+
+  // ✅ PUT /api/User/profile
+  updateProfile(data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/User/profile`, data);
+  }
+
+  // ✅ POST /api/User/change-password
+  changePassword(data: { currentPassword: string; newPassword: string; confirmPassword: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/User/change-password`, data);
   }
 
   forgotPassword(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/user/forgot-password`, { email });
+    return this.http.post(`${this.apiUrl}/send-otp`, { email });
   }
 
   resetPassword(token: string, newPassword: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/user/reset-password`, { token, newPassword });
+    return this.http.post(`${this.apiUrl}/User/change-password`, { token, newPassword, confirmPassword: newPassword });
   }
 
-  private setSession(response: LoginResponse): void {
-    localStorage.setItem('token', response.data.token);
-    this.tokenSignal.set(response.data.token);
+ private setSession(response: any): void {
+    console.log('Setting session from:', response);
+    
+    // Handle different response structures
+     const data = response.data;
+   const token = data.accessToken; 
+    const profile = data.profile; 
+    
+    if (token) {
+      localStorage.setItem('token', token);
+      this.tokenSignal.set(token);
+    }
+
     const userData: Partial<User> = {
-      userId: response.data.userId,
-      email: response.data.user.email,
-      firstName: response.data.user.firstName,
-      role: response.data.user.role,
+      userId: profile.userId || '',
+      email: profile.email || '',
+      firstName: profile.firstName || '',
+      lastName: profile.lastName || '',
+      role: profile.role || '',
+      phone: profile.phone || '',
+      gender: profile.gender || '',
+      dateOfBirth: profile.dateOfBirth || '',
     };
+    
+    
     localStorage.setItem('user', JSON.stringify(userData));
     this.currentUserSignal.set(userData as User);
+    
+    console.log('Session set. User:', userData);
+    
+    // Navigate based on role
+    this.navigateByRole();
   }
 
   logout(): void {
@@ -85,9 +123,7 @@ export class AuthService {
     this.router.navigate(['/auth/login']);
   }
 
-  getToken(): string | null {
-    return this.tokenSignal();
-  }
+  getToken(): string | null { return this.tokenSignal(); }
 
   hasRole(roles: UserRole[]): boolean {
     const role = this.userRole();

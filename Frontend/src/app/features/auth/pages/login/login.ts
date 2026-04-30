@@ -1,47 +1,79 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [RouterLink],
-  template: `
-    <div class="container py-5">
-      <div class="row justify-content-center">
-        <div class="col-md-5">
-          <div class="card shadow">
-            <div class="card-header bg-primary text-white text-center py-3">
-              <h4 class="mb-0"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</h4>
-            </div>
-            <div class="card-body p-4">
-              <form>
-                <div class="mb-3">
-                  <label class="form-label">Email</label>
-                  <input type="email" class="form-control" placeholder="you@example.com">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Password</label>
-                  <input type="password" class="form-control" placeholder="Enter password">
-                </div>
-                <div class="mb-3 form-check">
-                  <input type="checkbox" class="form-check-input" id="remember">
-                  <label class="form-check-label" for="remember">Remember me</label>
-                </div>
-                <button type="submit" class="btn btn-primary w-100 mb-3">Sign In</button>
-                <div class="text-center">
-                  <a routerLink="/auth/forgot-password" class="text-secondary">Forgot password?</a>
-                </div>
-                <hr>
-                <div class="text-center">
-                  <span class="text-medium">Don't have an account?</span>
-                  <a routerLink="/auth/register" class="ms-1">Register</a>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `
+  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  templateUrl: './login.html',
+  styles: [`
+    .login-container { min-height: 100vh; }
+    .brand-panel { background: linear-gradient(135deg, #078930, #056B24); }
+    .form-card { max-width: 440px; }
+  `]
 })
-export class LoginComponent {}
+export class LoginComponent {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private fb = inject(FormBuilder);
+
+  loginForm: FormGroup = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required]]
+  });
+
+  isLoading = signal(false);
+  showPassword = signal(false);
+  errorMessage = signal<string | null>(null);
+
+  togglePassword(): void {
+    this.showPassword.update(v => !v);
+  }
+onSubmit(): void {
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    const credentials = {
+      email: this.loginForm.value.email,
+      password: this.loginForm.value.password
+    };
+
+    this.authService.login(credentials).subscribe({
+      next: (response) => {
+        this.isLoading.set(false);
+        // ✅ Navigation happens in setSession now
+        if (!response.success) {
+          this.errorMessage.set(response.message || 'Login failed.');
+        }
+      },
+      error: (error) => {
+        this.isLoading.set(false);
+        console.error('Login error:', error);
+        
+        if (error.status === 401) {
+          this.errorMessage.set('Invalid email or password.');
+        } else if (error.status === 403) {
+          this.errorMessage.set('Your account is not verified. Please check your email.');
+        } else if (error.status === 429) {
+          this.errorMessage.set('Too many attempts. Please try again later.');
+        } else {
+          this.errorMessage.set(error?.error?.message || 'Login failed. Please try again.');
+        }
+      }
+    });
+  }
+
+
+  hasError(field: string, error: string): boolean {
+    const control = this.loginForm.get(field);
+    return !!(control && control.touched && control.hasError(error));
+  }
+}

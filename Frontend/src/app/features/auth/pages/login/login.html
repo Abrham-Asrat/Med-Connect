@@ -1,1 +1,117 @@
-<p>login works!</p>
+<div class="login-container d-flex">
+  
+  <!-- Left Brand Panel (Desktop) -->
+  <div class="brand-panel d-none d-lg-flex flex-column justify-content-center align-items-center text-white"
+       style="width: 45%; padding: 60px;">
+    <i class="bi bi-heart-pulse" style="font-size: 64px;"></i>
+    <h2 class="mt-3 fw-bold">Med-Connect</h2>
+    <p class="lead mt-2 text-center">Ethiopia's Trusted Healthcare Platform</p>
+    <hr class="border-warning my-4" style="width: 60px; border-width: 2px;">
+    <div class="mt-3">
+      <div class="mb-3"><i class="bi bi-check-circle-fill text-warning me-2"></i>2,000+ Verified Doctors</div>
+      <div class="mb-3"><i class="bi bi-check-circle-fill text-warning me-2"></i>Secure Online Appointments</div>
+      <div><i class="bi bi-check-circle-fill text-warning me-2"></i>Admin-Verified Credentials</div>
+    </div>
+  </div>
+
+  <!-- Right Form Panel -->
+  <div class="flex-grow-1 d-flex align-items-center justify-content-center bg-light p-4">
+    <div class="w-100 form-card">
+      
+      <div class="text-center mb-4 d-lg-none">
+        <i class="bi bi-heart-pulse text-primary" style="font-size: 48px;"></i>
+        <h4 class="text-primary mt-2">Med-Connect</h4>
+      </div>
+
+      <div class="card shadow">
+        <div class="card-body p-4">
+          
+          <h4 class="text-primary mb-1">Welcome Back</h4>
+          <p class="text-medium mb-4">Sign in to your account</p>
+
+          <!-- Error Message -->
+          @if (errorMessage()) {
+            <div class="alert alert-danger d-flex align-items-start gap-2 mb-3">
+              <i class="bi bi-exclamation-circle-fill mt-1"></i>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+
+          <!-- Verification Notice -->
+          <div class="alert alert-info d-flex align-items-center gap-2 mb-3" style="font-size: 14px;">
+            <i class="bi bi-info-circle"></i>
+            <span>Check your email for a verification code after registering. You must verify before logging in.</span>
+          </div>
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            
+            <!-- Email -->
+            <div class="mb-3">
+              <label class="form-label">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="email" class="form-control" formControlName="email"
+                       placeholder="you@example.com"
+                       [class.is-invalid]="hasError('email', 'required') || hasError('email', 'email')">
+                @if (hasError('email', 'required')) {
+                  <div class="invalid-feedback">Email is required</div>
+                }
+                @if (hasError('email', 'email')) {
+                  <div class="invalid-feedback">Please enter a valid email</div>
+                }
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                <input [type]="showPassword() ? 'text' : 'password'" class="form-control"
+                       formControlName="password" placeholder="Enter your password"
+                       [class.is-invalid]="hasError('password', 'required')">
+                <button type="button" class="btn btn-outline-secondary" (click)="togglePassword()">
+                  <i [class]="showPassword() ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                </button>
+                @if (hasError('password', 'required')) {
+                  <div class="invalid-feedback">Password is required</div>
+                }
+              </div>
+            </div>
+
+            <!-- Forgot Password -->
+            <div class="text-end mb-4">
+              <a routerLink="/auth/forgot-password" class="text-secondary text-decoration-none" style="font-size: 14px;">
+                Forgot password?
+              </a>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mb-3"
+                    [disabled]="isLoading()">
+              @if (isLoading()) {
+                <span class="spinner-border spinner-border-sm me-2"></span> Signing in...
+              } @else {
+                <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
+              }
+            </button>
+
+            <!-- Register Link -->
+            <div class="text-center">
+              <span class="text-medium">Don't have an account?</span>
+              <a routerLink="/auth/register" class="ms-1 fw-bold text-primary">Create one</a>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      <div class="text-center mt-3">
+        <a routerLink="/" class="text-medium text-decoration-none" style="font-size: 14px;">
+          <i class="bi bi-arrow-left me-1"></i>Back to Home
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>

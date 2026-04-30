@@ -13,34 +13,42 @@
         <div class="col-md-5">
           <div class="input-group">
             <span class="input-group-text bg-white"><i class="bi bi-search text-primary"></i></span>
-            <input type="text" class="form-control search-box" placeholder="Search doctors by name or specialty..."
+            <input type="text" class="form-control search-box" placeholder="Search doctors by name, specialty, or language..."
                    [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event); search()">
+            @if (searchTerm()) {
+              <button class="btn btn-outline-secondary" (click)="searchTerm.set(''); search()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            }
           </div>
         </div>
         <div class="col-md-3">
-          <select class="form-select" (change)="setSort($any($event.target).value)">
+          <select class="form-select" [ngModel]="sortBy()" (ngModelChange)="setSort($event)">
             <option value="rating">Sort by: Rating</option>
             <option value="experience">Sort by: Experience</option>
             <option value="fee-low">Sort by: Fee (Low to High)</option>
             <option value="fee-high">Sort by: Fee (High to Low)</option>
+            <option value="name">Sort by: Name (A-Z)</option>
           </select>
         </div>
         <div class="col-md-4">
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-sm rounded-pill"
-                    [class.active]="selectedType() === 'online'"
+            <button class="btn btn-sm rounded-pill" 
+                    [class.btn-primary]="selectedType() === 'online'"
+                    [class.btn-outline-primary]="selectedType() !== 'online'"
                     (click)="filterByType('online')">
               <i class="bi bi-camera-video me-1"></i> Online
             </button>
-            <button class="btn btn-outline-primary btn-sm rounded-pill"
-                    [class.active]="selectedType() === 'inperson'"
+            <button class="btn btn-sm rounded-pill" 
+                    [class.btn-primary]="selectedType() === 'inperson'"
+                    [class.btn-outline-primary]="selectedType() !== 'inperson'"
                     (click)="filterByType('inperson')">
               <i class="bi bi-building me-1"></i> In-Person
             </button>
             <div class="btn-group ms-auto">
-              <button class="btn btn-outline-secondary btn-sm" [class.active]="viewMode() === 'grid'"
+              <button class="btn btn-sm" [class.btn-primary]="viewMode() === 'grid'" [class.btn-outline-secondary]="viewMode() !== 'grid'"
                       (click)="viewMode.set('grid')"><i class="bi bi-grid"></i></button>
-              <button class="btn btn-outline-secondary btn-sm" [class.active]="viewMode() === 'list'"
+              <button class="btn btn-sm" [class.btn-primary]="viewMode() === 'list'" [class.btn-outline-secondary]="viewMode() !== 'list'"
                       (click)="viewMode.set('list')"><i class="bi bi-list"></i></button>
             </div>
           </div>
@@ -53,14 +61,18 @@
     <!-- Filter Sidebar (Desktop) -->
     <div class="col-lg-3 d-none d-lg-block">
       <div class="card">
-        <div class="card-header bg-white">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
           <h6 class="text-primary mb-0"><i class="bi bi-funnel me-2"></i>Filters</h6>
+          @if (hasActiveFilters()) {
+            <button class="btn btn-link text-danger btn-sm p-0" (click)="clearAllFilters()">Clear All</button>
+          }
         </div>
         <div class="card-body">
+          <!-- Specialty -->
           <h6 class="text-dark mb-2">Specialty</h6>
-          <div class="d-flex flex-wrap gap-1">
+          <div class="d-flex flex-wrap gap-1 mb-3">
             @for (spec of specialties; track spec) {
-              <span class="badge rounded-pill p-2 filter-chip"
+              <span class="badge rounded-pill p-2 filter-chip" style="cursor:pointer"
                     [class.active]="selectedSpecialty() === spec"
                     [class.bg-light]="selectedSpecialty() !== spec"
                     [class.text-dark]="selectedSpecialty() !== spec"
@@ -70,16 +82,31 @@
             }
           </div>
           <hr>
-          <h6 class="text-dark mb-2">Rating</h6>
-          <div class="d-flex flex-column gap-1">
-            <label class="text-medium" style="font-size:14px"><input type="radio" name="rating" class="me-1"> 4.5 & above</label>
-            <label class="text-medium" style="font-size:14px"><input type="radio" name="rating" class="me-1"> 4.0 & above</label>
-            <label class="text-medium" style="font-size:14px"><input type="radio" name="rating" class="me-1" checked> All</label>
+          <!-- Rating -->
+          <h6 class="text-dark mb-2">Minimum Rating</h6>
+          <div class="d-flex flex-column gap-1 mb-3">
+            <label class="text-medium" style="font-size:14px;cursor:pointer" (click)="filterByRating(4.5)">
+              <span [class.text-warning]="selectedRating() === 4.5">⭐⭐⭐⭐⭐</span> 4.5 & above
+            </label>
+            <label class="text-medium" style="font-size:14px;cursor:pointer" (click)="filterByRating(4)">
+              <span [class.text-warning]="selectedRating() === 4">⭐⭐⭐⭐</span> 4.0 & above
+            </label>
+            <label class="text-medium" style="font-size:14px;cursor:pointer" (click)="filterByRating(3.5)">
+              <span [class.text-warning]="selectedRating() === 3.5">⭐⭐⭐</span> 3.5 & above
+            </label>
+            <label class="text-medium" style="font-size:14px;cursor:pointer" (click)="selectedRating.set(null); applyFilters()">
+              All ratings
+            </label>
           </div>
           <hr>
+          <!-- Availability -->
           <h6 class="text-dark mb-2">Availability</h6>
-          <label class="text-medium" style="font-size:14px"><input type="checkbox" class="me-1"> Available today</label><br>
-          <label class="text-medium" style="font-size:14px"><input type="checkbox" class="me-1"> Available this week</label>
+          <label class="text-medium d-block mb-1" style="font-size:14px;cursor:pointer">
+            <input type="checkbox" class="me-1"> Available today
+          </label>
+          <label class="text-medium d-block" style="font-size:14px;cursor:pointer">
+            <input type="checkbox" class="me-1"> Available this week
+          </label>
         </div>
       </div>
     </div>
@@ -90,33 +117,35 @@
       <!-- Results Count -->
       <p class="text-medium mb-3">
         <strong>{{ filteredDoctors().length }}</strong> doctor{{ filteredDoctors().length !== 1 ? 's' : '' }} found
-        @if (selectedSpecialty()) {
-          in <span class="text-primary">{{ selectedSpecialty() }}</span>
-        }
+        @if (selectedSpecialty()) { in <span class="text-primary">{{ selectedSpecialty() }}</span> }
       </p>
 
       <!-- Active Filters -->
-      @if (selectedSpecialty() || selectedType()) {
+      @if (hasActiveFilters()) {
         <div class="d-flex gap-2 mb-3 flex-wrap">
           @if (selectedSpecialty()) {
             <span class="badge bg-primary rounded-pill px-3 py-2">
-              {{ selectedSpecialty() }} <i class="bi bi-x ms-1 cursor-pointer" (click)="filterBySpecialty(selectedSpecialty()!)"></i>
+              {{ selectedSpecialty() }} <i class="bi bi-x ms-1" style="cursor:pointer" (click)="filterBySpecialty(selectedSpecialty()!)"></i>
             </span>
           }
           @if (selectedType()) {
             <span class="badge bg-primary rounded-pill px-3 py-2">
               {{ selectedType() === 'online' ? 'Online' : 'In-Person' }} 
-              <i class="bi bi-x ms-1 cursor-pointer" (click)="filterByType(selectedType()!)"></i>
+              <i class="bi bi-x ms-1" style="cursor:pointer" (click)="filterByType(selectedType()!)"></i>
             </span>
           }
-          <button class="btn btn-link text-danger btn-sm p-0" (click)="selectedSpecialty.set(null); selectedType.set(null); applyFilters()">
-            Clear all
-          </button>
+          @if (selectedRating()) {
+            <span class="badge bg-primary rounded-pill px-3 py-2">
+              {{ selectedRating() }}+ ⭐
+              <i class="bi bi-x ms-1" style="cursor:pointer" (click)="selectedRating.set(null); applyFilters()"></i>
+            </span>
+          }
+          <button class="btn btn-link text-danger btn-sm p-0" (click)="clearAllFilters()">Clear all</button>
         </div>
       }
 
       <!-- Doctor Cards Grid -->
-      <div class="row g-3">
+      <div [class]="viewMode() === 'grid' ? 'row g-3' : 'd-flex flex-column gap-3'">
         @for (doc of filteredDoctors(); track doc.id) {
           <div [class.col-md-6]="viewMode() === 'grid'" [class.col-12]="viewMode() === 'list'">
             <div class="card doctor-card h-100">
@@ -132,41 +161,29 @@
                     }
                   </div>
                   
-                  <div class="flex-grow-1">
+                  <div class="flex-grow-1 min-width-0">
                     <div class="d-flex justify-content-between align-items-start">
                       <div>
                         <h6 class="mb-0">
                           Dr. {{ doc.firstName }} {{ doc.lastName }}
                           @if (doc.verified) {
-                            <i class="bi bi-shield-check text-primary small"></i>
+                            <i class="bi bi-shield-check text-primary small" title="Verified"></i>
                           }
                         </h6>
                         <small class="text-primary fw-bold">{{ doc.specialty }}</small>
                       </div>
-                      <span class="star-filled">{{ getStars(doc.rating) }}</span>
+                      <span class="star-filled">{{ getStars(doc.rating) }} <small class="text-medium">{{ doc.rating }}</small></span>
                     </div>
 
                     <div class="mt-2 d-flex flex-wrap gap-2">
-                      <small class="text-medium">
-                        <i class="bi bi-briefcase me-1"></i>{{ doc.experience }} yrs exp
-                      </small>
-                      <small class="text-medium">
-                        <i class="bi bi-star-fill star-filled me-1"></i>{{ doc.rating }} ({{ doc.reviewCount }})
-                      </small>
-                      <small class="text-medium">
-                        <i class="bi bi-globe me-1"></i>{{ doc.languages.join(', ') }}
-                      </small>
+                      <small class="text-medium"><i class="bi bi-briefcase me-1"></i>{{ doc.experience }} yrs</small>
+                      <small class="text-medium"><i class="bi bi-people me-1"></i>{{ doc.reviewCount }} reviews</small>
+                      <small class="text-medium"><i class="bi bi-globe me-1"></i>{{ doc.languages.join(', ') }}</small>
                     </div>
 
                     <div class="mt-2 d-flex align-items-center gap-3">
-                      <div>
-                        <small class="text-medium">Online</small><br>
-                        <strong class="text-primary">{{ doc.onlineFee }} ETB</strong>
-                      </div>
-                      <div class="border-start ps-3">
-                        <small class="text-medium">In-Person</small><br>
-                        <strong class="text-primary">{{ doc.inPersonFee }} ETB</strong>
-                      </div>
+                      <div><small class="text-medium">Online</small><br><strong class="text-primary">{{ doc.onlineFee }} ETB</strong></div>
+                      <div class="border-start ps-3"><small class="text-medium">In-Person</small><br><strong class="text-primary">{{ doc.inPersonFee }} ETB</strong></div>
                       <div class="ms-auto text-end">
                         <small class="text-medium">Next Available</small><br>
                         <strong class="text-primary" style="font-size:13px">{{ doc.nextAvailable }}</strong>
@@ -174,10 +191,10 @@
                     </div>
 
                     <div class="mt-3 d-flex gap-2">
-                      <button class="btn btn-primary btn-sm" routerLink="/patient/doctors/{{ doc.id }}">
+                      <button class="btn btn-primary btn-sm" [routerLink]="['/patient/doctors', doc.id]">
                         <i class="bi bi-eye me-1"></i> View Profile
                       </button>
-                      <button class="btn btn-outline-primary btn-sm">
+                      <button class="btn btn-outline-primary btn-sm" routerLink="/patient/book-appointment">
                         <i class="bi bi-calendar-plus me-1"></i> Book
                       </button>
                     </div>
@@ -194,8 +211,8 @@
             <i class="bi bi-search text-primary" style="font-size: 64px; opacity: 0.3;"></i>
             <h5 class="text-medium mt-3">No doctors found</h5>
             <p>Try adjusting your search or filters</p>
-            <button class="btn btn-primary" (click)="searchTerm.set(''); selectedSpecialty.set(null); selectedType.set(null); applyFilters()">
-              Clear All Filters
+            <button class="btn btn-primary" (click)="clearAllFilters()">
+              <i class="bi bi-arrow-repeat me-2"></i>Clear All Filters
             </button>
           </div>
         }

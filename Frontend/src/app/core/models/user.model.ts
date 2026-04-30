@@ -6,11 +6,11 @@ export interface User {
   lastName: string;
   email: string;
   phone?: string;
-  gender: 'Male' | 'Female' | 'Other';
+  gender: string;
   dateOfBirth: string;
   address?: string;
   role: UserRole;
-  status: 'Active' | 'Pending' | 'Suspended';
+  status: string;
   profilePhoto?: string;
   createdAt: string;
   updatedAt: string;
@@ -36,19 +36,26 @@ export interface LoginResponse {
   };
 }
 
+// ✅ Updated to match RegisterUserDto from swagger
 export interface RegisterRequest {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
-  phone?: string;
-  gender: 'Male' | 'Female' | 'Other';
+  phone: string;
+  gender: string;
   dateOfBirth: string;
-  role: UserRole;
+  address: string;
+  role: string;
+  medicalHistory?: string;
+  emergencyContactName?: string;
   emergencyContactPhone?: string;
-  // Doctor-specific fields
-  licenseNumber?: string;
-  specialty?: string;
-  experience?: number;
+  // Doctor-specific
+  specialties?: string[];
   qualifications?: string;
+  biography?: string;
+  onlineAppointmentFee?: number;
+  inPersonAppointmentFee?: number;
+  licenseNumber?: string;
+  experience?: number;
 }

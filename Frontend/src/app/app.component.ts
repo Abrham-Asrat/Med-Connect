@@ -7,11 +7,20 @@ import { GlobalSpinnerComponent } from './shared/components/global-spinner/globa
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, GlobalSpinnerComponent],
-  template: `
-     <app-global-spinner></app-global-spinner>
-    <router-outlet></router-outlet>
+  // imports: [RouterOutlet, GlobalSpinnerComponent,CookieConsentComponent, AiFloatingButtonComponent ],
+  imports: [RouterOutlet],
+  // template: `
+  //   <app-global-spinner></app-global-spinner>
+  //   <router-outlet></router-outlet>
+  //   //  <app-cookie-consent></app-cookie-consent>
+  //   // <app-ai-floating-button></app-ai-floating-button>
+
     
+  // `
+  template: `
+   
+    <router-outlet></router-outlet>
+   
   `
 })
 export class AppComponent {}

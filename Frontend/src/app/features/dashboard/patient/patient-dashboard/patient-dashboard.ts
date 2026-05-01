@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { AppointmentService } from '../../../../core/services/appointment.service';
 
 @Component({
   selector: 'app-patient-dashboard',
@@ -10,51 +11,54 @@ import { AuthService } from '../../../../core/auth/auth.service';
   templateUrl: './patient-dashboard.html',
   styles: [`
     .welcome-card { background: linear-gradient(135deg, #078930, #056B24); }
-    .stat-card { border-left: 4px solid #078930; transition: all 0.2s ease; }
-    .stat-card:hover { box-shadow: 0 4px 16px rgba(7,137,48,0.12); }
-    .stat-card.pending { border-left-color: #FCD116; }
-    .appointment-card { border-left: 4px solid #078930; transition: all 0.2s ease; }
-    .appointment-card.pending { border-left-color: #FCD116; }
-    .appointment-card:hover { box-shadow: 0 4px 24px rgba(7,137,48,0.12); }
-    .doctor-card { transition: all 0.2s ease; cursor: pointer; }
-    .doctor-card:hover { transform: translateY(-4px); box-shadow: 0 4px 24px rgba(7,137,48,0.12); }
+    .stat-card { border-left: 4px solid #078930; }
+    .appointment-card { border-left: 4px solid #078930; }
     .quick-action { transition: all 0.2s ease; cursor: pointer; }
     .quick-action:hover { background: #E8F5EC; transform: translateY(-2px); }
-    .mood-btn { transition: all 0.2s ease; }
-    .mood-btn:hover, .mood-btn.active { background: rgba(255,255,255,0.3); }
   `]
 })
-export class PatientDashboardComponent {
+export class PatientDashboardComponent implements OnInit {
   private authService = inject(AuthService);
+  private appointmentService = inject(AppointmentService);
+
   user = this.authService.currentUser;
+  isLoading = signal(false);
+  upcomingAppointments = signal(0);
+  completedAppointments = signal(0);
+  totalAppointments = signal(0);
+  appointments = signal<any[]>([]);
 
-  upcomingAppointments = signal(3);
-  completedAppointments = signal(21);
-  totalAppointments = signal(24);
-
-  appointments = signal([
-    {
-      id: 'APT-001', doctorName: 'Dr. Sarah Johnson', specialty: 'Cardiology',
-      date: 'May 15, 2026', time: '2:30 PM', type: 'Online' as const,
-      status: 'confirmed' as const, meetingLink: 'https://video.medconnect.com/abc123'
-    },
-    {
-      id: 'APT-002', doctorName: 'Dr. Abebe Kebede', specialty: 'Neurology',
-      date: 'May 18, 2026', time: '10:00 AM', type: 'InPerson' as const,
-      status: 'confirmed' as const
-    },
-    {
-      id: 'APT-003', doctorName: 'Dr. Tirunesh Desta', specialty: 'Dermatology',
-      date: 'May 22, 2026', time: '3:00 PM', type: 'Online' as const,
-      status: 'pending' as const
+  ngOnInit(): void {
+    const patientId = localStorage.getItem('patientId');
+    console.log('Dashboard - Patient ID:', patientId);
+    
+    if (patientId) {
+      this.loadAppointments(patientId);
     }
-  ]);
+  }
 
-  recommendedDoctors = signal([
-    { id: '1', name: 'Dr. Sarah Johnson', specialty: 'Cardiology', rating: 4.8, reviewCount: 124, fee: 500, nextAvailable: 'Today, 4:30 PM' },
-    { id: '2', name: 'Dr. Yonas Tadesse', specialty: 'Pediatrics', rating: 4.9, reviewCount: 89, fee: 400, nextAvailable: 'Tomorrow, 9:00 AM' },
-    { id: '3', name: 'Dr. Meseret Alemu', specialty: 'Gynecology', rating: 4.7, reviewCount: 201, fee: 600, nextAvailable: 'May 16, 1:00 PM' }
-  ]);
+  loadAppointments(patientId: string): void {
+    this.isLoading.set(true);
+    this.appointmentService.getPatientAppointments(patientId).subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        const data = response?.data || response || [];
+        const list = Array.isArray(data) ? data : [];
+        this.appointments.set(list.slice(0, 5));
+        this.totalAppointments.set(list.length);
+        this.upcomingAppointments.set(list.filter((a: any) => 
+          a.status === 'Scheduled' || a.status === 'Confirmed'
+        ).length);
+        this.completedAppointments.set(list.filter((a: any) => 
+          a.status === 'Completed'
+        ).length);
+      },
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error loading appointments:', error);
+      }
+    });
+  }
 
   getGreeting(): string {
     const hour = new Date().getHours();
@@ -64,8 +68,17 @@ export class PatientDashboardComponent {
   }
 
   getStatusClass(status: string): string {
-    return status === 'confirmed' ? 'bg-primary-light text-primary' : 'bg-warning-light text-warning-dark';
+    return status === 'Scheduled' || status === 'Confirmed' 
+      ? 'bg-primary-light text-primary' 
+      : 'bg-warning-light text-warning-dark';
   }
 
-  joinCall(link: string): void { window.open(link, '_blank'); }
+
+  showEmergency = signal(false);
+emergencyContacts = signal([
+  { name: 'Emergency (Ambulance)', phone: '907', icon: 'bi-telephone-plus' },
+  { name: 'Red Cross Ethiopia', phone: '911', icon: 'bi-heart' },
+  { name: 'St. Paul\'s Hospital', phone: '+251-111-234567', icon: 'bi-hospital' },
+  { name: 'Black Lion Hospital', phone: '+251-111-765432', icon: 'bi-hospital' },
+]);
 }

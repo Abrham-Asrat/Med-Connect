@@ -1,0 +1,95 @@
+<div class="container-fluid p-4">
+  
+  <h4 class="text-primary mb-4"><i class="bi bi-wallet2 me-2"></i>Payments</h4>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+      <div class="card stat-card h-100"><div class="card-body">
+        <p class="text-medium mb-0" style="font-size:13px">Total Spent</p>
+        <h3 class="text-primary mb-0">{{ totalSpent() }} ETB</h3>
+        <small class="text-medium">{{ completedPayments() }} appointments</small>
+      </div></div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="card stat-card pending h-100"><div class="card-body">
+        <p class="text-medium mb-0" style="font-size:13px">Pending</p>
+        <h3 class="text-warning-dark mb-0">{{ pendingPayments() }} ETB</h3>
+        <small class="text-medium">{{ pendingPayments() }} appointments</small>
+      </div></div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="card stat-card h-100"><div class="card-body">
+        <p class="text-medium mb-0" style="font-size:13px">Payment Method</p>
+        <h5 class="text-primary mb-0">Chapa</h5>
+        <small class="text-medium">Secure payments</small>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- Transaction History -->
+  <div class="card">
+    <div class="card-header bg-white">
+      <h5 class="text-primary mb-0"><i class="bi bi-receipt me-2"></i>Transaction History</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Doctor</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr><td colspan="6" class="text-center py-4">
+              <div class="spinner-border text-primary"></div>
+            </td></tr>
+          }
+          @for (apt of appointments(); track apt.appointmentId) {
+            <tr class="transaction-row">
+              <td>{{ apt.appointmentDate }}</td>
+              <td>{{ apt.doctorName || 'Doctor' }}</td>
+              <td>{{ apt.appointmentType || 'Virtual' }}</td>
+              <td><strong>500 ETB</strong></td>
+              <td>
+                <span class="badge rounded-pill px-3 py-2" [ngClass]="getStatusClass(apt.status)">
+                  {{ apt.status }}
+                </span>
+              </td>
+              <td>
+                @if (apt.status === 'Completed') {
+                  <span class="text-primary"><i class="bi bi-check-circle me-1"></i>Paid</span>
+                } @else if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
+                  <button class="btn btn-outline-primary btn-sm">Pay Now</button>
+                }
+              </td>
+            </tr>
+          }
+          @if (appointments().length === 0 && !isLoading()) {
+            <tr><td colspan="6" class="text-center py-4 text-medium">
+              No transactions yet. <a routerLink="/patient/book-appointment">Book an appointment</a>
+            </td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  @if (showPaymentModal()) {
+  <div class="modal d-block" style="background:rgba(0,0,0,0.5)"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header bg-primary text-white"><h6 class="modal-title">Pay for Appointment</h6><button class="btn-close btn-close-white" (click)="showPaymentModal.set(false)"></button></div>
+    <div class="modal-body text-center">
+      <p>Amount: <strong>500 ETB</strong></p>
+      <p class="text-medium">You'll receive a prompt on your phone to complete payment via Chapa.</p>
+      <button class="btn btn-primary btn-lg w-100 mt-3" (click)="processPayment()" [disabled]="paymentLoading()">
+        @if (paymentLoading()) { Processing... } @else { Pay 500 ETB via Chapa }
+      </button>
+    </div>
+  </div></div></div>
+}
+</div>

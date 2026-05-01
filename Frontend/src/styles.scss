@@ -24,7 +24,7 @@ $border-radius-lg: 0.75rem;
 $btn-font-weight: 700;
 $input-focus-border-color: #078930;
 
-@import 'bootstrap/scss/bootstrap';
+@import 'bootstrap/dist/css/bootstrap.min.css';
 
 // Your custom styles below
 html {

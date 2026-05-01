@@ -1,50 +1,126 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { AppointmentService } from '../../../../core/services/appointment.service';
 
 @Component({
   selector: 'app-notifications',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="container-fluid p-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="text-primary mb-0"><i class="bi bi-bell me-2"></i>Notifications</h4>
-        <button class="btn btn-outline-primary btn-sm">Mark All Read</button>
-      </div>
-
-      @for (n of notifications(); track n.id) {
-        <div class="card mb-2" [class.border-primary]="!n.read" style="border-left:4px solid #078930">
-          <div class="card-body py-3">
-            <div class="d-flex gap-3">
-              <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                   [class.bg-primary-light]="n.type==='appointment'" [class.bg-warning-light]="n.type==='review'"
-                   [class.bg-secondary-light]="n.type==='message'" style="width:40px;height:40px">
-                <i class="bi" [class.bi-calendar-check]="n.type==='appointment'"
-                   [class.bi-star]="n.type==='review'" [class.bi-chat-dots]="n.type==='message'"
-                   [class.text-primary]="n.type==='appointment'" [class.text-warning-dark]="n.type==='review'"
-                   [class.text-secondary]="n.type==='message'"></i>
-              </div>
-              <div class="flex-grow-1">
-                <strong>{{ n.title }}</strong>
-                <p class="text-medium mb-0" style="font-size:14px">{{ n.description }}</p>
-                <small class="text-medium">{{ n.time }}</small>
-              </div>
-              @if (!n.read) { <span class="badge bg-primary rounded-pill align-self-start">New</span> }
-            </div>
-          </div>
-        </div>
-      }
-      @if (notifications().length === 0) {
-        <div class="text-center py-5"><i class="bi bi-bell text-primary" style="font-size:48px;opacity:0.3"></i><p class="text-medium mt-2">No notifications</p></div>
-      }
-    </div>
-  `
+  templateUrl: './notifications.component.html',
+  styles: [`
+    .notification-item { border-left: 4px solid #078930; transition: all 0.2s; }
+    .notification-item:hover { background: #E8F5EC; }
+    .notification-item.unread { background: #F8FFF8; }
+    .notification-item.message { border-left-color: #007BFF; }
+    .notification-item.payment { border-left-color: #FCD116; }
+    .notification-item.system { border-left-color: #DA121A; }
+  `]
 })
-export class NotificationsComponent {
-  notifications = signal([
-    { id:'1', type:'appointment', title:'Appointment Confirmed', description:'Your appointment with Dr. Sarah Johnson on May 15 at 2:30 PM is confirmed.', time:'2 hours ago', read:false },
-    { id:'2', type:'message', title:'New Message', description:'Dr. Abebe Kebede sent you a message about your test results.', time:'Yesterday', read:false },
-    { id:'3', type:'review', title:'Review Request', description:'Rate your recent appointment with Dr. Tirunesh Desta.', time:'3 days ago', read:true },
-    { id:'4', type:'appointment', title:'Appointment Reminder', description:'Your appointment with Dr. Yonas Tadesse is tomorrow at 10:00 AM.', time:'Yesterday', read:true },
-  ]);
+export class NotificationsComponent implements OnInit {
+  private appointmentService = inject(AppointmentService);
+
+  patientId = localStorage.getItem('patientId') || '';
+  isLoading = signal(false);
+  
+  notifications = signal<any[]>([]);
+  unreadCount = signal(0);
+
+  ngOnInit(): void {
+    this.loadNotifications();
+  }
+
+  loadNotifications(): void {
+    if (!this.patientId) return;
+
+    this.isLoading.set(true);
+
+    this.appointmentService.getPatientAppointments(this.patientId).subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        const appointments = response?.data || [];
+        this.generateNotifications(Array.isArray(appointments) ? appointments : []);
+      },
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error:', error);
+      }
+    });
+  }
+
+  generateNotifications(appointments: any[]): void {
+    const notifs: any[] = [];
+
+    // Welcome notification
+    notifs.push({
+      id: 'welcome',
+      type: 'system',
+      title: 'Welcome to Med-Connect! 🎉',
+      message: 'Your account has been created successfully. Start by finding a doctor.',
+      time: new Date().toISOString(),
+      read: false,
+      icon: 'bi-heart-pulse'
+    });
+
+    // Appointment notifications
+    appointments.forEach((apt: any) => {
+      if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
+        notifs.push({
+          id: apt.appointmentId,
+          type: 'appointment',
+          title: 'Appointment Booked',
+          message: `Your ${apt.appointmentType || 'Virtual'} appointment on ${apt.appointmentDate} at ${apt.appointmentTime} is confirmed.`,
+          time: apt.createdAt || new Date().toISOString(),
+          read: false,
+          icon: 'bi-calendar-check'
+        });
+      }
+    });
+
+    // Add some sample notifications
+    notifs.push({
+      id: 'tip-1',
+      type: 'message',
+      title: 'Health Tip',
+      message: 'Remember to stay hydrated! Drink at least 8 glasses of water daily.',
+      time: new Date().toISOString(),
+      read: true,
+      icon: 'bi-lightbulb'
+    });
+
+    notifs.push({
+      id: 'payment-1',
+      type: 'payment',
+      title: 'Payment Information',
+      message: 'Payments are processed securely through Chapa. Keep your payment details updated.',
+      time: new Date().toISOString(),
+      read: true,
+      icon: 'bi-wallet2'
+    });
+
+    this.notifications.set(notifs);
+    this.unreadCount.set(notifs.filter(n => !n.read).length);
+  }
+
+  markAsRead(id: string): void {
+    this.notifications.update(n => n.map(item => 
+      item.id === id ? { ...item, read: true } : item
+    ));
+    this.unreadCount.update(c => Math.max(0, c - 1));
+  }
+
+  markAllAsRead(): void {
+    this.notifications.update(n => n.map(item => ({ ...item, read: true })));
+    this.unreadCount.set(0);
+  }
+
+  getTypeClass(type: string): string {
+    switch (type) {
+      case 'appointment': return 'notification-item';
+      case 'message': return 'notification-item message';
+      case 'payment': return 'notification-item payment';
+      case 'system': return 'notification-item system';
+      default: return 'notification-item';
+    }
+  }
 }

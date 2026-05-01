@@ -1,68 +1,108 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { AppointmentService } from '../../../../core/services/appointment.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-payment-history',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="container-fluid p-4">
-      <h4 class="text-primary mb-4"><i class="bi bi-wallet2 me-2"></i>Payment History</h4>
-
-      <!-- Summary Cards -->
-      <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-          <div class="card text-white bg-primary h-100"><div class="card-body">
-            <small>Total Spent</small><h4 class="mb-0">12,500 ETB</h4>
-          </div></div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="card h-100" style="border-left:4px solid #078930"><div class="card-body">
-            <small class="text-medium">This Month</small><h4 class="text-primary mb-0">2,400 ETB</h4>
-          </div></div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="card h-100" style="border-left:4px solid #FCD116"><div class="card-body">
-            <small class="text-medium">Pending</small><h4 class="text-warning-dark mb-0">500 ETB</h4>
-          </div></div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="card h-100" style="border-left:4px solid #007BFF"><div class="card-body">
-            <small class="text-medium">Refunds</small><h4 class="text-secondary mb-0">300 ETB</h4>
-          </div></div>
-        </div>
-      </div>
-
-      <!-- Transactions -->
-      <div class="card">
-        <div class="card-header bg-white"><h5 class="text-primary mb-0">Transactions</h5></div>
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead><tr><th>ID</th><th>Doctor</th><th>Date</th><th>Amount</th><th>Status</th><th>Receipt</th></tr></thead>
-            <tbody>
-              @for (t of transactions(); track t.id) {
-                <tr>
-                  <td><small class="text-primary">{{ t.id }}</small></td>
-                  <td>{{ t.doctor }}</td>
-                  <td>{{ t.date }}</td>
-                  <td><strong>{{ t.amount }} ETB</strong></td>
-                  <td><span class="badge" [class.bg-primary-light]="t.status==='Completed'" [class.text-primary]="t.status==='Completed'" [class.bg-warning-light]="t.status==='Pending'" [class.text-warning-dark]="t.status==='Pending'">{{ t.status }}</span></td>
-                  <td><button class="btn btn-outline-primary btn-sm"><i class="bi bi-download"></i></button></td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  `
+  imports: [CommonModule, RouterLink],
+  templateUrl: './payment-history.component.html',
+  styles: [`
+    .stat-card { border-left: 4px solid #078930; }
+    .stat-card.pending { border-left-color: #FCD116; }
+    .transaction-row { transition: all 0.2s; }
+    .transaction-row:hover { background: #E8F5EC; }
+  `]
 })
-export class PaymentHistoryComponent {
-  transactions = signal([
-    { id:'TXN-001', doctor:'Dr. Sarah Johnson', date:'May 15, 2026', amount:500, status:'Completed' },
-    { id:'TXN-002', doctor:'Dr. Abebe Kebede', date:'Apr 28, 2026', amount:600, status:'Completed' },
-    { id:'TXN-003', doctor:'Dr. Tirunesh Desta', date:'May 22, 2026', amount:400, status:'Pending' },
-    { id:'TXN-004', doctor:'Dr. Yonas Tadesse', date:'Mar 15, 2026', amount:550, status:'Refunded' },
-    { id:'TXN-005', doctor:'Dr. Sarah Johnson', date:'Mar 10, 2026', amount:500, status:'Completed' },
-  ]);
+export class PaymentHistoryComponent implements OnInit {
+  private appointmentService = inject(AppointmentService);
+
+  patientId = localStorage.getItem('patientId') || '';
+  private http = inject(HttpClient);
+private apiUrl = environment.apiUrl;
+successMessage = signal<string | null>(null);
+errorMessage = signal<string | null>(null);
+  isLoading = signal(false);
+  appointments = signal<any[]>([]);
+  
+  // Payment stats
+  totalSpent = signal(0);
+  pendingPayments = signal(0);
+  completedPayments = signal(0);
+
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  loadData(): void {
+    if (!this.patientId) return;
+
+    this.isLoading.set(true);
+
+    this.appointmentService.getPatientAppointments(this.patientId).subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        const data = response?.data || [];
+        this.appointments.set(Array.isArray(data) ? data : []);
+        this.calculateStats();
+      },
+      error: (error: any) => {
+        this.isLoading.set(false);
+        console.error('Error:', error);
+      }
+    });
+  }
+
+  calculateStats(): void {
+    const apps = this.appointments();
+    this.completedPayments.set(apps.filter(a => a.status === 'Completed').length);
+    this.pendingPayments.set(apps.filter(a => a.status === 'Scheduled' || a.status === 'Confirmed').length);
+    // Estimate 500 ETB per appointment
+    this.totalSpent.set(this.completedPayments() * 500);
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'Completed': return 'bg-primary-light text-primary';
+      case 'Scheduled':
+      case 'Confirmed': return 'bg-warning-light text-warning-dark';
+      case 'Cancelled': return 'bg-danger-light text-danger';
+      default: return 'bg-light text-medium';
+    }
+  }
+
+  showPaymentModal = signal(false);
+paymentAppointment = signal<any>(null);
+paymentLoading = signal(false);
+
+openPayment(apt: any): void {
+  this.paymentAppointment.set(apt);
+  this.showPaymentModal.set(true);
+}
+
+processPayment(): void {
+  this.paymentLoading.set(true);
+  // Call Chapa payment endpoint
+  this.http.post(`${this.apiUrl}/payments/charge`, {
+    amount: '500',
+    currency: 'ETB',
+    phoneNumber: '0911111111',
+    paymentProvider: 'Chapa',
+    paymentMethod: 'mobile'
+  }).subscribe({
+    next: () => {
+      this.paymentLoading.set(false);
+      this.showPaymentModal.set(false);
+      this.successMessage.set('Payment initiated! Check your phone.');
+      setTimeout(() => this.successMessage.set(null), 3000);
+    },
+    error: () => {
+      this.paymentLoading.set(false);
+      this.errorMessage.set('Payment failed. Try again.');
+    }
+  });
+}
 }

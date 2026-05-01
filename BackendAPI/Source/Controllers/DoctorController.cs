@@ -13,7 +13,7 @@ namespace BackendAPI.Source.Controllers
 {
     [ApiController]
     [Route("api/doctors")]
-    [Authorize] // All doctor endpoints require authentication
+    // [Authorize] // All doctor endpoints require authentication
     public class DoctorController(DoctorService doctorService , ILogger<DoctorController> logger) : ControllerBase
     {
         [HttpGet("all")]

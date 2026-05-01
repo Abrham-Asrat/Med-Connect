@@ -48,6 +48,8 @@ export const routes: Routes = [
       .then(m => m.ServerError)
   },
 
+  { path: 'email-verified', loadComponent: () => import('./features/auth/pages/email-verified/email-verified.component').then(m => m.EmailVerifiedComponent) },
+
   { path: 'maintenance', loadComponent: () => import('./features/errors/pages/maintenance/maintenance.component').then(m => m.MaintenanceComponent) },
   
   // Redirect unknown paths

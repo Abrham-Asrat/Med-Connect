@@ -1,86 +1,103 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../../environments/environment';
 
 @Component({
   selector: 'app-landing-page',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule],
   templateUrl: './landing-page.component.html',
   styles: [`
-    .hero-section { background: linear-gradient(135deg, #078930, #056B24); min-height: 90vh; }
+    .hero { background: linear-gradient(135deg, #078930, #056B24); }
     .section-padding { padding: 80px 0; }
     .bg-light-gray { background: #F8F9FA; }
-    .feature-icon { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; }
-    .step-card { transition: all 0.3s ease; cursor: pointer; }
-    .step-card:hover { transform: translateY(-8px); box-shadow: 0 8px 32px rgba(7,137,48,0.15); }
-    .testimonial-card { border-left: 4px solid #078930; transition: all 0.3s ease; }
-    .testimonial-card:hover { transform: translateY(-4px); box-shadow: 0 4px 20px rgba(7,137,48,0.12); }
-    .stat-number { font-size: 48px; font-weight: 700; color: #078930; }
-    .footer { background: #04521D; }
-    .footer a { transition: color 0.2s; }
-    .footer a:hover { color: #FCD116 !important; }
-    .check-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
-    .check-icon { color: #078930; font-size: 20px; margin-top: 2px; }
-    .specialty-card { transition: all 0.3s ease; cursor: pointer; border: 2px solid transparent; }
-    .specialty-card:hover { border-color: #078930; transform: translateY(-4px); }
-    .counter { font-size: 42px; font-weight: 700; color: #078930; }
+    .feature-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .blog-card { transition: all 0.3s; cursor: pointer; }
+    .blog-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(7,137,48,0.12); }
+    .contact-card { border-left: 4px solid #078930; }
+    .nav-link-custom { color: white; text-decoration: none; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
+    .nav-link-custom:hover { background: rgba(255,255,255,0.15); }
+    .counter { font-size: 40px; font-weight: 700; color: #078930; }
   `]
 })
-export class LandingPageComponent {
-  // Stats that could be animated
-  stats = signal([
+export class LandingPageComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl;
+
+  blogs = signal<any[]>([]);
+  contactLoading = signal(false);
+  contactSuccess = signal(false);
+  contactError = signal<string | null>(null);
+
+  contactForm = this.fb.group({
+    firstName: ['', Validators.required],
+    lastName: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    phone: ['', Validators.required],
+    message: ['', [Validators.required, Validators.maxLength(1000)]],
+  });
+
+  stats = [
     { number: '2000+', label: 'Verified Doctors' },
-    { number: '50,000+', label: 'Registered Patients' },
-    { number: '100,000+', label: 'Appointments Completed' },
-    { number: '98%', label: 'Patient Satisfaction' }
-  ]);
+    { number: '50,000+', label: 'Patients' },
+    { number: '100,000+', label: 'Appointments' },
+    { number: '98%', label: 'Satisfaction' }
+  ];
 
-  // How it works steps
-  steps = signal([
-    { icon: 'bi-search', title: 'Find Your Doctor', desc: 'Search by specialty, rating, or availability. All doctors are admin-verified.' },
-    { icon: 'bi-calendar-check', title: 'Book Instantly', desc: 'Choose online or in-person appointments. Select your preferred time slot.' },
-    { icon: 'bi-heart-pulse', title: 'Get Quality Care', desc: 'Consult via secure video call or visit in person. Receive quality healthcare.' }
-  ]);
+  teamMembers = [
+    { name: 'Dr. Abebe Kebede', role: 'Chief Medical Officer', initials: 'AK' },
+    { name: 'Dr. Sarah Johnson', role: 'Head of Cardiology', initials: 'SJ' },
+    { name: 'Ms. Tirunesh Desta', role: 'Patient Relations', initials: 'TD' },
+    { name: 'Mr. Dawit Haile', role: 'Technical Lead', initials: 'DH' }
+  ];
 
-  // Patient benefits
-  patientBenefits = signal([
-    'Search doctors by specialty, location, and availability',
-    'Book online or in-person appointments 24/7',
-    'Secure video consultations from anywhere in Ethiopia',
-    'Access your medical records, prescriptions, and history',
-    'Rate and review your healthcare experience',
-    'Emergency contact information always available'
-  ]);
+  ngOnInit(): void {
+    this.loadBlogs();
+  }
 
-  // Doctor benefits
-  doctorBenefits = signal([
-    'Reach thousands of patients across Ethiopia',
-    'Manage your schedule and appointments with ease',
-    'Conduct secure online consultations via video',
-    'Build your professional reputation with reviews',
-    'Admin-verified credentials boost patient trust',
-    'Integrated payment processing via Chapa'
-  ]);
+  loadBlogs(): void {
+    this.http.get(`${this.apiUrl}/blogs/all`).subscribe({
+      next: (response: any) => {
+        const data = response?.data || response || [];
+        this.blogs.set(Array.isArray(data) ? data.slice(0, 3) : []);
+      },
+      error: () => {
+        // Fallback mock blogs
+        this.blogs.set([
+          { id:'1', title:'Understanding Blood Pressure', authorName:'Dr. Sarah Johnson', publishedAt:new Date().toISOString(), content:'A comprehensive guide to understanding blood pressure readings and maintaining heart health.', category:'Health Tips', viewCount:12500 },
+          { id:'2', title:'The Importance of Regular Check-ups', authorName:'Dr. Abebe Kebede', publishedAt:new Date().toISOString(), content:'Prevention is better than cure. Learn why annual check-ups are crucial for your health.', category:'Patient Education', viewCount:8200 },
+          { id:'3', title:'Healthy Eating for a Healthy Heart', authorName:'Dr. Sarah Johnson', publishedAt:new Date().toISOString(), content:'Discover the best foods for cardiovascular health and how to incorporate them into your diet.', category:'Wellness', viewCount:15000 }
+        ]);
+      }
+    });
+  }
 
-  // Testimonials
-  testimonials = signal([
-    { name: 'Abebe T.', location: 'Addis Ababa', rating: 5, text: 'Med-Connect made it so easy to find a cardiologist. Dr. Johnson was excellent! I booked online and had my consultation the same day.' },
-    { name: 'Meron H.', location: 'Bahir Dar', rating: 5, text: 'As someone living outside Addis, the online consultation feature is a lifesaver. I can consult with top doctors without traveling.' },
-    { name: 'Tigist D.', location: 'Adama', rating: 4, text: 'The doctor verification gave me confidence. I know every doctor on this platform is properly vetted. Highly recommended!' }
-  ]);
+  submitContact(): void {
+    if (this.contactForm.invalid) {
+      this.contactForm.markAllAsTouched();
+      return;
+    }
+    this.contactLoading.set(true);
+    this.contactError.set(null);
+    this.http.post(`${this.apiUrl}/Contact`, this.contactForm.value).subscribe({
+      next: () => {
+        this.contactLoading.set(false);
+        this.contactSuccess.set(true);
+        this.contactForm.reset();
+        setTimeout(() => this.contactSuccess.set(false), 5000);
+      },
+      error: (err) => {
+        this.contactLoading.set(false);
+        this.contactError.set(err?.error?.message || 'Failed to send message. Please try again.');
+      }
+    });
+  }
 
-  // Specialties
-  specialties = signal([
-    { icon: 'bi-heart-pulse', name: 'Cardiology', color: '#DA121A' },
-    { icon: 'bi-brain', name: 'Neurology', color: '#007BFF' },
-    { icon: 'bi-people', name: 'Pediatrics', color: '#FCD116' },
-    { icon: 'bi-droplet', name: 'Dermatology', color: '#078930' },
-    { icon: 'bi-bone', name: 'Orthopedics', color: '#6B7280' },
-    { icon: 'bi-gender-female', name: 'Gynecology', color: '#DA121A' }
-  ]);
-
-  // Footer links
-  quickLinks = signal(['Home', 'Find Doctors', 'Book Appointment', 'For Doctors', 'About Us', 'Contact']);
-  supportLinks = signal(['Help Center', 'Privacy Policy', 'Terms of Service', 'FAQs', 'Accessibility']);
+  scrollTo(section: string): void {
+    document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
+  }
 }

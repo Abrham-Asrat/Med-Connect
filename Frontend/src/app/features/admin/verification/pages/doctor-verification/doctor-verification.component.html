@@ -1,0 +1,102 @@
+<div class="container-fluid p-4">
+  
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="text-primary mb-0"><i class="bi bi-person-check me-2"></i>Doctor Verification</h4>
+    <div>
+      <span class="badge bg-danger me-2">{{ pendingCount() }} Pending</span>
+      <span class="badge bg-primary">{{ approvedToday() }} Approved Today</span>
+    </div>
+  </div>
+
+  @if (successMessage()) { <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>{{ successMessage() }}</div> }
+  @if (errorMessage()) { <div class="alert alert-danger d-flex align-items-center gap-2"><i class="bi bi-exclamation-triangle-fill"></i>{{ errorMessage() }}<button class="btn btn-link btn-sm text-white" (click)="loadPendingDoctors()">Retry</button></div> }
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="card stat-card text-center p-3"><h3 class="text-danger mb-0">{{ pendingCount() }}</h3><small class="text-medium">Pending</small></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card review text-center p-3"><h3 class="text-warning-dark mb-0">0</h3><small class="text-medium">In Review</small></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card approved text-center p-3"><h3 class="text-primary mb-0">{{ approvedToday() }}</h3><small class="text-medium">Approved Today</small></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card rejected text-center p-3"><h3 class="text-danger mb-0">{{ rejectedCount() }}</h3><small class="text-medium">Rejected</small></div></div>
+  </div>
+
+  <!-- Search -->
+  <div class="card mb-4"><div class="card-body">
+    <input type="text" class="form-control" placeholder="Search by name, email or specialty..." [(ngModel)]="searchTerm">
+  </div></div>
+
+  <!-- Pending Doctors -->
+  <div class="card">
+    <div class="card-header bg-white"><h5 class="text-primary mb-0"><i class="bi bi-clock me-2"></i>Pending Approvals ({{ filteredDoctors().length }})</h5></div>
+    <div class="table-responsive"><table class="table table-hover mb-0">
+      <thead><tr><th>Doctor</th><th>Specialty</th><th>Experience</th><th>Documents</th><th>Submitted</th><th>Actions</th></tr></thead>
+      <tbody>
+        @if (isLoading()) { <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr> }
+        @for (doc of filteredDoctors(); track doc.doctorId) {
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-size:14px;font-weight:700">{{ doc.firstName?.charAt(0) }}{{ doc.lastName?.charAt(0) }}</div>
+                <div><strong>{{ doc.firstName }} {{ doc.lastName }}</strong><br><small class="text-medium">{{ doc.email }}</small></div>
+              </div>
+            </td>
+            <td><span class="badge bg-primary-light text-primary">{{ doc.specialties?.join?.(', ') || 'N/A' }}</span></td>
+            <td>{{ doc.experience || 'N/A' }} yrs</td>
+            <td>
+              @if (doc.cvUrl) { <button class="btn btn-outline-primary btn-sm me-1" (click)="viewDocument(doc.cvUrl)"><i class="bi bi-file-pdf me-1"></i>CV</button> }
+              <small class="text-medium">{{ doc.certificateCount || 0 }} certs</small>
+            </td>
+            <td><small>{{ doc.registeredAt | date:'mediumDate' }}</small></td>
+            <td>
+              <button class="btn btn-primary btn-sm me-1" (click)="openApprove(doc)"><i class="bi bi-check-lg me-1"></i>Approve</button>
+              <button class="btn btn-outline-danger btn-sm" (click)="openReject(doc)"><i class="bi bi-x-lg me-1"></i>Reject</button>
+            </td>
+          </tr>
+        }
+        @if (!isLoading() && filteredDoctors().length===0) { <tr><td colspan="6" class="text-center py-4 text-medium">No pending doctors</td></tr> }
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- Document Viewer Modal -->
+  @if (showDocumentViewer()) {
+    <div class="modal d-block" style="background:rgba(0,0,0,0.5)"><div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header"><h6 class="modal-title">Document Viewer</h6><button class="btn-close" (click)="showDocumentViewer.set(false)"></button></div>
+      <div class="modal-body text-center"><p class="text-medium">Document URL: {{ viewingDocument() }}</p></div>
+    </div></div></div>
+  }
+
+  <!-- Approve Modal -->
+  @if (showApproveModal()) {
+    <div class="modal d-block" style="background:rgba(0,0,0,0.5)"><div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header bg-primary text-white"><h6 class="modal-title">Approve Doctor</h6><button class="btn-close btn-close-white" (click)="showApproveModal.set(false)"></button></div>
+      <div class="modal-body">
+        <p>Approve <strong>Dr. {{ selectedDoctor()?.firstName }} {{ selectedDoctor()?.lastName }}</strong>?</p>
+        <p class="text-medium"><strong>Specialty:</strong> {{ selectedDoctor()?.specialties?.join?.(', ') }}</p>
+        <p class="text-medium"><strong>Qualifications:</strong> {{ selectedDoctor()?.qualifications }}</p>
+        <textarea class="form-control mt-2" [(ngModel)]="approveNotes" placeholder="Admin notes (optional)"></textarea>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" (click)="showApproveModal.set(false)">Cancel</button><button class="btn btn-primary" (click)="confirmApprove()">Confirm Approval</button></div>
+    </div></div></div>
+  }
+
+  <!-- Reject Modal -->
+  @if (showRejectModal()) {
+    <div class="modal d-block" style="background:rgba(0,0,0,0.5)"><div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header bg-danger text-white"><h6 class="modal-title">Reject Doctor</h6><button class="btn-close btn-close-white" (click)="showRejectModal.set(false)"></button></div>
+      <div class="modal-body">
+        <p>Reject <strong>Dr. {{ selectedDoctor()?.firstName }} {{ selectedDoctor()?.lastName }}</strong>?</p>
+        <label class="form-label">Reason for rejection *</label>
+        <select class="form-select mb-2" [(ngModel)]="rejectReason">
+          <option value="">Select reason...</option>
+          <option value="Incomplete documentation">Incomplete documentation</option>
+          <option value="Invalid credentials">Invalid credentials</option>
+          <option value="Does not meet requirements">Does not meet requirements</option>
+          <option value="Duplicate application">Duplicate application</option>
+          <option value="Other">Other</option>
+        </select>
+        <textarea class="form-control" [(ngModel)]="rejectReason" placeholder="Detailed reason..."></textarea>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" (click)="showRejectModal.set(false)">Cancel</button><button class="btn btn-danger" (click)="confirmReject()" [disabled]="!rejectReason()">Confirm Rejection</button></div>
+    </div></div></div>
+  }
+</div>

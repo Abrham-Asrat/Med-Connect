@@ -12,6 +12,7 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'patients', loadComponent: () => import('../../admin/patients/pages/patients-list/patients-list.component').then(m => m.PatientsListComponent) },
       { path: 'moderation', loadComponent: () => import('../../admin/moderation/pages/content-moderation/content-moderation.component').then(m => m.ContentModerationComponent) },
       { path: 'finance', loadComponent: () => import('../../admin/finance/pages/financial-analytics/financial-analytics.component').then(m => m.FinancialAnalyticsComponent) },
+      { path: 'users', loadComponent: () => import('../../admin/users/pages/users-list/users-list.component').then(m => m.UsersListComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

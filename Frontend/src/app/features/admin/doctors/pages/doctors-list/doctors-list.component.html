@@ -1,0 +1,61 @@
+<div class="container-fluid p-4">
+  
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="text-primary mb-0"><i class="bi bi-people me-2"></i>Doctors Management</h4>
+    <div>
+      <span class="badge bg-primary me-2">{{ totalDoctors() }} Total</span>
+      <span class="badge bg-success me-2">{{ activeDoctors() }} Active</span>
+      <span class="badge bg-warning me-2">{{ pendingDoctors() }} Pending</span>
+      <span class="badge bg-danger">{{ suspendedDoctors() }} Suspended</span>
+    </div>
+  </div>
+
+  @if (errorMessage()) { <div class="alert alert-danger">{{ errorMessage() }}</div> }
+
+  <!-- Filters -->
+  <div class="card mb-4"><div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4"><input type="text" class="form-control" placeholder="Search doctors..." [(ngModel)]="searchTerm" (input)="applyFilters()"></div>
+      <div class="col-md-3"><select class="form-select" (change)="filterBySpecialty($any($event.target).value)"><option value="">All Specialties</option>@for(s of specialties; track s){<option [value]="s">{{s}}</option>}</select></div>
+      <div class="col-md-3"><select class="form-select" (change)="filterByStatus($any($event.target).value)"><option value="">All Status</option><option value="Active">Active</option><option value="Pending">Pending</option><option value="Suspended">Suspended</option></select></div>
+      <div class="col-md-2"><button class="btn btn-outline-primary w-100" (click)="resetFilters()">Reset</button></div>
+    </div>
+  </div></div>
+
+  <!-- Doctors Table -->
+  <div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+    <thead class="table-light"><tr><th>Doctor</th><th>Specialty</th><th>Rating</th><th>Patients</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+      @if (isLoading()) { <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr> }
+      @for (doc of filteredDoctors(); track doc.doctorId || doc.userId) {
+        <tr class="doctor-row">
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center" style="width:40px;height:40px;font-size:16px;font-weight:700">{{ doc.firstName?.charAt(0) }}{{ doc.lastName?.charAt(0) }}</div>
+              <div><strong>{{ doc.firstName }} {{ doc.lastName }}</strong><br><small class="text-medium">{{ doc.email }}</small></div>
+            </div>
+          </td>
+          <td><span class="badge bg-primary-light text-primary">{{ doc.specialties?.join?.(', ') || 'N/A' }}</span></td>
+          <td><span class="text-warning">⭐ {{ doc.rating || 'N/A' }}</span></td>
+          <td>{{ doc.patientCount || 0 }}</td>
+          <td><span class="status-badge" [ngClass]="getStatusClass(doc.doctorStatus)">{{ getStatusLabel(doc.doctorStatus) }}</span></td>
+          <td>
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>View Profile</a></li>
+                @if (doc.doctorStatus === 1 || doc.doctorStatus === 'Active') {
+                  <li><a class="dropdown-item text-danger" (click)="suspendDoctor(doc.doctorId)"><i class="bi bi-pause-circle me-2"></i>Suspend</a></li>
+                }
+                @if (doc.doctorStatus === 2 || doc.doctorStatus === 'Suspended') {
+                  <li><a class="dropdown-item text-success" (click)="reactivateDoctor(doc.doctorId)"><i class="bi bi-play-circle me-2"></i>Reactivate</a></li>
+                }
+              </ul>
+            </div>
+          </td>
+        </tr>
+      }
+      @if (!isLoading() && filteredDoctors().length===0) { <tr><td colspan="6" class="text-center py-4 text-medium">No doctors found</td></tr> }
+    </tbody>
+  </table></div></div>
+</div>

@@ -26,17 +26,20 @@ export interface LoginResponse {
   message: string;
   data: {
     userId: string;
-    token: string;
+    accessToken: string;
     expiresIn: number;
-    user: {
-      email: string;
+    profile: {
+      userId: string;
       firstName: string;
-      role: UserRole;
+      lastName: string;
+      role: string;
+      phone: string;
+      gender: string;
+      dateOfBirth: string;
     };
   };
 }
 
-// ✅ Updated to match RegisterUserDto from swagger
 export interface RegisterRequest {
   firstName: string;
   lastName: string;
@@ -47,15 +50,17 @@ export interface RegisterRequest {
   dateOfBirth: string;
   address: string;
   role: string;
-  medicalHistory?: string;
+  onlineAppointmentFee: number;
+  inPersonAppointmentFee: number;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
-  // Doctor-specific
   specialties?: string[];
   qualifications?: string;
   biography?: string;
-  onlineAppointmentFee?: number;
-  inPersonAppointmentFee?: number;
-  licenseNumber?: string;
-  experience?: number;
+  doctorStatus?: number;
+  cv?: {
+    fileName: string;
+    mimeType: string;
+    fileDataBase64: string;
+  };
 }

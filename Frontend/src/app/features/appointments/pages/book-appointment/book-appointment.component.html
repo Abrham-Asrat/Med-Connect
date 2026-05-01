@@ -1,56 +1,41 @@
 <div class="container py-4">
-  <div class="booking-card mx-auto">
+  <div class="mx-auto" style="max-width: 600px;">
     
-    <!-- Back button -->
     <a routerLink="/patient/doctors" class="btn btn-link text-primary p-0 mb-3">
-      <i class="bi bi-arrow-left me-1"></i> Back to Doctors
+      <i class="bi bi-arrow-left me-1"></i> Back
     </a>
-
-    <!-- Doctor Info Header -->
-    <div class="card mb-4">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center"
-             style="width:56px;height:56px;font-size:20px;font-weight:700">{{ doctor.image }}</div>
-        <div>
-          <h5 class="mb-0">{{ doctor.name }}</h5>
-          <small class="text-primary">{{ doctor.specialty }} · ⭐{{ doctor.rating }}</small>
-        </div>
-        <div class="ms-auto text-end">
-          <strong class="text-primary">{{ getFee() }} ETB</strong><br>
-          <small class="text-medium">per consultation</small>
-        </div>
-      </div>
-    </div>
 
     <!-- Step Indicator -->
     <div class="d-flex align-items-center justify-content-center mb-4">
       @for (s of [1,2,3,4,5]; track s) {
-        <span class="step-dot" [class.active]="step() === s" [class.done]="step() > s">{{ step() > s ? '✓' : s }}</span>
-        @if (s < 5) { <span class="step-line mx-1" [class.done]="step() > s"></span> }
+        <span class="step-dot" [class.active]="step()===s" [class.done]="step()>s">{{ step()>s ? '✓' : s }}</span>
+        @if (s < 5) { <span class="step-line mx-1" [class.done]="step()>s"></span> }
       }
     </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-danger">{{ errorMessage() }}</div>
+    }
 
     <div class="card shadow">
       <div class="card-body p-4">
 
-        <!-- STEP 1: Appointment Type -->
+        <!-- STEP 1: Type -->
         @if (step() === 1) {
-          <h5 class="text-primary mb-4">Select Appointment Type</h5>
+          <h5 class="text-primary mb-4 text-center">Select Appointment Type</h5>
           <div class="row g-3">
             <div class="col-6">
-              <div class="type-card rounded-4 p-4 text-center h-100" (click)="selectType('Online')">
+              <div class="type-card h-100" (click)="selectType('Virtual')">
                 <i class="bi bi-camera-video text-primary" style="font-size:40px"></i>
-                <h6 class="mt-2">Online Consultation</h6>
-                <p class="text-medium small">Video call from anywhere</p>
-                <strong class="text-primary">{{ doctor.onlineFee }} ETB</strong>
+                <h6 class="mt-2">Virtual</h6>
+                <small class="text-medium">Video consultation</small>
               </div>
             </div>
             <div class="col-6">
-              <div class="type-card rounded-4 p-4 text-center h-100" (click)="selectType('InPerson')">
+              <div class="type-card h-100" (click)="selectType('InPerson')">
                 <i class="bi bi-building text-primary" style="font-size:40px"></i>
-                <h6 class="mt-2">In-Person Visit</h6>
-                <p class="text-medium small">Visit the clinic</p>
-                <strong class="text-primary">{{ doctor.inPersonFee }} ETB</strong>
+                <h6 class="mt-2">In-Person</h6>
+                <small class="text-medium">Visit the clinic</small>
               </div>
             </div>
           </div>
@@ -59,185 +44,80 @@
         <!-- STEP 2: Date & Time -->
         @if (step() === 2) {
           <h5 class="text-primary mb-3">Choose Date & Time</h5>
-          <p class="text-medium mb-3">{{ appointmentType() === 'Online' ? '💻 Online' : '🏥 In-Person' }} Consultation</p>
           
-          <!-- Dates -->
           <div class="d-flex gap-2 overflow-auto pb-2 mb-4">
-            @for (d of availableDates(); track d.date) {
+            @for (d of dates(); track d.date) {
               <div class="text-center p-2 rounded-3 flex-shrink-0" style="cursor:pointer; min-width:60px"
-                   [class.bg-primary]="selectedDate() === d.date"
-                   [class.text-white]="selectedDate() === d.date"
-                   [class.bg-light]="selectedDate() !== d.date"
-                   (click)="selectDate(d.date)">
-                <small>{{ d.day }}</small><br>
-                <strong>{{ d.dayNum }}</strong><br>
-                <small>{{ d.month }}</small>
+                   [class.bg-primary]="selectedDate()===d.date" [class.text-white]="selectedDate()===d.date"
+                   [class.bg-light]="selectedDate()!==d.date" (click)="selectDate(d.date)">
+                <small>{{d.day}}</small><br><strong>{{d.dayNum}}</strong><br><small>{{d.month}}</small>
               </div>
             }
           </div>
 
-          <!-- Time Slots -->
-          @if (selectedDate()) {
-            <div>
-              <h6 class="text-dark mb-2"><i class="bi bi-sun me-1"></i>Morning</h6>
-              <div class="d-flex flex-wrap gap-2 mb-3">
-                @for (slot of morningSlots; track slot) {
-                  <span class="badge rounded-pill p-2 px-3 time-slot"
-                        [class.selected]="selectedTime() === slot"
-                        [class.booked]="isBooked(slot)"
-                        [class.bg-light]="!isBooked(slot) && selectedTime() !== slot"
-                        [class.text-dark]="!isBooked(slot) && selectedTime() !== slot"
-                        (click)="selectTime(slot)">
-                    {{ slot }}
-                  </span>
-                }
-              </div>
-              <h6 class="text-dark mb-2"><i class="bi bi-sunset me-1"></i>Afternoon</h6>
-              <div class="d-flex flex-wrap gap-2 mb-3">
-                @for (slot of afternoonSlots; track slot) {
-                  <span class="badge rounded-pill p-2 px-3 time-slot"
-                        [class.selected]="selectedTime() === slot"
-                        [class.booked]="isBooked(slot)"
-                        [class.bg-light]="!isBooked(slot) && selectedTime() !== slot"
-                        [class.text-dark]="!isBooked(slot) && selectedTime() !== slot"
-                        (click)="selectTime(slot)">
-                    {{ slot }}
-                  </span>
-                }
-              </div>
-              <h6 class="text-dark mb-2"><i class="bi bi-moon me-1"></i>Evening</h6>
-              <div class="d-flex flex-wrap gap-2">
-                @for (slot of eveningSlots; track slot) {
-                  <span class="badge rounded-pill p-2 px-3 time-slot"
-                        [class.selected]="selectedTime() === slot"
-                        [class.booked]="isBooked(slot)"
-                        [class.bg-light]="!isBooked(slot) && selectedTime() !== slot"
-                        [class.text-dark]="!isBooked(slot) && selectedTime() !== slot"
-                        (click)="selectTime(slot)">
-                    {{ slot }}
-                  </span>
-                }
-              </div>
-            </div>
-          }
+          <h6 class="mb-2">Morning</h6>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            @for (slot of morningSlots; track slot) {
+              <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
+            }
+          </div>
+          <h6 class="mb-2">Afternoon</h6>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            @for (slot of afternoonSlots; track slot) {
+              <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
+            }
+          </div>
+          <h6 class="mb-2">Evening</h6>
+          <div class="d-flex flex-wrap gap-2">
+            @for (slot of eveningSlots; track slot) {
+              <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
+            }
+          </div>
+
+          <div class="d-flex justify-content-between mt-4">
+            <button class="btn btn-outline-secondary" (click)="step.set(1)">Back</button>
+            <button class="btn btn-primary" (click)="confirmDetails()" [disabled]="!selectedTime()">Continue</button>
+          </div>
         }
 
-        <!-- STEP 3: Confirm Details -->
+        <!-- STEP 3: Confirm -->
         @if (step() === 3) {
-          <h5 class="text-primary mb-4">Confirm Your Appointment</h5>
+          <h5 class="text-primary mb-4">Confirm Details</h5>
           <div class="bg-light rounded-3 p-4">
-            <div class="row mb-3">
-              <div class="col-4 text-medium">Doctor</div>
-              <div class="col-8 fw-bold">{{ doctor.name }} ({{ doctor.specialty }})</div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-4 text-medium">Type</div>
-              <div class="col-8 fw-bold">{{ appointmentType() === 'Online' ? '💻 Online Consultation' : '🏥 In-Person Visit' }}</div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-4 text-medium">Date</div>
-              <div class="col-8 fw-bold">{{ formatDate(selectedDate()) }}</div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-4 text-medium">Time</div>
-              <div class="col-8 fw-bold">{{ selectedTime() }}</div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-4 text-medium">Duration</div>
-              <div class="col-8 fw-bold">30 minutes</div>
-            </div>
-            <hr>
-            <div class="row">
-              <div class="col-4 text-medium">Total</div>
-              <div class="col-8 fw-bold text-primary fs-5">{{ getFee() }} ETB</div>
-            </div>
+            <p><strong>Type:</strong> {{ appointmentType() }}</p>
+            <p><strong>Date:</strong> {{ selectedDate() }}</p>
+            <p><strong>Time:</strong> {{ selectedTime() }}</p>
           </div>
-          <div class="alert alert-warning mt-3 d-flex align-items-center gap-2">
-            <i class="bi bi-info-circle"></i>
-            <small>Free cancellation up to 2 hours before appointment.</small>
+          <div class="d-flex justify-content-between mt-4">
+            <button class="btn btn-outline-secondary" (click)="step.set(2)">Back</button>
+            <button class="btn btn-primary" (click)="goToPayment()">Proceed to Payment</button>
           </div>
         }
 
         <!-- STEP 4: Payment -->
         @if (step() === 4) {
           <h5 class="text-primary mb-4">Payment</h5>
-          <div class="bg-light rounded-3 p-4 mb-4">
-            <div class="d-flex justify-content-between">
-              <span>Total Amount</span>
-              <strong class="text-primary fs-5">{{ getFee() }} ETB</strong>
-            </div>
-          </div>
-          
-          <h6 class="mb-3">Select Payment Method</h6>
-          <div class="type-card rounded-3 p-3 mb-2 d-flex align-items-center gap-3"
-               [class.selected]="paymentMethod() === 'chapa'"
-               (click)="paymentMethod.set('chapa')">
-            <i class="bi bi-phone text-primary fs-4"></i>
-            <div>
-              <strong>Chapa</strong><br><small class="text-medium">Mobile banking & card payment</small>
-            </div>
-          </div>
-          <div class="type-card rounded-3 p-3 d-flex align-items-center gap-3"
-               [class.selected]="paymentMethod() === 'card'"
-               (click)="paymentMethod.set('card')">
-            <i class="bi bi-credit-card text-primary fs-4"></i>
-            <div>
-              <strong>Credit/Debit Card</strong><br><small class="text-medium">Direct card payment</small>
-            </div>
+          <p class="text-medium">Appointment fee: <strong>500 ETB</strong></p>
+          <div class="d-flex justify-content-between mt-4">
+            <button class="btn btn-outline-secondary" (click)="step.set(3)">Back</button>
+            <button class="btn btn-primary" (click)="bookAppointment()" [disabled]="isLoading()">
+              @if (isLoading()) { Booking... } @else { Confirm & Pay }
+            </button>
           </div>
         }
 
         <!-- STEP 5: Success -->
         @if (step() === 5) {
-          <div class="text-center py-4">
-            <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center mb-3"
-                 style="width:80px;height:80px">
+          <div class="text-center py-3">
+            <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center mb-3" style="width:80px;height:80px">
               <i class="bi bi-check-lg text-white" style="font-size:40px"></i>
             </div>
-            <h4 class="text-primary">Appointment Confirmed! 🎉</h4>
-            <p class="text-medium">Your appointment has been booked successfully.</p>
-            <div class="bg-light rounded-3 p-3 text-start mt-3">
-              <p class="mb-1"><strong>Confirmation:</strong> APT-2026-05-15-001</p>
-              <p class="mb-1"><strong>Doctor:</strong> {{ doctor.name }}</p>
-              <p class="mb-1"><strong>Date:</strong> {{ formatDate(selectedDate()) }}</p>
-              <p class="mb-1"><strong>Time:</strong> {{ selectedTime() }}</p>
-              <p class="mb-0"><strong>Type:</strong> {{ appointmentType() === 'Online' ? 'Online' : 'In-Person' }}</p>
-            </div>
-            <div class="mt-4 d-flex gap-2 justify-content-center">
-              <a routerLink="/patient/appointments" class="btn btn-primary">My Appointments</a>
-              <a routerLink="/patient/dashboard" class="btn btn-outline-primary">Dashboard</a>
-            </div>
+            <h4 class="text-primary">Appointment Booked! 🎉</h4>
+            <p class="text-medium">Your appointment has been scheduled.</p>
+            <button class="btn btn-primary mt-3" (click)="goToDashboard()">Go to Dashboard</button>
           </div>
         }
 
-        <!-- Navigation Buttons -->
-        @if (step() < 5) {
-          <div class="d-flex justify-content-between mt-4">
-            <button class="btn btn-outline-secondary" (click)="back()" [disabled]="step() === 1">
-              <i class="bi bi-arrow-left me-1"></i> Back
-            </button>
-            
-            @if (step() === 2 && selectedTime()) {
-              <button class="btn btn-primary px-4" (click)="confirmDetails()">
-                Continue <i class="bi bi-arrow-right ms-1"></i>
-              </button>
-            }
-            @if (step() === 3) {
-              <button class="btn btn-primary px-4" (click)="proceedToPayment()">
-                Proceed to Payment <i class="bi bi-arrow-right ms-1"></i>
-              </button>
-            }
-            @if (step() === 4 && paymentMethod()) {
-              <button class="btn btn-primary px-4" (click)="processPayment()" [disabled]="isProcessing()">
-                @if (isProcessing()) {
-                  <span class="spinner-border spinner-border-sm me-2"></span>Processing...
-                } @else {
-                  Pay {{ getFee() }} ETB <i class="bi bi-lock ms-1"></i>
-                }
-              </button>
-            }
-          </div>
-        }
       </div>
     </div>
   </div>

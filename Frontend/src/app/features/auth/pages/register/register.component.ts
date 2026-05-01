@@ -1,10 +1,24 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { UserRole } from '../../../../core/enums/user-role.enum';
-import { RegisterRequest } from '../../../../core/models/user.model';
+
+function minAgeValidator(minAge: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    const birth = new Date(control.value);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age >= minAge ? null : { minAge: { required: minAge, actual: age } };
+  };
+}
+
+function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+  return control.get('password')?.value === control.get('confirmPassword')?.value ? null : { passwordMismatch: true };
+}
 
 @Component({
   selector: 'app-register',
@@ -13,18 +27,13 @@ import { RegisterRequest } from '../../../../core/models/user.model';
   templateUrl: './register.component.html',
   styles: [`
     .brand-panel { background: linear-gradient(135deg, #078930, #056B24); }
-    .form-card { max-width: 600px; }
-    .step-dot { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; border: 2px solid #E5E7EB; background: white; color: #6B7280; transition: all 0.3s ease; }
-    .step-dot.active { background: #078930; color: white; border-color: #078930; }
-    .step-dot.done { background: #078930; color: white; border-color: #078930; }
-    .step-line { width: 40px; height: 2px; background: #E5E7EB; transition: all 0.3s ease; }
-    .step-line.done { background: #078930; }
-    .role-card { cursor: pointer; border: 2px solid #E5E7EB; border-radius: 16px; padding: 24px; text-align: center; transition: all 0.3s ease; }
+    .role-card { cursor: pointer; border: 2px solid #E5E7EB; border-radius: 16px; padding: 28px; text-align: center; transition: all 0.3s; }
     .role-card:hover, .role-card.selected { border-color: #078930; background: #E8F5EC; }
-    .role-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 12px; }
-    .upload-zone { border: 2px dashed #E5E7EB; border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
+    .role-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 14px; }
+    .upload-zone { cursor: pointer; border: 2px dashed #E5E7EB; border-radius: 12px; transition: all 0.3s; }
     .upload-zone:hover, .upload-zone.has-file { border-color: #078930; background: #E8F5EC; }
-    .timeline-item { display: flex; align-items: center; gap: 8px; }
+    .strength-bar { height: 4px; border-radius: 2px; background: #E5E7EB; }
+    .strength-fill { height: 100%; border-radius: 2px; transition: all 0.3s; }
   `]
 })
 export class RegisterComponent {
@@ -32,164 +41,137 @@ export class RegisterComponent {
   private router = inject(Router);
   private fb = inject(FormBuilder);
 
-  // Steps: 1=Role, 2=Account, 3=Professional (Doctor only), 4=Documents (Doctor only), 5=Done
-  step = signal(1);
-  totalSteps = signal(2); // 2 for Patient, 4 for Doctor
-  selectedRole = signal<UserRole | null>(null);
+  selectedRole = signal<'Patient' | 'Doctor' | null>(null);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
   showPassword = signal(false);
-
-  // Files
+  showConfirmPassword = signal(false);
   cvFile = signal<File | null>(null);
-  certFiles = signal<File[]>([]);
+  cvBase64 = signal<string | null>(null);
 
-  // Common form (Step 2)
-  accountForm = this.fb.group({
+  passwordStrength = signal(0);
+  strengthLabel = signal('');
+  strengthWidth = signal('0%');
+  strengthColor = signal('#E5E7EB');
+  hasMinLength = signal(false);
+  hasUpperCase = signal(false);
+  hasNumber = signal(false);
+  hasSpecial = signal(false);
+
+  maxDate = signal(new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]);
+
+  patientForm = this.fb.group({
     firstName: ['', [Validators.required, Validators.maxLength(50)]],
     lastName: ['', [Validators.required, Validators.maxLength(50)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
+    confirmPassword: ['', [Validators.required]],
     phone: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(20)]],
     gender: ['', Validators.required],
-    dateOfBirth: ['', Validators.required],
+    dateOfBirth: ['', [Validators.required, minAgeValidator(18)]],
     address: ['', [Validators.required, Validators.maxLength(500)]],
     emergencyContactName: [''],
     emergencyContactPhone: [''],
-  });
+  }, { validators: passwordMatchValidator });
 
-  // Doctor Professional form (Step 3)
-  professionalForm = this.fb.group({
-    licenseNumber: ['', Validators.required],
-    specialty: ['', Validators.required],
-    experience: ['', [Validators.required, Validators.min(0)]],
-    qualifications: ['', Validators.required],
+  doctorForm = this.fb.group({
+    firstName: ['', [Validators.required, Validators.maxLength(50)]],
+    lastName: ['', [Validators.required, Validators.maxLength(50)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
+    confirmPassword: ['', [Validators.required]],
+    phone: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(20)]],
+    gender: ['', Validators.required],
+    dateOfBirth: ['', [Validators.required, minAgeValidator(18)]],
+    address: ['', [Validators.required, Validators.maxLength(500)]],
+    specialty: [''],
+    qualifications: [''],
     biography: [''],
-    onlineAppointmentFee: [0],
-    inPersonAppointmentFee: [0],
-  });
+    onlineAppointmentFee: [300, Validators.required],
+    inPersonAppointmentFee: [500, Validators.required],
+  }, { validators: passwordMatchValidator });
 
-  specialties = ['Cardiology', 'Neurology', 'Pediatrics', 'Dermatology', 'Orthopedics', 'Gynecology', 'Psychiatry', 'Ophthalmology', 'Internal Medicine', 'General Practice', 'ENT', 'Dentistry'];
+  specialties = ['Cardiology','Neurology','Pediatrics','Dermatology','Orthopedics','Gynecology','Psychiatry','Ophthalmology','Internal Medicine','General Practice','ENT','Dentistry'];
 
-  // ─── Navigation ──────────────────────────────
-
-  selectRole(role: string): void {
-    this.selectedRole.set(role === 'Patient' ? UserRole.Patient : UserRole.Doctor);
-    if (role === 'Patient') {
-      this.totalSteps.set(2);
-    } else {
-      this.totalSteps.set(4);
-    }
-    this.step.set(2);
-  }
-
-  nextStep(): void {
-    if (this.step() === 2 && this.isDoctor()) {
-      if (this.accountForm.invalid) {
-        this.accountForm.markAllAsTouched();
-        return;
-      }
-    }
-    if (this.step() === 3 && this.isDoctor()) {
-      if (this.professionalForm.invalid) {
-        this.professionalForm.markAllAsTouched();
-        return;
-      }
-    }
-    this.step.update(v => Math.min(v + 1, this.totalSteps()));
-  }
-
-  prevStep(): void { this.step.update(v => Math.max(v - 1, 1)); }
-
-  isDoctor(): boolean { return this.selectedRole() === UserRole.Doctor; }
-  isPatient(): boolean { return this.selectedRole() === UserRole.Patient; }
-
-  // ─── File Handling ───────────────────────────
+  getForm(): FormGroup { return this.selectedRole() === 'Patient' ? this.patientForm : this.doctorForm; }
+  selectRole(role: 'Patient' | 'Doctor'): void { this.selectedRole.set(role); }
+  backToRole(): void { this.selectedRole.set(null); this.errorMessage.set(null); this.successMessage.set(null); }
 
   onCVSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files?.[0]) this.cvFile.set(input.files[0]);
+    const file = input.files?.[0];
+    if (file) { this.cvFile.set(file); const r = new FileReader(); r.onload = () => this.cvBase64.set(r.result as string); r.readAsDataURL(file); }
   }
+  removeCV(): void { this.cvFile.set(null); this.cvBase64.set(null); }
 
-  removeCV(): void { this.cvFile.set(null); }
-
-  onCertsSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files) this.certFiles.update(f => [...f, ...Array.from(input.files!)]);
+  checkPasswordStrength(password: string): void {
+    let s = 0;
+    this.hasMinLength.set(password.length >= 8);
+    this.hasUpperCase.set(/[A-Z]/.test(password));
+    this.hasNumber.set(/\d/.test(password));
+    this.hasSpecial.set(/[!@#$%^&*(),.?":{}|<>]/.test(password));
+    if (password.length >= 8) s++; if (/[A-Z]/.test(password)) s++;
+    if (/\d/.test(password)) s++; if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) s++;
+    this.passwordStrength.set(s);
+    switch (s) {
+      case 0: this.strengthLabel.set(''); this.strengthWidth.set('0%'); this.strengthColor.set('#E5E7EB'); break;
+      case 1: this.strengthLabel.set('Weak'); this.strengthWidth.set('25%'); this.strengthColor.set('#DA121A'); break;
+      case 2: this.strengthLabel.set('Fair'); this.strengthWidth.set('50%'); this.strengthColor.set('#FCD116'); break;
+      case 3: this.strengthLabel.set('Good'); this.strengthWidth.set('75%'); this.strengthColor.set('#007BFF'); break;
+      case 4: this.strengthLabel.set('Strong'); this.strengthWidth.set('100%'); this.strengthColor.set('#078930'); break;
+    }
   }
-
-  removeCert(index: number): void { this.certFiles.update(f => f.filter((_, i) => i !== index)); }
-
-  formatFileSize(bytes: number): string {
-    if (!bytes) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  }
-
-  // ─── Submit ──────────────────────────────────
 
   onSubmit(): void {
-    if (this.isPatient() && this.accountForm.invalid) {
-      this.accountForm.markAllAsTouched();
-      return;
-    }
-    if (this.isDoctor() && (this.accountForm.invalid || this.professionalForm.invalid)) {
-      this.accountForm.markAllAsTouched();
-      this.professionalForm.markAllAsTouched();
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-
-    const a = this.accountForm.value;
-    const p = this.isDoctor() ? this.professionalForm.value : null;
+    const form = this.getForm();
+    if (form.invalid) { form.markAllAsTouched(); return; }
+    this.isLoading.set(true); this.errorMessage.set(null); this.successMessage.set(null);
+    const v: any = form.value;
+    const isPatient = this.selectedRole() === 'Patient';
 
     const data: any = {
-      firstName: a.firstName || '',
-      lastName: a.lastName || '',
-      email: a.email || '',
-      password: a.password || '',
-      phone: a.phone || '',
-      gender: a.gender || '',
-      dateOfBirth: a.dateOfBirth || '',
-      address: a.address || '',
+      firstName: v.firstName, lastName: v.lastName, email: v.email,
+      password: v.password, phone: v.phone, gender: v.gender,
+      dateOfBirth: v.dateOfBirth, address: v.address,
       role: this.selectedRole() || 'Patient',
-      onlineAppointmentFee: p?.onlineAppointmentFee || 0,
-      inPersonAppointmentFee: p?.inPersonAppointmentFee || 0,
-      emergencyContactName: a.emergencyContactName || '',
-      emergencyContactPhone: a.emergencyContactPhone || '',
-      ...(this.isDoctor() ? {
-        specialties: [p?.specialty || 'General Practice'],
-        qualifications: p?.qualifications || '',
-        biography: p?.biography || '',
-        doctorStatus: 0,
-      } : {}),
+      onlineAppointmentFee: isPatient ? 0 : (v.onlineAppointmentFee || 300),
+      inPersonAppointmentFee: isPatient ? 0 : (v.inPersonAppointmentFee || 500),
     };
-
-    console.log('Sending:', JSON.stringify(data, null, 2));
+    if (isPatient) {
+      if (v.emergencyContactName) data.emergencyContactName = v.emergencyContactName;
+      if (v.emergencyContactPhone) data.emergencyContactPhone = v.emergencyContactPhone;
+    } else {
+      if (v.specialty) data.specialties = [v.specialty];
+      if (v.qualifications) data.qualifications = v.qualifications;
+      if (v.biography) data.biography = v.biography;
+      data.doctorStatus = 0;
+      if (this.cvFile() && this.cvBase64()) {
+        data.cv = { fileName: this.cvFile()!.name, mimeType: this.cvFile()!.type || 'application/pdf', fileDataBase64: this.cvBase64()!.split(',')[1] || this.cvBase64() };
+      }
+    }
 
     this.authService.register(data).subscribe({
-      next: (response: any) => {
+      next: (r: any) => {
         this.isLoading.set(false);
-        if (response?.success) {
-          this.step.set(this.totalSteps()); // Show success step
-          this.authService.resendOTP(data.email).subscribe();
+        if (r?.success) {
+          if (r.data?.patientId) localStorage.setItem('patientId', r.data.patientId);
+          if (r.data?.doctorId) localStorage.setItem('doctorId', r.data.doctorId);
+          
+          const isDoctor = this.selectedRole() === 'Doctor';
+          localStorage.setItem('pendingEmail', data.email);
+          localStorage.setItem('pendingRole', this.selectedRole() || '');
+          
+          this.successMessage.set(
+            isDoctor 
+              ? 'Application submitted! Check email to verify. Admin review within 1-3 days.' 
+              : 'Account created! Check email to verify, then login.'
+          );
         } else {
-          this.errorMessage.set(response?.message || 'Registration failed.');
+          this.errorMessage.set(r?.message || 'Registration failed.');
         }
       },
-      error: (error: any) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(error?.error?.message || 'Registration failed.');
-      }
+      error: (e: any) => { this.isLoading.set(false); this.errorMessage.set(e?.error?.message || 'Registration failed.'); }
     });
-  }
-
-  goToOTP(): void {
-    this.router.navigate(['/auth/verify-otp'], { queryParams: { email: this.accountForm.value.email } });
   }
 }

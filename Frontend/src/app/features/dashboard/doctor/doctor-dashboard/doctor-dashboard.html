@@ -1,192 +1,90 @@
 <div class="container-fluid p-4">
   
-  <!-- Welcome Card -->
+  <!-- Welcome -->
   <div class="welcome-card rounded-4 p-4 text-white mb-4">
     <div class="row align-items-center">
       <div class="col-md-8">
-        <h4 class="mb-1">{{ getGreeting() }}, Dr. {{ user()?.lastName || 'Doctor' }}! 👋</h4>
-        <p class="mb-2 opacity-75">Here's your practice overview for today</p>
-        <div class="d-flex align-items-center gap-3">
+        <h4>{{ getGreeting() }}, Dr. {{ user()?.lastName || 'Doctor' }}! 👋</h4>
+        <div class="d-flex align-items-center gap-3 mt-2">
           <span>Status:</span>
           <div class="form-check form-switch">
-            <input class="form-check-input online-toggle" type="checkbox" [checked]="isOnline()" (change)="toggleOnline()">
-            <label class="form-check-label">{{ isOnline() ? 'Online - Accepting Patients' : 'Offline' }}</label>
+            <input class="form-check-input" type="checkbox" [checked]="isOnline()" (change)="toggleOnline()">
+            <label>{{ isOnline() ? 'Online' : 'Offline' }}</label>
           </div>
         </div>
       </div>
       <div class="col-md-4 text-end d-none d-md-block">
-        <i class="bi bi-stethoscope" style="font-size: 80px; opacity: 0.2;"></i>
+        <i class="bi bi-stethoscope" style="font-size:80px;opacity:0.2"></i>
       </div>
     </div>
   </div>
 
-  <!-- Stats Row -->
+  <!-- Stats -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
-      <div class="card stat-card h-100"><div class="card-body">
-        <p class="text-medium mb-0" style="font-size:13px">Today's Appointments</p>
+      <div class="card stat-card"><div class="card-body">
+        <small class="text-medium">Today's Appts</small>
         <h3 class="text-primary mb-0">{{ todayAppointments() }}</h3>
       </div></div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card stat-card pending h-100"><div class="card-body">
-        <p class="text-medium mb-0" style="font-size:13px">Pending Confirmations</p>
+      <div class="card stat-card pending"><div class="card-body">
+        <small class="text-medium">Pending</small>
         <h3 class="text-warning-dark mb-0">{{ pendingConfirmations() }}</h3>
       </div></div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card stat-card h-100"><div class="card-body">
-        <p class="text-medium mb-0" style="font-size:13px">Total Patients</p>
+      <div class="card stat-card"><div class="card-body">
+        <small class="text-medium">Patients</small>
         <h3 class="text-primary mb-0">{{ totalPatients() }}</h3>
       </div></div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card stat-card earnings h-100"><div class="card-body">
-        <p class="text-medium mb-0" style="font-size:13px">Monthly Earnings</p>
-        <h3 class="text-secondary mb-0">{{ monthlyEarnings().toLocaleString() }} ETB</h3>
+      <div class="card stat-card"><div class="card-body">
+        <small class="text-medium">Completed Today</small>
+        <h3 class="text-primary mb-0">{{ completedToday() }}</h3>
       </div></div>
     </div>
   </div>
 
-  <div class="row g-4">
-    <!-- Main Content -->
-    <div class="col-lg-8">
-      
-      <!-- Today's Schedule -->
-      <div class="card mb-4">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-          <h5 class="text-primary mb-0"><i class="bi bi-calendar-check me-2"></i>Today's Schedule</h5>
-          <span class="badge bg-primary">{{ todaySchedule().length }} Appointments</span>
-        </div>
-        <div class="card-body p-0">
-          @for (apt of todaySchedule(); track apt.id) {
-            <div class="appointment-row p-3 border-bottom" [class.pending]="apt.status === 'pending'">
-              <div class="row align-items-center">
-                <div class="col-md-1 text-center">
-                  <span class="text-primary fw-bold">{{ apt.time.split(' ')[0] }}</span>
-                  <small class="text-medium d-block">{{ apt.time.split(' ')[1] }}</small>
-                </div>
-                <div class="col-md-3">
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="patient-avatar bg-primary-light text-primary">{{ apt.patient.split(' ')[0]?.charAt(0) || '' }}{{ apt.patient.split(' ')[1]?.charAt(0) || '' }}</div>
-                    <div>
-                      <h6 class="mb-0">{{ apt.patient }}</h6>
-                      <small class="text-medium">{{ apt.type === 'Online' ? '💻 Online' : '🏥 In-Person' }}</small>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <small class="text-medium">{{ apt.notes }}</small>
-                </div>
-                <div class="col-md-2">
-                  <span class="badge rounded-pill px-3 py-2" [ngClass]="getStatusClass(apt.status)">
-                    {{ apt.status === 'in-progress' ? 'In Progress' : apt.status }}
-                  </span>
-                </div>
-                <div class="col-md-3 text-end">
-                  @if (apt.status === 'confirmed' && apt.type === 'Online') {
-                    <button class="btn btn-primary btn-sm me-1" (click)="startConsultation(apt.id)">
-                      <i class="bi bi-camera-video me-1"></i> Start
-                    </button>
-                  }
-                  @if (apt.status === 'in-progress') {
-                    <button class="btn btn-success btn-sm me-1" (click)="completeConsultation(apt.id)">
-                      <i class="bi bi-check-lg me-1"></i> Complete
-                    </button>
-                  }
-                  @if (apt.status === 'pending') {
-                    <button class="btn btn-primary btn-sm me-1" (click)="confirmAppointment(apt.id)">Confirm</button>
-                    <button class="btn btn-outline-danger btn-sm" (click)="declineAppointment(apt.id)">Decline</button>
-                  }
-                  @if (apt.status === 'completed') {
-                    <span class="text-primary"><i class="bi bi-check-circle-fill me-1"></i>Done</span>
-                  }
-                </div>
-              </div>
+  <!-- Appointments -->
+  <div class="card">
+    <div class="card-header bg-white d-flex justify-content-between">
+      <h5 class="text-primary mb-0"><i class="bi bi-calendar-check me-2"></i>Appointments</h5>
+      <span class="badge bg-primary">{{ appointments().length }}</span>
+    </div>
+    <div class="card-body p-0">
+      @if (isLoading()) {
+        <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+      }
+      @for (apt of appointments(); track apt.appointmentId) {
+        <div class="appointment-row p-3 border-bottom" [class.pending]="apt.status==='Pending'">
+          <div class="row align-items-center">
+            <div class="col-md-2">
+              <span class="text-primary fw-bold">{{ apt.appointmentTime }}</span>
             </div>
-          }
-        </div>
-      </div>
-
-      <!-- Pending Requests -->
-      @if (pendingRequests().length > 0) {
-        <div class="card mb-4">
-          <div class="card-header bg-white">
-            <h5 class="text-warning-dark mb-0"><i class="bi bi-clock me-2"></i>Pending Appointment Requests</h5>
-          </div>
-          <div class="card-body">
-            @for (req of pendingRequests(); track req.id) {
-              <div class="d-flex justify-content-between align-items-center p-3 border rounded mb-2">
-                <div>
-                  <strong>{{ req.patient }}</strong>
-                  <p class="mb-0 text-medium" style="font-size:14px">{{ req.requestedTime }} · {{ req.type }} · {{ req.reason }}</p>
-                </div>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-primary btn-sm" (click)="confirmAppointment(req.id)">Accept</button>
-                  <button class="btn btn-outline-danger btn-sm" (click)="declineAppointment(req.id)">Decline</button>
-                </div>
-              </div>
-            }
+            <div class="col-md-4">
+              <strong>{{ apt.patientName || 'Patient' }}</strong>
+              <br><small class="text-medium">{{ apt.appointmentType || 'Virtual' }}</small>
+            </div>
+            <div class="col-md-3">
+              <span class="badge rounded-pill px-3" [ngClass]="getStatusClass(apt.status)">{{ apt.status }}</span>
+            </div>
+            <div class="col-md-3 text-end">
+              @if (apt.status === 'Pending') {
+                <button class="btn btn-primary btn-sm me-1" (click)="confirmAppointment(apt.appointmentId)">Confirm</button>
+                <button class="btn btn-outline-danger btn-sm" (click)="declineAppointment(apt.appointmentId)">Decline</button>
+              }
+              @if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
+                <button class="btn btn-outline-primary btn-sm">Start</button>
+              }
+            </div>
           </div>
         </div>
       }
-    </div>
-
-    <!-- Sidebar -->
-    <div class="col-lg-4">
-      
-      <!-- Weekly Overview -->
-      <div class="card mb-4">
-        <div class="card-header bg-white"><h6 class="text-primary mb-0"><i class="bi bi-bar-chart me-2"></i>This Week</h6></div>
-        <div class="card-body">
-          @for (day of weeklyStats(); track day.day) {
-            <div class="d-flex align-items-center mb-2">
-              <span style="width:40px" class="fw-bold">{{ day.day }}</span>
-              <div class="flex-grow-1 mx-2" style="height:20px; background:#E5E7EB; border-radius:10px; overflow:hidden">
-                <div [style.width.%]="(day.appointments / 8) * 100" style="height:100%; background:#078930; border-radius:10px"></div>
-              </div>
-              <small class="text-medium">{{ day.appointments }}</small>
-            </div>
-          }
-          <div class="d-flex mt-2">
-            <small class="text-medium me-3">🟢 {{ weeklyStats().reduce((s,d) => s + d.available, 0) }} slots open</small>
-            <small class="text-medium">📊 {{ weeklyStats().reduce((s,d) => s + d.appointments, 0) }} booked</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Stats -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row text-center">
-            <div class="col-6 mb-3">
-              <h5 class="text-primary mb-0">{{ thisMonthAppointments() }}</h5>
-              <small class="text-medium">This Month</small>
-            </div>
-            <div class="col-6 mb-3">
-              <h5 class="text-primary mb-0">{{ patientSatisfaction() }}%</h5>
-              <small class="text-medium">Satisfaction</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Patients -->
-      <div class="card">
-        <div class="card-header bg-white"><h6 class="text-primary mb-0"><i class="bi bi-people me-2"></i>Recent Patients</h6></div>
-        <div class="card-body">
-          @for (patient of recentPatients(); track patient.id) {
-            <div class="d-flex align-items-center gap-3 mb-3">
-              <div class="patient-avatar bg-primary-light text-primary">{{ patient.avatar }}</div>
-              <div>
-                <h6 class="mb-0">{{ patient.name }}</h6>
-                <small class="text-medium">{{ patient.condition }} · {{ patient.lastVisit }}</small>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
+      @if (appointments().length === 0 && !isLoading()) {
+        <p class="text-center text-medium py-4">No appointments yet</p>
+      }
     </div>
   </div>
 </div>

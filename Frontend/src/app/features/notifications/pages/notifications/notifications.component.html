@@ -1,0 +1,52 @@
+<div class="container-fluid p-4">
+  
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="text-primary mb-0"><i class="bi bi-bell me-2"></i>Notifications</h4>
+    <div>
+      <span class="badge bg-primary me-2">{{ unreadCount() }} unread</span>
+      <button class="btn btn-outline-primary btn-sm" (click)="markAllAsRead()">Mark All Read</button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+  }
+
+  @if (!isLoading()) {
+    @for (notif of notifications(); track notif.id) {
+      <div class="card mb-2" [class]="getTypeClass(notif.type)" [class.unread]="!notif.read">
+        <div class="card-body py-3">
+          <div class="d-flex gap-3">
+            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                 [class.bg-primary-light]="notif.type==='appointment'"
+                 [class.bg-warning-light]="notif.type==='payment'"
+                 [class.bg-secondary-light]="notif.type==='message'"
+                 [class.bg-danger-light]="notif.type==='system'"
+                 style="width:44px;height:44px">
+              <i [class]="'bi ' + notif.icon + ' fs-5'"
+                 [class.text-primary]="notif.type==='appointment'"
+                 [class.text-warning-dark]="notif.type==='payment'"
+                 [class.text-secondary]="notif.type==='message'"
+                 [class.text-danger]="notif.type==='system'"></i>
+            </div>
+            <div class="flex-grow-1" (click)="markAsRead(notif.id)" style="cursor:pointer">
+              <div class="d-flex justify-content-between">
+                <strong [class.text-medium]="notif.read">{{ notif.title }}</strong>
+                @if (!notif.read) { <span class="badge bg-primary rounded-pill">New</span> }
+              </div>
+              <p class="text-medium mb-0" style="font-size:14px">{{ notif.message }}</p>
+              <small class="text-medium">{{ notif.time | date:'medium' }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (notifications().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-bell-slash text-primary" style="font-size:48px;opacity:0.3"></i>
+        <p class="text-medium mt-3">No notifications yet</p>
+      </div>
+    }
+  }
+</div>

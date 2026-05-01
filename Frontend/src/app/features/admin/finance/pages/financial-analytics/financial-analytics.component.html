@@ -1,0 +1,63 @@
+<div class="container-fluid p-4">
+  
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="text-primary mb-0"><i class="bi bi-graph-up me-2"></i>Financial Analytics</h4>
+    <button class="btn btn-outline-primary btn-sm"><i class="bi bi-download me-1"></i>Export Report</button>
+  </div>
+
+  @if (errorMessage()) { <div class="alert alert-danger">{{ errorMessage() }}</div> }
+
+  <!-- Key Metrics -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="card bg-primary text-white h-100"><div class="card-body"><small>Total Revenue</small><h3 class="mb-0">{{ totalRevenue().toLocaleString() }} ETB</h3></div></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card revenue h-100"><div class="card-body"><small class="text-medium">This Month</small><h3 class="text-primary mb-0">{{ thisMonth().toLocaleString() }} ETB</h3></div></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card pending h-100"><div class="card-body"><small class="text-medium">Pending Payouts</small><h3 class="text-warning-dark mb-0">{{ pendingPayouts().toLocaleString() }} ETB</h3></div></div></div>
+    <div class="col-6 col-md-3"><div class="card stat-card chapa h-100"><div class="card-body"><small class="text-medium">Appointments</small><h3 class="text-secondary mb-0">{{ totalAppointments() }}</h3><small>{{ completedAppointments() }} completed</small></div></div></div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Revenue Chart -->
+    <div class="col-lg-8"><div class="card h-100"><div class="card-header bg-white"><h5 class="text-primary mb-0">Monthly Revenue</h5></div><div class="card-body">
+      <div class="revenue-bar justify-content-center">
+        @for (m of monthlyRevenue(); track m.month) {
+          <div class="text-center">
+            <div class="bar bg-primary" [style.height.px]="(m.amount / getMaxRevenue()) * 180"></div>
+            <small class="text-medium d-block mt-1">{{ m.month }}</small>
+            <small class="text-primary fw-bold">{{ (m.amount / 1000).toFixed(0) }}k</small>
+          </div>
+        }
+      </div>
+    </div></div></div>
+
+    <!-- By Specialty -->
+    <div class="col-lg-4"><div class="card h-100"><div class="card-header bg-white"><h5 class="text-primary mb-0">By Specialty</h5></div><div class="card-body">
+      @for (s of revenueBySpecialty(); track s.specialty) {
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-medium">{{ s.specialty }}</span>
+          <span class="text-primary fw-bold">{{ s.amount.toLocaleString() }} ETB</span>
+        </div>
+      }
+    </div></div></div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="card"><div class="card-header bg-white d-flex justify-content-between"><h5 class="text-primary mb-0"><i class="bi bi-receipt me-2"></i>Recent Transactions</h5></div>
+    <div class="table-responsive"><table class="table table-hover mb-0">
+      <thead><tr><th>ID</th><th>Doctor</th><th>Patient</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>
+        @if (isLoading()) { <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr> }
+        @for (t of transactions(); track t.id) {
+          <tr>
+            <td><small class="text-primary">{{ t.id }}</small></td>
+            <td>{{ t.doctor }}</td>
+            <td>{{ t.patient }}</td>
+            <td><strong>{{ t.amount }} ETB</strong></td>
+            <td>{{ t.date }}</td>
+            <td><span class="badge rounded-pill px-3" [ngClass]="getStatusClass(t.status)">{{ t.status }}</span></td>
+          </tr>
+        }
+        @if (!isLoading() && transactions().length===0) { <tr><td colspan="6" class="text-center py-4 text-medium">No transactions</td></tr> }
+      </tbody>
+    </table></div>
+  </div>
+</div>

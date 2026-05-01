@@ -2,21 +2,12 @@
   <div class="d-flex chat-container">
     
     <!-- Conversation List -->
-    <div class="conversation-list border-end bg-white d-flex flex-column d-none d-md-flex">
+    <div class="conversation-list border-end bg-white d-flex flex-column">
       <div class="p-3 border-bottom">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="text-primary mb-0"><i class="bi bi-chat-dots me-2"></i>Messages</h5>
-          <span class="badge rounded-pill" 
-                [class.bg-primary]="connectionState() === 'connected'"
-                [class.bg-warning]="connectionState() === 'reconnecting'"
-                [class.bg-danger]="connectionState() === 'disconnected'">
-            {{ connectionState() === 'connected' ? '🟢 Live' : connectionState() === 'reconnecting' ? '🟡 ...' : '🔴 Off' }}
-          </span>
-        </div>
-        <div class="input-group">
-          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-          <input type="text" class="form-control" placeholder="Search conversations...">
-        </div>
+        <h5 class="text-primary mb-0"><i class="bi bi-chat-dots me-2"></i>Messages</h5>
+        @if (isLoading()) {
+          <div class="text-center mt-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+        }
       </div>
       
       <div class="flex-grow-1 overflow-auto">
@@ -33,18 +24,19 @@
               <div class="flex-grow-1 min-width-0">
                 <div class="d-flex justify-content-between">
                   <h6 class="mb-0 text-truncate">{{ conv.name }}</h6>
-                  <small class="text-medium flex-shrink-0 ms-1">{{ conv.time }}</small>
+                  <small class="text-medium">{{ conv.time }}</small>
                 </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <small class="text-medium text-truncate d-block">{{ conv.lastMessage }}</small>
-                  @if (conv.unread > 0) {
-                    <span class="badge bg-primary rounded-pill flex-shrink-0 ms-1">{{ conv.unread }}</span>
-                  }
-                </div>
-                <small class="text-primary" style="font-size:12px">{{ conv.role }}</small>
+                <small class="text-medium text-truncate d-block">{{ conv.lastMessage }}</small>
+                @if (conv.unread > 0) {
+                  <span class="badge bg-primary rounded-pill">{{ conv.unread }}</span>
+                }
               </div>
             </div>
           </div>
+        }
+
+        @if (conversations().length === 0 && !isLoading()) {
+          <div class="text-center p-4 text-medium">No conversations yet</div>
         }
       </div>
     </div>
@@ -52,13 +44,7 @@
     <!-- Chat Area -->
     <div class="chat-area d-flex flex-column bg-light">
       @if (activeConv()) {
-        <!-- Chat Header -->
         <div class="bg-white border-bottom p-3 d-flex align-items-center gap-3">
-          <!-- Mobile back button -->
-          <button class="btn btn-link text-primary p-0 d-md-none" (click)="activeConversation.set(null)">
-            <i class="bi bi-arrow-left fs-5"></i>
-          </button>
-          
           <div class="position-relative">
             <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center"
                  style="width:44px;height:44px;font-weight:700">{{ activeConv()?.avatar }}</div>
@@ -66,131 +52,35 @@
           </div>
           <div class="flex-grow-1">
             <h6 class="mb-0">{{ activeConv()?.name }}</h6>
-            <small>
-              @if (activeConv()?.online) {
-                <span class="text-primary">Online</span>
-              } @else {
-                <span class="text-medium">Offline</span>
-              }
-              · {{ activeConv()?.role }}
-            </small>
-          </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-sm rounded-pill">
-              <i class="bi bi-camera-video me-1"></i> Call
-            </button>
-            <button class="btn btn-link text-primary">
-              <i class="bi bi-three-dots-vertical"></i>
-            </button>
+            <small class="text-medium">{{ activeConv()?.role }}</small>
           </div>
         </div>
 
-        <!-- Messages -->
-        <div class="flex-grow-1 overflow-auto p-4" id="messagesContainer">
+        <div class="flex-grow-1 overflow-auto p-4">
           @for (msg of messages(); track msg.id) {
-            <!-- System Message -->
-            @if (msg.type === 'system') {
-              <div class="text-center mb-3">
-                <span class="msg-system px-3 py-1 d-inline-block text-dark">
-                  <i class="bi bi-info-circle me-1"></i>{{ msg.text }}
-                </span>
-              </div>
-            }
-            
-            <!-- Regular Message -->
-            @if (msg.type !== 'system') {
-              <div class="d-flex mb-3" [class.justify-content-end]="msg.sender === 'me'">
-                @if (msg.sender === 'them') {
-                  <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center flex-shrink-0 me-2 align-self-end"
-                       style="width:32px;height:32px;font-size:12px;font-weight:700">{{ activeConv()?.avatar }}</div>
-                }
-                <div [class.text-end]="msg.sender === 'me'">
-                  @if (msg.type === 'file') {
-                    <div [class.msg-sent]="msg.sender === 'me'" 
-                         [class.msg-received]="msg.sender === 'them'"
-                         class="px-3 py-2 mb-1">
-                      <div class="file-attachment d-flex align-items-center gap-3">
-                        <i class="bi bi-file-earmark-pdf fs-3" [class.text-white]="msg.sender === 'me'" [class.text-danger]="msg.sender === 'them'"></i>
-                        <div>
-                          <div class="fw-bold">{{ msg.fileName }}</div>
-                          <small [class.text-white-50]="msg.sender === 'me'" [class.text-medium]="msg.sender === 'them'">Click to download</small>
-                        </div>
-                        <i class="bi bi-download ms-2"></i>
-                      </div>
-                    </div>
-                  } @else {
-                    <div [class.msg-sent]="msg.sender === 'me'" 
-                         [class.msg-received]="msg.sender === 'them'"
-                         class="px-3 py-2 mb-1">
-                      {{ msg.text }}
-                    </div>
-                  }
-                  <small class="text-medium d-block" style="font-size:11px">
-                    {{ msg.time }}
-                    @if (msg.sender === 'me') {
-                      <i [class]="msg.read ? 'bi bi-check2-all text-primary' : 'bi bi-check2 text-medium'"></i>
-                    }
-                  </small>
-                </div>
-                @if (msg.sender === 'me') {
-                  <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0 ms-2 align-self-end"
-                       style="width:32px;height:32px;font-size:12px;font-weight:700">You</div>
-                }
-              </div>
-            }
-          }
-
-          <!-- Typing Indicator -->
-          @if (isTyping()) {
-            <div class="d-flex mb-3">
-              <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center flex-shrink-0 me-2 align-self-end"
-                   style="width:32px;height:32px;font-size:12px;font-weight:700">{{ activeConv()?.avatar }}</div>
-              <div class="msg-received px-3 py-3">
-                <span class="typing-dot me-1"></span>
-                <span class="typing-dot me-1"></span>
-                <span class="typing-dot"></span>
+            <div class="d-flex mb-3" [class.justify-content-end]="msg.sender === 'me'">
+              <div [class.msg-sent]="msg.sender==='me'" [class.msg-received]="msg.sender==='them'" class="px-3 py-2">
+                {{ msg.text }}
               </div>
             </div>
           }
         </div>
 
-        <!-- Message Input -->
         <div class="bg-white border-top p-3">
-          <div class="d-flex gap-2 align-items-end">
-            <button class="btn btn-outline-secondary btn-sm rounded-circle" (click)="sendFile()" title="Attach file">
-              <i class="bi bi-paperclip"></i>
-            </button>
-            <textarea class="form-control" rows="1" placeholder="Type a message..." style="resize:none; max-height:120px"
-                      [ngModel]="newMessage()" 
-                      (ngModelChange)="newMessage.set($event); onTyping()"
-                      (keydown)="onKeyPress($event)"></textarea>
-            <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center"
-                    style="width:40px;height:40px" (click)="sendMessage()"
-                    [disabled]="!newMessage().trim() || connectionState() !== 'connected'">
+          <div class="d-flex gap-2">
+            <input type="text" class="form-control" placeholder="Type a message..."
+                   [ngModel]="newMessage()" (ngModelChange)="newMessage.set($event)"
+                   (keydown)="onKeyPress($event)">
+            <button class="btn btn-primary" (click)="sendMessage()" [disabled]="!newMessage().trim()">
               <i class="bi bi-send"></i>
             </button>
           </div>
-          @if (connectionState() !== 'connected') {
-            <small class="text-warning d-block mt-1">
-              <i class="bi bi-exclamation-triangle me-1"></i>
-              {{ connectionState() === 'reconnecting' ? 'Reconnecting...' : 'Disconnected. Messages will send when reconnected.' }}
-            </small>
-          }
         </div>
       } @else {
-        <!-- No conversation selected -->
         <div class="flex-grow-1 d-flex align-items-center justify-content-center">
-          <div class="text-center p-5">
-            <div class="rounded-circle bg-primary-light d-inline-flex align-items-center justify-content-center mb-3"
-                 style="width:100px;height:100px">
-              <i class="bi bi-chat-square-text text-primary" style="font-size:48px"></i>
-            </div>
-            <h5 class="text-medium">Select a conversation</h5>
-            <p class="text-medium">Choose a chat from the left to start messaging</p>
-            <!-- Mobile: show conversation list button -->
-            <button class="btn btn-primary d-md-none mt-2" (click)="activeConversation.set('1')">
-              <i class="bi bi-chat-dots me-2"></i>View Conversations
-            </button>
+          <div class="text-center">
+            <i class="bi bi-chat-square-text text-primary" style="font-size:64px;opacity:0.3"></i>
+            <h5 class="text-medium mt-3">Select a conversation</h5>
           </div>
         </div>
       }

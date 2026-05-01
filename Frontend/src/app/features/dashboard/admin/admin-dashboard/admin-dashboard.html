@@ -1,1 +1,99 @@
-<p>admin-dashboard works!</p>
+<div class="container-fluid p-4">
+  
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="text-primary mb-0"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h4>
+    <span class="badge bg-danger pulse-red">{{ pendingApprovals() }} Pending</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card stat-card danger h-100"><div class="card-body">
+        <small class="text-medium">Pending Approvals</small><h3 class="text-danger mb-0">{{ pendingApprovals() }}</h3>
+      </div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100"><div class="card-body">
+        <small class="text-medium">Total Doctors</small><h3 class="text-primary mb-0">{{ totalDoctors() }}</h3>
+      </div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card info h-100"><div class="card-body">
+        <small class="text-medium">Total Patients</small><h3 class="text-secondary mb-0">{{ totalPatients() }}</h3>
+      </div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card warning h-100"><div class="card-body">
+        <small class="text-medium">Revenue</small><h3 class="text-warning-dark mb-0">{{ totalRevenue().toLocaleString() }} ETB</h3>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- Pending Doctors -->
+  <div class="card">
+    <div class="card-header bg-white d-flex justify-content-between">
+      <h5 class="text-danger mb-0"><i class="bi bi-clock me-2"></i>Pending Doctor Approvals</h5>
+      <a routerLink="/admin/verification" class="btn btn-primary btn-sm">View All</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>Doctor</th><th>Specialty</th><th>Qualifications</th><th>Submitted</th><th>Actions</th></tr></thead>
+        <tbody>
+          @if (isLoading()) { <tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr> }
+          @for (doc of pendingDoctors(); track doc.doctorId) {
+            <tr class="pending-row">
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-size:14px;font-weight:700">{{ doc.firstName?.charAt(0) }}{{ doc.lastName?.charAt(0) }}</div>
+                  <div><strong>{{ doc.firstName }} {{ doc.lastName }}</strong><br><small class="text-medium">{{ doc.email }}</small></div>
+                </div>
+              </td>
+              <td><span class="badge bg-primary-light text-primary">{{ doc.specialties?.join?.(', ') || 'N/A' }}</span></td>
+              <td><small>{{ doc.qualifications || 'N/A' }}</small></td>
+              <td><small>{{ doc.registeredAt | date:'mediumDate' }}</small></td>
+              <td>
+                <button class="btn btn-primary btn-sm me-1" (click)="openApprove(doc)">Approve</button>
+                <button class="btn btn-outline-danger btn-sm" (click)="openReject(doc)">Reject</button>
+              </td>
+            </tr>
+          }
+          @if (!isLoading() && pendingDoctors().length===0) {
+            <tr><td colspan="5" class="text-center py-4 text-medium">No pending doctors</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="row g-3 mt-3">
+    <div class="col-md-3"><a routerLink="/admin/verification" class="card text-center p-3 text-decoration-none h-100" style="border-left:4px solid #DA121A"><i class="bi bi-person-check text-danger fs-3"></i><h6 class="text-dark mt-2">Verification</h6></a></div>
+    <div class="col-md-3"><a routerLink="/admin/doctors" class="card text-center p-3 text-decoration-none h-100" style="border-left:4px solid #078930"><i class="bi bi-people text-primary fs-3"></i><h6 class="text-dark mt-2">Doctors</h6></a></div>
+    <div class="col-md-3"><a routerLink="/admin/patients" class="card text-center p-3 text-decoration-none h-100" style="border-left:4px solid #007BFF"><i class="bi bi-people-fill text-secondary fs-3"></i><h6 class="text-dark mt-2">Patients</h6></a></div>
+    <div class="col-md-3"><a routerLink="/admin/finance" class="card text-center p-3 text-decoration-none h-100" style="border-left:4px solid #FCD116"><i class="bi bi-graph-up text-warning-dark fs-3"></i><h6 class="text-dark mt-2">Finance</h6></a></div>
+  </div>
+
+  <!-- Approve Modal -->
+  @if (showApproveModal()) {
+    <div class="modal d-block" style="background:rgba(0,0,0,0.5)"><div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header bg-primary text-white"><h6 class="modal-title">Approve Doctor</h6><button class="btn-close btn-close-white" (click)="showApproveModal.set(false)"></button></div>
+      <div class="modal-body">
+        <p>Approve <strong>{{ selectedDoctor()?.firstName }} {{ selectedDoctor()?.lastName }}</strong>?</p>
+        <textarea class="form-control" [(ngModel)]="approveNotes" placeholder="Admin notes (optional)"></textarea>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" (click)="showApproveModal.set(false)">Cancel</button><button class="btn btn-primary" (click)="confirmApprove()">Confirm Approval</button></div>
+    </div></div></div>
+  }
+
+  <!-- Reject Modal -->
+  @if (showRejectModal()) {
+    <div class="modal d-block" style="background:rgba(0,0,0,0.5)"><div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header bg-danger text-white"><h6 class="modal-title">Reject Doctor</h6><button class="btn-close btn-close-white" (click)="showRejectModal.set(false)"></button></div>
+      <div class="modal-body">
+        <p>Reject <strong>{{ selectedDoctor()?.firstName }} {{ selectedDoctor()?.lastName }}</strong>?</p>
+        <textarea class="form-control" [(ngModel)]="rejectReason" placeholder="Reason for rejection *" required></textarea>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" (click)="showRejectModal.set(false)">Cancel</button><button class="btn btn-danger" (click)="confirmReject()" [disabled]="!rejectReason()">Confirm Rejection</button></div>
+    </div></div></div>
+  }
+</div>

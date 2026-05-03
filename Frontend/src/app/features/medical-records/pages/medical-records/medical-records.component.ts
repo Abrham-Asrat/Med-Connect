@@ -2,29 +2,26 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppointmentService } from '../../../../core/services/appointment.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-medical-records',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './medical-records.component.html',
-  styles: [`
-    .record-card { border-left: 4px solid #078930; transition: all 0.2s ease; }
-    .record-card:hover { box-shadow: 0 4px 16px rgba(7,137,48,0.12); }
-    .record-card.prescription { border-left-color: #078930; }
-    .record-card.lab { border-left-color: #007BFF; }
-    .record-card.diagnosis { border-left-color: #FCD116; }
-    .category-btn { cursor: pointer; transition: all 0.2s; }
-    .category-btn.active { background: #078930; color: white; }
-  `]
+  styleUrls: ['./medical-records.component.scss']
 })
 export class MedicalRecordsComponent implements OnInit {
   private authService = inject(AuthService);
   private appointmentService = inject(AppointmentService);
+  private http = inject(HttpClient);
+
+  private apiUrl = environment.apiUrl;
 
   user = this.authService.currentUser;
   patientId = localStorage.getItem('patientId') || '';
-  
+
   isLoading = signal(false);
   activeCategory = signal('all');
   appointments = signal<any[]>([]);
@@ -59,34 +56,22 @@ export class MedicalRecordsComponent implements OnInit {
     this.activeCategory.set(category);
     const appointments = this.appointments();
 
-    // Convert appointments to medical record format
+    // Convert appointments to medical record format securely mapped from Backend entities
     let records = appointments.map((apt: any) => ({
       id: apt.appointmentId,
-      category: 'diagnosis',
+      // Differentiate completed as diagnosis vs pending tracking
+      category: apt.status === 'Completed' ? 'diagnosis' : 'general',
       title: `${apt.appointmentType || 'Virtual'} Consultation`,
-      date: apt.appointmentDate,
-      doctor: apt.doctorName || 'Doctor',
-      description: `Appointment on ${apt.appointmentDate} at ${apt.appointmentTime}. Status: ${apt.status}.`,
+      date: new Date(apt.appointmentDate).toISOString().split('T')[0],
+      doctor: apt.doctorName ? `Dr. ${apt.doctorName}` : 'Assigning Doctor',
+      description: apt.status === 'Completed'
+        ? `Post-consultation summary record for your appointment on ${apt.appointmentDate}.`
+        : `Appointment scheduled at ${apt.appointmentTime}. Status is currently: ${apt.status}.`,
       status: apt.status
     }));
 
-    // Add some sample records based on completed appointments
-    const completedApts = appointments.filter((a: any) => a.status === 'Completed');
-    
-    if (completedApts.length > 0) {
-      records.push({
-        id: 'presc-1',
-        category: 'prescription',
-        title: 'Standard Prescription',
-        date: completedApts[0].appointmentDate,
-        doctor: completedApts[0].doctorName || 'Doctor',
-        description: 'Routine medication prescribed during consultation.',
-        status: 'Active'
-      });
-    }
-
     if (category !== 'all') {
-      records = records.filter(r => r.category === category);
+      records = records.filter((r: any) => r.category === category);
     }
 
     this.filteredRecords.set(records);
@@ -103,5 +88,69 @@ export class MedicalRecordsComponent implements OnInit {
 
   getCategoryClass(category: string): string {
     return `record-card ${category}`;
+  }
+
+  isUploading = signal(false);
+
+  triggerFileInput(): void {
+    const fileInput = document.getElementById('recordUpload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file && this.patientId) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit / የፋይል መጠን ከ5MB ገደብ ያልፋል');
+        return;
+      }
+
+      this.isUploading.set(true);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = (reader.result as string).split(',')[1];
+
+        const payload = {
+          fileName: file.name,
+          mimeType: file.type || 'application/pdf',
+          fileDataBase64: base64String
+        };
+
+        this.http.post(`${this.apiUrl}/Patient/${this.patientId}/medical-records`, payload).subscribe({
+          next: () => {
+            alert('Medical record uploaded securely! / የህክምና መዝገብዎ በደህና ተሰቅሏል!');
+            this.isUploading.set(false);
+            // Optionally reload or push to records list
+            this.filteredRecords.update(records => [
+              {
+                id: Math.random().toString(),
+                category: 'general',
+                title: file.name,
+                date: new Date().toISOString().split('T')[0],
+                doctor: 'Uploaded By Patient',
+                description: 'Patient uploaded physical medical record.',
+                status: 'Completed'
+              },
+              ...records
+            ]);
+          },
+          error: (err) => {
+            console.error('File Upload Error:', err);
+            alert('Error securely uploading file / ፋይል በመስቀል ላይ ስህተት ተፈጥሯል');
+            this.isUploading.set(false);
+          }
+        });
+      };
+
+      reader.onerror = () => {
+        alert('Error reading file / ፋይል በማንበብ ላይ ስህተት ተፈጥሯል');
+        this.isUploading.set(false);
+      };
+
+      reader.readAsDataURL(file);
+    }
   }
 }

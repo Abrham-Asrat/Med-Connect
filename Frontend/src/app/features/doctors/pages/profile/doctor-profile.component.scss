@@ -1,0 +1,148 @@
+@use "sass:color";
+$primary: #078930;
+$warning: #FCD116;
+
+.profile-header {
+    background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -12%));
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(white, transparent 60%);
+        opacity: 0.05;
+        border-radius: 50%;
+    }
+
+    /* Fade down enter */
+    animation: fadeInDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1);
+}
+
+.star-filled {
+    color: $warning;
+}
+
+.rating-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: #E5E7EB;
+    overflow: hidden;
+}
+
+.rating-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: $warning;
+    transition: width 1s ease-out;
+}
+
+.time-slot {
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid #E5E7EB;
+
+    &:hover:not(.booked) {
+        border-color: $primary;
+        background: rgba($primary, 0.05);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba($primary, 0.1);
+    }
+
+    &.selected {
+        background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -8%));
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 5px 15px rgba($primary, 0.2);
+    }
+
+    &.booked {
+        background: #F8F9FA;
+        color: #D1D5DB;
+        cursor: not-allowed;
+        text-decoration: line-through;
+    }
+}
+
+.tab-active {
+    border-bottom: 3px solid $primary;
+    color: $primary;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+    animation: fadeUp 0.5s ease backwards;
+}
+
+.review-card {
+    border-left: 4px solid $primary;
+    border-top: none;
+    border-right: none;
+    border-bottom: none;
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateX(4px);
+        box-shadow: 0 10px 25px rgba($primary, 0.1);
+    }
+}
+
+.booking-card {
+    position: sticky;
+    top: 20px;
+    border: 2px solid rgba($primary, 0.1);
+    animation-delay: 0.2s;
+}
+
+.btn-book {
+    background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -8%));
+    border: none;
+    transition: all 0.3s ease;
+    padding: 0.8rem;
+    border-radius: 0.75rem;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba($primary, 0.2);
+    }
+}
+
+.stat-col {
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateY(-3px);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

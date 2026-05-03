@@ -1,0 +1,192 @@
+@use "sass:color";
+$primary: #078930;
+$light-bg: #F8F9FA;
+$warning: #FCD116;
+
+/* Overall Page Layout Enhancements */
+.container-fluid {
+    animation: fadeIn 0.6s ease-out;
+    height: calc(100vh - 80px);
+    /* Account for top nav */
+    overflow: hidden;
+}
+
+/* Custom Scrollbar for results */
+.custom-scroll {
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: rgba($primary, 0.05);
+        border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba($primary, 0.3);
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: rgba($primary, 0.6);
+    }
+}
+
+/* Beautiful Search Bar Card */
+.card {
+    border: none;
+    border-radius: 1.2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+/* Sleek Input Fields */
+.input-group {
+    border-radius: 50px;
+    background: white;
+    box-shadow: 0 4px 15px rgba($primary, 0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:focus-within {
+        box-shadow: 0 8px 25px rgba($primary, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .form-control,
+    .input-group-text,
+    .btn {
+        border: none;
+        background: transparent;
+    }
+
+    .form-control:focus {
+        box-shadow: none;
+    }
+}
+
+.form-select {
+    border-radius: 50px;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid rgba($primary, 0.2);
+    box-shadow: 0 4px 15px rgba($primary, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:focus {
+        border-color: $primary;
+        box-shadow: 0 8px 25px rgba($primary, 0.15);
+    }
+}
+
+/* Sidebar Filters */
+.filter-chip {
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba($primary, 0.15);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    &:hover {
+        background: rgba($primary, 0.06);
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 5px 15px rgba($primary, 0.1);
+    }
+
+    &.active {
+        background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -10%));
+        color: white !important;
+        border-color: transparent;
+        box-shadow: 0 8px 20px rgba($primary, 0.3);
+        transform: scale(1.05);
+    }
+}
+
+/* Stunning Doctor Cards */
+.doctor-card {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    border-radius: 1.5rem;
+    border: 2px solid transparent;
+    background: white;
+    position: relative;
+    overflow: hidden;
+    animation: slideUpFade 0.5s ease backwards;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, $primary, $warning);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .rounded-circle {
+        transition: all 0.4s ease;
+        border: 4px solid white;
+        box-shadow: 0 5px 15px rgba($primary, 0.1);
+    }
+
+    &:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba($primary, 0.15);
+        border-color: rgba($primary, 0.1);
+
+        &::before {
+            opacity: 1;
+        }
+
+        .rounded-circle {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .btn-primary {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba($primary, 0.3);
+        }
+    }
+
+    .btn {
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* Animations */
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Stagger animations for grid items gracefully */
+@for $i from 1 through 12 {
+    .row.g-3>div:nth-child(#{$i}) .doctor-card {
+        animation-delay: #{$i * 0.08}s;
+    }
+}

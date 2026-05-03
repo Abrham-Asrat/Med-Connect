@@ -9,11 +9,9 @@ import { ProfileService } from '../../../../core/services/profile.service';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './settings.component.html',
-  styles: [`
-    .section-card { border-left: 4px solid #078930; }
-    .section-card.danger { border-left-color: #DA121A; }
-  `]
+  styleUrls: ['./settings.component.scss']
 })
+
 export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
   private profileService = inject(ProfileService);
@@ -47,11 +45,11 @@ export class SettingsComponent implements OnInit {
 
   // Notification prefs
   notifications = signal([
-    { label: 'Appointment reminders', enabled: true },
-    { label: 'New messages', enabled: true },
-    { label: 'Payment receipts', enabled: true },
-    { label: 'Review requests', enabled: true },
-    { label: 'Marketing emails', enabled: false },
+    { label: 'Appointment reminders / የቀጠሮ ማሳሰቢያዎች', enabled: true },
+    { label: 'New messages / አዳዲስ መልዕክቶች', enabled: true },
+    { label: 'Payment receipts / የክፍያ ደረሰኞች', enabled: true },
+    { label: 'Review requests / የግምገማ ጥያቄዎች', enabled: true },
+    { label: 'Marketing emails / የማስተዋወቂያ ኢሜይሎች', enabled: false },
   ]);
 
   ngOnInit(): void {
@@ -102,6 +100,8 @@ export class SettingsComponent implements OnInit {
     this.errorMessage.set(null);
 
     const data = this.profileForm.getRawValue();
+    const user = this.user();
+    data.userId = user?.userId || JSON.parse(localStorage.getItem('user') || '{}').userId;
 
     this.profileService.updateProfile(data).subscribe({
       next: (response: any) => {
@@ -120,7 +120,7 @@ export class SettingsComponent implements OnInit {
 
   changePassword(): void {
     if (this.passwordForm.invalid) return;
-    
+
     const pw = this.passwordForm.value;
     if (pw.newPassword !== pw.confirmPassword) {
       this.errorMessage.set('Passwords do not match.');
@@ -151,7 +151,7 @@ export class SettingsComponent implements OnInit {
   }
 
   toggleNotification(index: number): void {
-    this.notifications.update(n => n.map((item, i) => 
+    this.notifications.update(n => n.map((item, i) =>
       i === index ? { ...item, enabled: !item.enabled } : item
     ));
   }
@@ -167,5 +167,5 @@ export class SettingsComponent implements OnInit {
       }
     }
   }
-  
+
 }

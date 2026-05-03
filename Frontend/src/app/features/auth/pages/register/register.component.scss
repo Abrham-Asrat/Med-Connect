@@ -1,0 +1,214 @@
+@use "sass:color";
+
+$primary: #078930;
+$secondary: #007BFF;
+$warning: #FCD116;
+
+.brand-panel {
+    background: linear-gradient(rgba(#000, 0.4), rgba(#02290D, 0.85)), url('/assets/register-bg.png') no-repeat center center;
+    background-size: cover;
+    position: relative;
+    overflow: hidden;
+
+    .glass-brand-box {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+@keyframes pulseHeart {
+    0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba($warning, 0.4));
+    }
+
+    50% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 15px rgba($warning, 0.8));
+    }
+
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba($warning, 0.4));
+    }
+}
+
+.step-container {
+    >* {
+        opacity: 0;
+        animation: slideIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+
+        &:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+
+        &:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        &:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+
+        &:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+
+        &:nth-child(5) {
+            animation-delay: 0.25s;
+        }
+
+        &:nth-child(6) {
+            animation-delay: 0.3s;
+        }
+
+        &:nth-child(7) {
+            animation-delay: 0.35s;
+        }
+
+        &:nth-child(8) {
+            animation-delay: 0.4s;
+        }
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.form-card {
+    border-radius: 1.5rem;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.role-card {
+    cursor: pointer;
+    border: 2px solid transparent;
+    background: white;
+    border-radius: 1.2rem;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    .role-icon {
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    &.doctor-card .role-icon {
+        background: rgba($warning, 0.2);
+        color: color.adjust($warning, $lightness: -15%);
+    }
+
+    &:hover,
+    &.selected {
+        border-color: $primary;
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba($primary, 0.08);
+
+        .role-icon {
+            background: $primary !important;
+            color: white !important;
+            transform: scale(1.1);
+        }
+
+        &.doctor-card .role-icon {
+            background: $warning !important;
+            color: #1A1A1A !important;
+        }
+    }
+}
+
+.form-control,
+.form-select {
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+
+    &:focus {
+        background: white !important;
+        box-shadow: 0 0 15px rgba($primary, 0.25), 0 0 0 4px rgba($primary, 0.1);
+    }
+}
+
+.input-group {
+    .form-control:focus+.btn-light {
+        background: white !important;
+        border-color: transparent;
+    }
+}
+
+.upload-zone {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-color: #dee2e6 !important;
+
+    &:hover {
+        border-color: $primary !important;
+        background: rgba($primary, 0.03) !important;
+        color: $primary;
+    }
+}
+
+.strength-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: #E5E7EB;
+    overflow: hidden;
+}
+
+.strength-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease, background-color 0.4s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -8%));
+    border: none;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background: linear-gradient(135deg, color.adjust($primary, $lightness: -5%), color.adjust($primary, $lightness: -12%));
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba($primary, 0.25) !important;
+    }
+}
+
+.hover-primary {
+    transition: all 0.2s;
+
+    &:hover {
+        color: $primary !important;
+    }
+}
+
+.transition-all {
+    transition: all 0.3s;
+}

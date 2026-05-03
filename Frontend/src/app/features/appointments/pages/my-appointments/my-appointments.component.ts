@@ -9,14 +9,7 @@ import { AppointmentService } from '../../../../core/services/appointment.servic
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './my-appointments.component.html',
-  styles: [`
-    .appointment-card { border-left: 4px solid #078930; transition: all 0.2s ease; }
-    .appointment-card:hover { box-shadow: 0 4px 16px rgba(7,137,48,0.12); }
-    .appointment-card.pending { border-left-color: #FCD116; }
-    .appointment-card.cancelled { border-left-color: #DA121A; }
-    .filter-btn { cursor: pointer; transition: all 0.2s; }
-    .filter-btn.active { background: #078930; color: white; }
-  `]
+  styleUrls: ['./my-appointments.component.scss']
 })
 export class MyAppointmentsComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
@@ -67,12 +60,12 @@ export class MyAppointmentsComponent implements OnInit {
     const all = this.appointments();
     switch (filter) {
       case 'upcoming':
-        this.filteredAppointments.set(all.filter(a => 
+        this.filteredAppointments.set(all.filter(a =>
           a.status === 'Scheduled' || a.status === 'Confirmed' || a.status === 'Pending'
         ));
         break;
       case 'past':
-        this.filteredAppointments.set(all.filter(a => 
+        this.filteredAppointments.set(all.filter(a =>
           a.status === 'Completed' || a.status === 'Cancelled'
         ));
         break;

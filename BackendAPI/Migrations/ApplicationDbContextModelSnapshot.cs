@@ -340,6 +340,27 @@ namespace BackendAPI.Migrations
                     b.ToTable("DoctorSpecialties");
                 });
 
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.DocumentFileAssociation", b =>
+                {
+                    b.Property<Guid>("FileAssociationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("FileAssociationId");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("DocumentFileAssociations");
+                });
+
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.EducationModel", b =>
                 {
                     b.Property<Guid>("EducationId")
@@ -505,6 +526,9 @@ namespace BackendAPI.Migrations
 
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Message")
                         .IsRequired()
@@ -968,6 +992,25 @@ namespace BackendAPI.Migrations
                     b.Navigation("Specialty");
                 });
 
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.DocumentFileAssociation", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.FileModel", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.PatientModel", "Patient")
+                        .WithMany("Documents")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("File");
+
+                    b.Navigation("Patient");
+                });
+
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.EducationModel", b =>
                 {
                     b.HasOne("BackendAPI.Source.Models.Entities.DoctorModel", "Doctor")
@@ -1132,6 +1175,8 @@ namespace BackendAPI.Migrations
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.PatientModel", b =>
                 {
+                    b.Navigation("Documents");
+
                     b.Navigation("Reviews");
                 });
 

@@ -1,20 +1,20 @@
 <div class="container py-4">
   <div class="mx-auto" style="max-width: 600px;">
-    
+
     <a routerLink="/patient/doctors" class="btn btn-link text-primary p-0 mb-3">
-      <i class="bi bi-arrow-left me-1"></i> Back
+      <i class="bi bi-arrow-left me-1"></i> Back / ወደኋላ
     </a>
 
     <!-- Step Indicator -->
     <div class="d-flex align-items-center justify-content-center mb-4">
       @for (s of [1,2,3,4,5]; track s) {
-        <span class="step-dot" [class.active]="step()===s" [class.done]="step()>s">{{ step()>s ? '✓' : s }}</span>
-        @if (s < 5) { <span class="step-line mx-1" [class.done]="step()>s"></span> }
-      }
+      <span class="step-dot" [class.active]="step()===s" [class.done]="step()>s">{{ step()>s ? '✓' : s }}</span>
+      @if (s < 5) { <span class="step-line mx-1" [class.done]="step()>s"></span> }
+        }
     </div>
 
     @if (errorMessage()) {
-      <div class="alert alert-danger">{{ errorMessage() }}</div>
+    <div class="alert alert-danger">{{ errorMessage() }}</div>
     }
 
     <div class="card shadow">
@@ -22,100 +22,102 @@
 
         <!-- STEP 1: Type -->
         @if (step() === 1) {
-          <h5 class="text-primary mb-4 text-center">Select Appointment Type</h5>
-          <div class="row g-3">
-            <div class="col-6">
-              <div class="type-card h-100" (click)="selectType('Virtual')">
-                <i class="bi bi-camera-video text-primary" style="font-size:40px"></i>
-                <h6 class="mt-2">Virtual</h6>
-                <small class="text-medium">Video consultation</small>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="type-card h-100" (click)="selectType('InPerson')">
-                <i class="bi bi-building text-primary" style="font-size:40px"></i>
-                <h6 class="mt-2">In-Person</h6>
-                <small class="text-medium">Visit the clinic</small>
-              </div>
+        <h5 class="text-primary mb-4 text-center">Select Appointment Type / የቀጠሮ አይነት ይምረጡ</h5>
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="type-card h-100" (click)="selectType('Virtual')">
+              <i class="bi bi-camera-video text-primary" style="font-size:40px"></i>
+              <h6 class="mt-2">Virtual / በቪዲዮ</h6>
+              <small class="text-medium">Video consultation / የቪዲዮ ምክክር</small>
             </div>
           </div>
+          <div class="col-6">
+            <div class="type-card h-100" (click)="selectType('InPerson')">
+              <i class="bi bi-building text-primary" style="font-size:40px"></i>
+              <h6 class="mt-2">In-Person / በአካል</h6>
+              <small class="text-medium">Visit the clinic / ክሊኒኩን ይጎብኙ</small>
+            </div>
+          </div>
+        </div>
         }
 
         <!-- STEP 2: Date & Time -->
         @if (step() === 2) {
-          <h5 class="text-primary mb-3">Choose Date & Time</h5>
-          
-          <div class="d-flex gap-2 overflow-auto pb-2 mb-4">
-            @for (d of dates(); track d.date) {
-              <div class="text-center p-2 rounded-3 flex-shrink-0" style="cursor:pointer; min-width:60px"
-                   [class.bg-primary]="selectedDate()===d.date" [class.text-white]="selectedDate()===d.date"
-                   [class.bg-light]="selectedDate()!==d.date" (click)="selectDate(d.date)">
-                <small>{{d.day}}</small><br><strong>{{d.dayNum}}</strong><br><small>{{d.month}}</small>
-              </div>
-            }
-          </div>
+        <h5 class="text-primary mb-3">Choose Date & Time / ቀን እና ሰዓት ይምረጡ</h5>
 
-          <h6 class="mb-2">Morning</h6>
-          <div class="d-flex flex-wrap gap-2 mb-3">
-            @for (slot of morningSlots; track slot) {
-              <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
-            }
+        <div class="d-flex gap-2 overflow-auto pb-2 mb-4">
+          @for (d of dates(); track d.date) {
+          <div class="text-center p-2 rounded-3 flex-shrink-0" style="cursor:pointer; min-width:60px"
+            [class.bg-primary]="selectedDate()===d.date" [class.text-white]="selectedDate()===d.date"
+            [class.bg-light]="selectedDate()!==d.date" (click)="selectDate(d.date)">
+            <small>{{d.day}}</small><br><strong>{{d.dayNum}}</strong><br><small>{{d.month}}</small>
           </div>
-          <h6 class="mb-2">Afternoon</h6>
-          <div class="d-flex flex-wrap gap-2 mb-3">
-            @for (slot of afternoonSlots; track slot) {
-              <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
-            }
-          </div>
-          <h6 class="mb-2">Evening</h6>
-          <div class="d-flex flex-wrap gap-2">
-            @for (slot of eveningSlots; track slot) {
-              <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
-            }
-          </div>
+          }
+        </div>
 
-          <div class="d-flex justify-content-between mt-4">
-            <button class="btn btn-outline-secondary" (click)="step.set(1)">Back</button>
-            <button class="btn btn-primary" (click)="confirmDetails()" [disabled]="!selectedTime()">Continue</button>
-          </div>
+        <h6 class="mb-2">Morning / ጥዋት</h6>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          @for (slot of morningSlots; track slot) {
+          <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
+          }
+        </div>
+        <h6 class="mb-2">Afternoon / ከሰዓት</h6>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          @for (slot of afternoonSlots; track slot) {
+          <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
+          }
+        </div>
+        <h6 class="mb-2">Evening / ማታ</h6>
+        <div class="d-flex flex-wrap gap-2">
+          @for (slot of eveningSlots; track slot) {
+          <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
+          }
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-outline-secondary" (click)="step.set(1)">Back / ወደኋላ</button>
+          <button class="btn btn-primary" (click)="confirmDetails()" [disabled]="!selectedTime()">Continue /
+            ቀጥል</button>
+        </div>
         }
 
         <!-- STEP 3: Confirm -->
         @if (step() === 3) {
-          <h5 class="text-primary mb-4">Confirm Details</h5>
-          <div class="bg-light rounded-3 p-4">
-            <p><strong>Type:</strong> {{ appointmentType() }}</p>
-            <p><strong>Date:</strong> {{ selectedDate() }}</p>
-            <p><strong>Time:</strong> {{ selectedTime() }}</p>
-          </div>
-          <div class="d-flex justify-content-between mt-4">
-            <button class="btn btn-outline-secondary" (click)="step.set(2)">Back</button>
-            <button class="btn btn-primary" (click)="goToPayment()">Proceed to Payment</button>
-          </div>
+        <h5 class="text-primary mb-4">Confirm Details / ዝርዝሮች ያረጋግጡ</h5>
+        <div class="bg-light rounded-3 p-4">
+          <p><strong>Type / አይነት:</strong> {{ appointmentType() }}</p>
+          <p><strong>Date / ቀን:</strong> {{ selectedDate() }}</p>
+          <p><strong>Time / ሰዓት:</strong> {{ selectedTime() }}</p>
+        </div>
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-outline-secondary" (click)="step.set(2)">Back / ወደኋላ</button>
+          <button class="btn btn-primary" (click)="goToPayment()">Proceed to Payment / ወደ ክፍያ ይቀጥሉ</button>
+        </div>
         }
 
         <!-- STEP 4: Payment -->
         @if (step() === 4) {
-          <h5 class="text-primary mb-4">Payment</h5>
-          <p class="text-medium">Appointment fee: <strong>500 ETB</strong></p>
-          <div class="d-flex justify-content-between mt-4">
-            <button class="btn btn-outline-secondary" (click)="step.set(3)">Back</button>
-            <button class="btn btn-primary" (click)="bookAppointment()" [disabled]="isLoading()">
-              @if (isLoading()) { Booking... } @else { Confirm & Pay }
-            </button>
-          </div>
+        <h5 class="text-primary mb-4">Payment / ክፍያ</h5>
+        <p class="text-medium">Appointment fee / የቀጠሮ ክፍያ: <strong>500 ETB</strong></p>
+        <div class="d-flex justify-content-between mt-4">
+          <button class="btn btn-outline-secondary" (click)="step.set(3)">Back / ወደኋላ</button>
+          <button class="btn btn-primary" (click)="bookAppointment()" [disabled]="isLoading()">
+            @if (isLoading()) { Booking... / በመያዝ ላይ... } @else { Confirm & Pay / አረጋግጥ እና ክፈል }
+          </button>
+        </div>
         }
 
         <!-- STEP 5: Success -->
         @if (step() === 5) {
-          <div class="text-center py-3">
-            <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center mb-3" style="width:80px;height:80px">
-              <i class="bi bi-check-lg text-white" style="font-size:40px"></i>
-            </div>
-            <h4 class="text-primary">Appointment Booked! 🎉</h4>
-            <p class="text-medium">Your appointment has been scheduled.</p>
-            <button class="btn btn-primary mt-3" (click)="goToDashboard()">Go to Dashboard</button>
+        <div class="text-center py-3">
+          <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center mb-3"
+            style="width:80px;height:80px">
+            <i class="bi bi-check-lg text-white" style="font-size:40px"></i>
           </div>
+          <h4 class="text-primary">Appointment Booked! / ቀጠሮ ተይዟል! 🎉</h4>
+          <p class="text-medium">Your appointment has been scheduled. / የቀጠሮዎ መርሐግብር ተይዟል።</p>
+          <button class="btn btn-primary mt-3" (click)="goToDashboard()">Go to Dashboard / ወደ ዳሽቦርድ ይሂዱ</button>
+        </div>
         }
 
       </div>

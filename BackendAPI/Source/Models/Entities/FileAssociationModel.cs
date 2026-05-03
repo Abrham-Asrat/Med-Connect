@@ -23,10 +23,8 @@ public class MessageFileAssociation : FileAssociation
 //   public virtual BlogComment? BlogComment { get; set; }
 // }
 
-// public class DocumentFileAssociation : FileAssociation
-// {
-//   public override DiscriminatorTypes EntityType => DiscriminatorTypes.Document;
-
-//   public Guid DocumentId { get; set; }
-//   public virtual BlogComment? BlogComment { get; set; }
-// }
+public class DocumentFileAssociation : FileAssociation
+{
+  public Guid PatientId { get; set; }
+  public virtual PatientModel? Patient { get; set; }
+}

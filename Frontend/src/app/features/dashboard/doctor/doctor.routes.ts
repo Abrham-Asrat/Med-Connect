@@ -10,12 +10,16 @@ export const DOCTOR_ROUTES: Routes = [
       { path: 'schedule', loadComponent: () => import('../../doctor-schedule/pages/schedule-management/schedule-management.component').then(m => m.ScheduleManagementComponent) },
       { path: 'blog', loadComponent: () => import('../../blog/pages/blog-management/blog-management.component').then(m => m.BlogManagementComponent) },
       {
-       path: 'chat', 
-        loadComponent: () => import('../../chat/pages/chat/doctor-chat/doctor-chat.component').then(m => m.DoctorChatComponent) 
+        path: 'chat',
+        loadComponent: () => import('../../chat/pages/chat/doctor-chat/doctor-chat.component').then(m => m.DoctorChatComponent)
       },
-      { 
-        path: 'earnings', 
-        loadComponent: () => import('../../payments/pages/payment-history/payment-history.component').then(m => m.PaymentHistoryComponent) 
+      {
+        path: 'earnings',
+        loadComponent: () => import('../../payments/pages/payment-history/payment-history.component').then(m => m.PaymentHistoryComponent)
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('../../settings/pages/doctor-settings/doctor-settings.component').then(m => m.DoctorSettingsComponent)
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

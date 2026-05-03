@@ -1,0 +1,60 @@
+@use "sass:color";
+$primary: #078930;
+$warning: #FCD116;
+
+.stat-card {
+    border-left: 4px solid $primary;
+    border-radius: 1rem;
+    border-top: none;
+    border-bottom: none;
+    border-right: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: slideUpFade 0.4s ease backwards;
+
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba($primary, 0.1);
+    }
+}
+
+.stat-card.pending {
+    border-left-color: $warning;
+}
+
+/* Stagger animations */
+@for $i from 1 through 3 {
+    .row.g-3>div:nth-child(#{$i}) .stat-card {
+        animation-delay: #{$i * 0.15}s;
+    }
+}
+
+.card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.03);
+    animation: slideUpFade 0.6s ease backwards;
+    animation-delay: 0.3s;
+}
+
+.transaction-row {
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.transaction-row:hover {
+    background: rgba($primary, 0.05) !important;
+    transform: translateX(4px);
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

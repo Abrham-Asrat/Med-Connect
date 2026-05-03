@@ -80,5 +80,5 @@ export class AdminLayoutComponent {
   user = this.authService.currentUser;
   sidebarOpen = signal(false);
   toggleSidebar(): void { this.sidebarOpen.update(v => !v); }
-  logout(): void { this.authService.logout(); }
+  logout(): void { this.authService.logout(true); }
 }

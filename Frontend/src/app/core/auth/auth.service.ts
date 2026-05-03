@@ -63,8 +63,20 @@ export class AuthService {
     this.navigateByRole();
   }
 
-  logout(): void {
-    ['token','user','patientId','doctorId'].forEach(k => localStorage.removeItem(k));
+  logout(showPrompt: boolean = false): void {
+    if (showPrompt) {
+      if (!window.confirm('Are you sure you want to logout? / በእርግጥ መውጣት ይፈልጋሉ?')) return;
+    }
+
+    // Attempt backend token invalidation connection
+    this.http.post(`${this.apiUrl}/User/logout`, {}).subscribe({
+      next: () => this.executeLocalLogout(),
+      error: () => this.executeLocalLogout() // Perform local logout even if HTTP fails/endpoint missing
+    });
+  }
+
+  executeLocalLogout(): void {
+    ['token', 'user', 'patientId', 'doctorId'].forEach(k => localStorage.removeItem(k));
     this.tokenSignal.set(null); this.currentUserSignal.set(null);
     this.patientIdSignal.set(null); this.doctorIdSignal.set(null);
     this.router.navigate(['/auth/login']);

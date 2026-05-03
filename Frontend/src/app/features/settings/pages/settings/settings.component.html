@@ -1,23 +1,26 @@
 <div class="container-fluid p-4">
-  
-  <h4 class="text-primary mb-4"><i class="bi bi-gear me-2"></i>Settings</h4>
+
+  <h4 class="text-primary mb-4"><i class="bi bi-gear me-2"></i>Settings / ቅንጅቶች</h4>
 
   @if (successMessage()) {
-    <div class="alert alert-success d-flex align-items-center gap-2">
-      <i class="bi bi-check-circle-fill"></i> {{ successMessage() }}
-    </div>
+  <div class="alert alert-success d-flex align-items-center gap-2">
+    <i class="bi bi-check-circle-fill"></i> {{ successMessage() }}
+  </div>
   }
   @if (errorMessage()) {
-    <div class="alert alert-danger d-flex align-items-center gap-2">
-      <i class="bi bi-exclamation-triangle-fill"></i> {{ errorMessage() }}
-    </div>
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ errorMessage() }}
+  </div>
   }
 
   <!-- Tabs -->
-  <ul class="nav nav-pills mb-4">
-    <li class="nav-item"><a class="nav-link" [class.active]="activeTab()==='profile'" (click)="activeTab.set('profile')" style="cursor:pointer">Profile</a></li>
-    <li class="nav-item"><a class="nav-link" [class.active]="activeTab()==='password'" (click)="activeTab.set('password')" style="cursor:pointer">Password</a></li>
-    <li class="nav-item"><a class="nav-link" [class.active]="activeTab()==='notifications'" (click)="activeTab.set('notifications')" style="cursor:pointer">Notifications</a></li>
+  <ul class="nav nav-pills mb-4 gap-2">
+    <li class="nav-item"><a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='profile'"
+        (click)="activeTab.set('profile')" style="cursor:pointer">Profile / መገለጫ</a></li>
+    <li class="nav-item"><a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='password'"
+        (click)="activeTab.set('password')" style="cursor:pointer">Password / የይለፍ ቃል</a></li>
+    <li class="nav-item"><a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='notifications'"
+        (click)="activeTab.set('notifications')" style="cursor:pointer">Notifications / ማሳወቂያዎች</a></li>
   </ul>
 
   <div class="row g-4">
@@ -25,112 +28,126 @@
 
       <!-- Profile Section -->
       @if (activeTab() === 'profile') {
-        <div class="card section-card">
-          <div class="card-header bg-white"><h5 class="text-primary mb-0">Profile Information</h5></div>
-          <div class="card-body">
-            <form [formGroup]="profileForm">
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">First Name *</label>
-                  <input type="text" class="form-control" formControlName="firstName">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Last Name *</label>
-                  <input type="text" class="form-control" formControlName="lastName">
-                </div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-control" formControlName="email" readonly>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Phone *</label>
-                <input type="tel" class="form-control" formControlName="phone">
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Gender</label>
-                  <select class="form-select" formControlName="gender">
-                    <option value="">Select</option><option>Male</option><option>Female</option><option>Other</option>
-                  </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Date of Birth</label>
-                  <input type="date" class="form-control" formControlName="dateOfBirth">
-                </div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Address</label>
-                <input type="text" class="form-control" formControlName="address">
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Emergency Contact Name</label>
-                  <input type="text" class="form-control" formControlName="emergencyContactName">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Emergency Contact Phone</label>
-                  <input type="tel" class="form-control" formControlName="emergencyContactPhone">
-                </div>
-              </div>
-              <button type="button" class="btn btn-primary" (click)="saveProfile()" [disabled]="isLoading()">
-                @if (isLoading()) { Saving... } @else { Save Changes }
-              </button>
-            </form>
-          </div>
+      <div class="card section-card">
+        <div class="card-header bg-white">
+          <h5 class="text-primary mb-0">Profile Information / የመገለጫ መረጃ</h5>
         </div>
+        <div class="card-body">
+          <form [formGroup]="profileForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">First Name / ስም *</label>
+                <input type="text" class="form-control" formControlName="firstName">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Last Name / የአባት ስም *</label>
+                <input type="text" class="form-control" formControlName="lastName">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email / ኢሜይል</label>
+              <input type="email" class="form-control" formControlName="email" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Phone / ስልክ *</label>
+              <input type="tel" class="form-control" formControlName="phone">
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Gender / ፆታ</label>
+                <select class="form-select" formControlName="gender">
+                  <option value="">Select / ይምረጡ</option>
+                  <option>Male / ወንድ</option>
+                  <option>Female / ሴት</option>
+                  <option>Other / ሌላ</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Date of Birth / የትውልድ ቀን</label>
+                <input type="date" class="form-control" formControlName="dateOfBirth">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Address / አድራሻ</label>
+              <input type="text" class="form-control" formControlName="address">
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Emergency Contact Name / የአደጋ ጊዜ ተጠሪ ስም</label>
+                <input type="text" class="form-control" formControlName="emergencyContactName">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Emergency Contact Phone / የአደጋ ጊዜ ተጠሪ ስልክ</label>
+                <input type="tel" class="form-control" formControlName="emergencyContactPhone">
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary rounded-pill px-4 mt-2" (click)="saveProfile()"
+              [disabled]="isLoading()">
+              @if (isLoading()) { Saving... / በማስቀመጥ ላይ... } @else { Save Changes / ለውጦችን አስቀምጥ }
+            </button>
+          </form>
+        </div>
+      </div>
       }
 
       <!-- Password Section -->
       @if (activeTab() === 'password') {
-        <div class="card section-card">
-          <div class="card-header bg-white"><h5 class="text-primary mb-0">Change Password</h5></div>
-          <div class="card-body">
-            <form [formGroup]="passwordForm">
-              <div class="mb-3">
-                <label class="form-label">Current Password *</label>
-                <input type="password" class="form-control" formControlName="currentPassword">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">New Password *</label>
-                <input type="password" class="form-control" formControlName="newPassword">
-                <small class="text-medium">Min 8 characters</small>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Confirm Password *</label>
-                <input type="password" class="form-control" formControlName="confirmPassword">
-              </div>
-              <button type="button" class="btn btn-primary" (click)="changePassword()" [disabled]="isLoading()">
-                @if (isLoading()) { Updating... } @else { Update Password }
-              </button>
-            </form>
-          </div>
+      <div class="card section-card">
+        <div class="card-header bg-white">
+          <h5 class="text-primary mb-0">Change Password / የይለፍ ቃል ይቀይሩ</h5>
         </div>
+        <div class="card-body">
+          <form [formGroup]="passwordForm">
+            <div class="mb-3">
+              <label class="form-label">Current Password / የአሁኑ የይለፍ ቃል *</label>
+              <input type="password" class="form-control" formControlName="currentPassword">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">New Password / አዲስ የይለፍ ቃል *</label>
+              <input type="password" class="form-control" formControlName="newPassword">
+              <small class="text-medium">Min 8 characters / ቢያንስ 8 ፊደላት</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Confirm Password / የይለፍ ቃሉን ያረጋግጡ *</label>
+              <input type="password" class="form-control" formControlName="confirmPassword">
+            </div>
+            <button type="button" class="btn btn-primary rounded-pill px-4 mt-2" (click)="changePassword()"
+              [disabled]="isLoading()">
+              @if (isLoading()) { Updating... / በማዘመን ላይ... } @else { Update Password / የይለፍ ቃል አዘምን }
+            </button>
+          </form>
+        </div>
+      </div>
       }
 
       <!-- Notifications Section -->
       @if (activeTab() === 'notifications') {
-        <div class="card section-card">
-          <div class="card-header bg-white"><h5 class="text-primary mb-0">Notification Preferences</h5></div>
-          <div class="card-body">
-            @for (pref of notifications(); track pref.label; let i = $index) {
-              <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" [checked]="pref.enabled" (change)="toggleNotification(i)">
-                <label class="form-check-label">{{ pref.label }}</label>
-              </div>
-            }
-          </div>
+      <div class="card section-card">
+        <div class="card-header bg-white">
+          <h5 class="text-primary mb-0">Notification Preferences / የማሳወቂያ ምርጫዎች</h5>
         </div>
+        <div class="card-body">
+          @for (pref of notifications(); track pref.label; let i = $index) {
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" [checked]="pref.enabled" (change)="toggleNotification(i)">
+            <label class="form-check-label">{{ pref.label }}</label>
+          </div>
+          }
+        </div>
+      </div>
       }
     </div>
 
     <!-- Danger Zone -->
     <div class="col-lg-4">
-      <div class="card section-card danger">
-        <div class="card-header bg-white"><h5 class="text-danger mb-0">Danger Zone</h5></div>
+      <div class="card section-card danger mt-0">
+        <div class="card-header bg-white">
+          <h5 class="text-danger mb-0">Danger Zone / አደገኛ ዞን</h5>
+        </div>
         <div class="card-body">
-          <p class="text-medium">Delete your account and all data permanently.</p>
-          <button class="btn btn-outline-danger" (click)="deleteAccount()">Delete Account</button>
+          <p class="text-medium">Delete your account and all data permanently. / መለያዎን እና መረጃዎን በቋሚነት ይሰርዙ።</p>
+          <button class="btn btn-outline-danger rounded-pill px-4" (click)="deleteAccount()">Delete Account / መለያ
+            ይሰርዙ</button>
         </div>
       </div>
     </div>

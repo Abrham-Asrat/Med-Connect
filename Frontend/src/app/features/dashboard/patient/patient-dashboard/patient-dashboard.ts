@@ -9,13 +9,7 @@ import { AppointmentService } from '../../../../core/services/appointment.servic
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './patient-dashboard.html',
-  styles: [`
-    .welcome-card { background: linear-gradient(135deg, #078930, #056B24); }
-    .stat-card { border-left: 4px solid #078930; }
-    .appointment-card { border-left: 4px solid #078930; }
-    .quick-action { transition: all 0.2s ease; cursor: pointer; }
-    .quick-action:hover { background: #E8F5EC; transform: translateY(-2px); }
-  `]
+  styleUrls: ['./patient-dashboard.scss']
 })
 export class PatientDashboardComponent implements OnInit {
   private authService = inject(AuthService);
@@ -31,7 +25,7 @@ export class PatientDashboardComponent implements OnInit {
   ngOnInit(): void {
     const patientId = localStorage.getItem('patientId');
     console.log('Dashboard - Patient ID:', patientId);
-    
+
     if (patientId) {
       this.loadAppointments(patientId);
     }
@@ -46,10 +40,10 @@ export class PatientDashboardComponent implements OnInit {
         const list = Array.isArray(data) ? data : [];
         this.appointments.set(list.slice(0, 5));
         this.totalAppointments.set(list.length);
-        this.upcomingAppointments.set(list.filter((a: any) => 
+        this.upcomingAppointments.set(list.filter((a: any) =>
           a.status === 'Scheduled' || a.status === 'Confirmed'
         ).length);
-        this.completedAppointments.set(list.filter((a: any) => 
+        this.completedAppointments.set(list.filter((a: any) =>
           a.status === 'Completed'
         ).length);
       },
@@ -62,23 +56,23 @@ export class PatientDashboardComponent implements OnInit {
 
   getGreeting(): string {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return 'Good Morning / እንደምን አደሩ';
+    if (hour < 17) return 'Good Afternoon / እንደምን ዋሉ';
+    return 'Good Evening / እንደምን አመሹ';
   }
 
   getStatusClass(status: string): string {
-    return status === 'Scheduled' || status === 'Confirmed' 
-      ? 'bg-primary-light text-primary' 
+    return status === 'Scheduled' || status === 'Confirmed'
+      ? 'bg-primary-light text-primary'
       : 'bg-warning-light text-warning-dark';
   }
 
 
   showEmergency = signal(false);
-emergencyContacts = signal([
-  { name: 'Emergency (Ambulance)', phone: '907', icon: 'bi-telephone-plus' },
-  { name: 'Red Cross Ethiopia', phone: '911', icon: 'bi-heart' },
-  { name: 'St. Paul\'s Hospital', phone: '+251-111-234567', icon: 'bi-hospital' },
-  { name: 'Black Lion Hospital', phone: '+251-111-765432', icon: 'bi-hospital' },
-]);
+  emergencyContacts = signal([
+    { name: 'Emergency (Ambulance)', phone: '907', icon: 'bi-telephone-plus' },
+    { name: 'Red Cross Ethiopia', phone: '911', icon: 'bi-heart' },
+    { name: 'St. Paul\'s Hospital', phone: '+251-111-234567', icon: 'bi-hospital' },
+    { name: 'Black Lion Hospital', phone: '+251-111-765432', icon: 'bi-hospital' },
+  ]);
 }

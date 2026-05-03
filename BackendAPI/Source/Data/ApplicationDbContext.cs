@@ -39,10 +39,7 @@ namespace BackendAPI.Source.Data
         public DbSet<Notification> Notifications { get; set; }
 
         public DbSet<MessageFileAssociation> MessageFileAssociations { get; set; }
-
-
-
-    
+        public DbSet<DocumentFileAssociation> DocumentFileAssociations { get; set; }    
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -87,6 +84,7 @@ namespace BackendAPI.Source.Data
                 .HasKey(cm => new { cm.ConversationId, cm.UserId });
             modelBuilder.Entity<Notification>().HasKey(n => n.NotificationId);
             modelBuilder.Entity<MessageFileAssociation>().HasKey(fa => fa.FileAssociationId);
+            modelBuilder.Entity<DocumentFileAssociation>().HasKey(fa => fa.FileAssociationId);
             
 
 

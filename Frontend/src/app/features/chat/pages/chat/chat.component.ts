@@ -1,7 +1,9 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../../../core/services/chat.service';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { Subscription } from 'rxjs';
 
 interface Message {
   id: string;
@@ -28,20 +30,11 @@ interface Conversation {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './chat.component.html',
-  styles: [`
-    .chat-container { height: calc(100vh - 140px); }
-    .conversation-list { width: 340px; min-width: 340px; }
-    .chat-area { flex: 1; min-width: 0; }
-    .conv-item { cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
-    .conv-item:hover, .conv-item.active { background: #E8F5EC; border-left-color: #078930; }
-    .msg-sent { background: #078930; color: white; border-radius: 16px 16px 4px 16px; max-width: 75%; }
-    .msg-received { background: #F8F9FA; border: 1px solid #E5E7EB; border-radius: 16px 16px 16px 4px; max-width: 75%; }
-    .msg-system { background: #FFF8E1; border-radius: 12px; font-size: 13px; }
-    .online-dot { width: 10px; height: 10px; border-radius: 50%; background: #078930; position: absolute; bottom: 0; right: 0; border: 2px solid white; }
-  `]
+  styleUrls: ['./chat.component.scss']
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent implements OnInit, OnDestroy {
   private chatService = inject(ChatService);
+  private authService = inject(AuthService);
 
   newMessage = signal('');
   activeConversation = signal<string | null>(null);
@@ -50,10 +43,47 @@ export class ChatComponent implements OnInit {
 
   conversations = signal<Conversation[]>([]);
   messages = signal<Message[]>([]);
-  userId = localStorage.getItem('userId') || '';
+
+  userId = this.authService.currentUser()?.userId || localStorage.getItem('userId') || '';
+
+  private messageSub: Subscription | undefined;
 
   ngOnInit(): void {
+    // 1. Initial Load
     this.loadConversations();
+
+    // 2. Establish Real-time SignalR Connection
+    this.chatService.startConnection().then(() => {
+      console.log("Chat Hooked Up");
+    });
+
+    // 3. Listen for Incoming Live Messages
+    this.messageSub = this.chatService.messageReceived$.subscribe((incomingMsg: any) => {
+      // If the incoming message belongs to the current open thread, push it to UI
+      if (incomingMsg.conversationId === this.activeConversation()) {
+        this.messages.update(msgs => [...msgs, {
+          id: incomingMsg.messageId || incomingMsg.id,
+          sender: incomingMsg.senderId === this.userId ? 'me' : 'them',
+          text: incomingMsg.content || incomingMsg.text,
+          time: new Date(incomingMsg.sentAt || Date.now()).toLocaleTimeString(),
+          type: incomingMsg.messageType === 'file' ? 'file' : 'text',
+          read: incomingMsg.isRead || false
+        }]);
+      }
+
+      // Update the conversations sidebar preview text dynamically
+      this.conversations.update(convs => convs.map(c => {
+        if (c.id === incomingMsg.conversationId) {
+          return { ...c, lastMessage: incomingMsg.content, time: new Date().toLocaleTimeString() };
+        }
+        return c;
+      }));
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.messageSub) this.messageSub.unsubscribe();
+    this.chatService.stopConnection();
   }
 
   loadConversations(): void {
@@ -67,7 +97,7 @@ export class ChatComponent implements OnInit {
         this.isLoading.set(false);
         const data = response?.data || response || [];
         const convs = Array.isArray(data) ? data : [];
-        
+
         this.conversations.set(convs.map((c: any) => ({
           id: c.conversationId || c.id,
           name: c.participantName || 'User',
@@ -86,20 +116,8 @@ export class ChatComponent implements OnInit {
       error: (error: any) => {
         this.isLoading.set(false);
         console.error('Error loading conversations:', error);
-        // Show mock data if API fails
-        this.loadMockData();
       }
     });
-  }
-
-  loadMockData(): void {
-    this.conversations.set([
-      { id: '1', name: 'Dr. Sarah Johnson', role: 'Cardiologist', avatar: 'SJ', lastMessage: 'Your results are normal', time: '2:30 PM', unread: 2, online: true },
-      { id: '2', name: 'Dr. Abebe Kebede', role: 'Neurologist', avatar: 'AK', lastMessage: 'Schedule a follow-up', time: 'Yesterday', unread: 0, online: false },
-    ]);
-    if (this.conversations().length > 0) {
-      this.selectConversation(this.conversations()[0].id);
-    }
   }
 
   selectConversation(id: string): void {
@@ -123,11 +141,7 @@ export class ChatComponent implements OnInit {
       },
       error: (error: any) => {
         console.error('Error loading messages:', error);
-        // Mock messages
-        this.messages.set([
-          { id: '1', sender: 'them', text: 'Hello! How can I help you?', time: '2:15 PM', type: 'text', read: true },
-          { id: '2', sender: 'me', text: 'Hi, I have a question about my appointment.', time: '2:18 PM', type: 'text', read: true },
-        ]);
+        this.errorMessage.set('Failed to load thread history.');
       }
     });
   }
@@ -137,13 +151,17 @@ export class ChatComponent implements OnInit {
     const convId = this.activeConversation();
     if (!text || !convId) return;
 
-    // Add locally immediately
-    const now = new Date().toLocaleTimeString();
-    this.messages.update(msgs => [...msgs, {
-      id: crypto.randomUUID(),
-      sender: 'me', text, time: now, type: 'text', read: false
-    }]);
-    this.newMessage.set('');
+    // Send through SignalR WebSockets (Instant, No standard HTTP Request blocking)
+    this.chatService.sendMessageToHub(convId, text, [])
+      .then(() => {
+        // We don't manually push it here anymore! 
+        // The backend Hub acknowledges creation and bounces the 'ReceiveMessage' event back to us and the other person simultaneously.
+        // Our `.subscribe()` from `ngOnInit` will naturally catch it and render it.
+        this.newMessage.set('');
+      })
+      .catch((err) => {
+        console.error("Failed to send message via SignalR:", err);
+      });
   }
 
   activeConv(): Conversation | undefined {

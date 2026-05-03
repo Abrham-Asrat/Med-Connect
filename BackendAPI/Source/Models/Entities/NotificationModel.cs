@@ -16,5 +16,7 @@ public class Notification : BaseEntity
   [Required]
   public required string Message { get; set; }
 
+  public bool IsRead { get; set; } = false;
+
   public virtual UserModel? User { get; set; }
 }

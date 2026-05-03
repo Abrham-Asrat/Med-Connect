@@ -64,7 +64,7 @@ namespace BackendAPI.Source.Service
       throw;
     }
   }
-         public async Task<MessageFileAssociation> CreateFileAssociationAsync(
+         public async Task<FileAssociation> CreateFileAssociationAsync(
     Guid fileId,
     Guid assocId,
     DiscriminatorTypes entityType
@@ -72,14 +72,18 @@ namespace BackendAPI.Source.Service
   {
     try
     {
-      MessageFileAssociation fa = entityType switch
+      FileAssociation fa = entityType switch
       {
         DiscriminatorTypes.Message
           => new MessageFileAssociation { FileId = fileId, MessageId = assocId },
+        DiscriminatorTypes.Document
+          => new DocumentFileAssociation { FileId = fileId, PatientId = assocId },
         _ => throw new ArgumentException($"Unsupported Discriminator Type: {entityType}")
       };
 
-      await appContext.MessageFileAssociations.AddAsync(fa);
+      if (fa is MessageFileAssociation m) await appContext.MessageFileAssociations.AddAsync(m);
+      else if (fa is DocumentFileAssociation d) await appContext.DocumentFileAssociations.AddAsync(d);
+      
       await appContext.SaveChangesAsync();
 
       return fa;

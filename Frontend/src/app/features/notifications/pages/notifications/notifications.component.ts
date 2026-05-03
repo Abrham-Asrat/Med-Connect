@@ -1,7 +1,8 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { AppointmentService } from '../../../../core/services/appointment.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-notifications',
@@ -19,10 +20,12 @@ import { AppointmentService } from '../../../../core/services/appointment.servic
 })
 export class NotificationsComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl;
 
   patientId = localStorage.getItem('patientId') || '';
   isLoading = signal(false);
-  
+
   notifications = signal<any[]>([]);
   unreadCount = signal(0);
 
@@ -31,87 +34,76 @@ export class NotificationsComponent implements OnInit {
   }
 
   loadNotifications(): void {
-    if (!this.patientId) return;
-
     this.isLoading.set(true);
 
-    this.appointmentService.getPatientAppointments(this.patientId).subscribe({
+    this.http.get(`${this.apiUrl}/Notification/me`).subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
-        const appointments = response?.data || [];
-        this.generateNotifications(Array.isArray(appointments) ? appointments : []);
+        const data = response?.data || [];
+        this.processNotifications(Array.isArray(data) ? data : []);
       },
       error: (error: any) => {
         this.isLoading.set(false);
-        console.error('Error:', error);
+        console.error('Error fetching notifications:', error);
       }
     });
   }
 
-  generateNotifications(appointments: any[]): void {
-    const notifs: any[] = [];
+  processNotifications(dbNotifications: any[]): void {
+    const parsedNotifs = dbNotifications.map(n => {
+      // Map Backend enum to local types
+      let mappedType = 'system';
+      let mappedIcon = 'bi-bell';
 
-    // Welcome notification
-    notifs.push({
-      id: 'welcome',
-      type: 'system',
-      title: 'Welcome to Med-Connect! 🎉',
-      message: 'Your account has been created successfully. Start by finding a doctor.',
-      time: new Date().toISOString(),
-      read: false,
-      icon: 'bi-heart-pulse'
-    });
-
-    // Appointment notifications
-    appointments.forEach((apt: any) => {
-      if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
-        notifs.push({
-          id: apt.appointmentId,
-          type: 'appointment',
-          title: 'Appointment Booked',
-          message: `Your ${apt.appointmentType || 'Virtual'} appointment on ${apt.appointmentDate} at ${apt.appointmentTime} is confirmed.`,
-          time: apt.createdAt || new Date().toISOString(),
-          read: false,
-          icon: 'bi-calendar-check'
-        });
+      switch (n.notificationType) {
+        case 0: // Payment
+        case 'Payment':
+          mappedType = 'payment'; mappedIcon = 'bi-wallet2'; break;
+        case 1: // Comment
+        case 'Comment':
+        case 3: // Chat
+        case 'Chat':
+          mappedType = 'message'; mappedIcon = 'bi-chat-dots'; break;
+        case 2: // Appointment
+        case 'Appointment':
+          mappedType = 'appointment'; mappedIcon = 'bi-calendar-check'; break;
       }
+
+      return {
+        id: n.notificationId || n.id,
+        type: mappedType,
+        title: mappedType.charAt(0).toUpperCase() + mappedType.slice(1) + ' Notification',
+        message: n.message,
+        time: n.createdAt || new Date().toISOString(),
+        read: n.isRead,
+        icon: mappedIcon
+      };
     });
 
-    // Add some sample notifications
-    notifs.push({
-      id: 'tip-1',
-      type: 'message',
-      title: 'Health Tip',
-      message: 'Remember to stay hydrated! Drink at least 8 glasses of water daily.',
-      time: new Date().toISOString(),
-      read: true,
-      icon: 'bi-lightbulb'
-    });
-
-    notifs.push({
-      id: 'payment-1',
-      type: 'payment',
-      title: 'Payment Information',
-      message: 'Payments are processed securely through Chapa. Keep your payment details updated.',
-      time: new Date().toISOString(),
-      read: true,
-      icon: 'bi-wallet2'
-    });
-
-    this.notifications.set(notifs);
-    this.unreadCount.set(notifs.filter(n => !n.read).length);
+    this.notifications.set(parsedNotifs);
+    this.unreadCount.set(parsedNotifs.filter(notif => !notif.read).length);
   }
 
   markAsRead(id: string): void {
-    this.notifications.update(n => n.map(item => 
-      item.id === id ? { ...item, read: true } : item
-    ));
-    this.unreadCount.update(c => Math.max(0, c - 1));
+    this.http.put(`${this.apiUrl}/Notification/${id}/read`, {}).subscribe({
+      next: () => {
+        this.notifications.update(n => n.map(item =>
+          item.id === id ? { ...item, read: true } : item
+        ));
+        this.unreadCount.update(c => Math.max(0, c - 1));
+      },
+      error: (err) => console.error('Failed to mark read', err)
+    });
   }
 
   markAllAsRead(): void {
-    this.notifications.update(n => n.map(item => ({ ...item, read: true })));
-    this.unreadCount.set(0);
+    this.http.put(`${this.apiUrl}/Notification/read-all`, {}).subscribe({
+      next: () => {
+        this.notifications.update(n => n.map(item => ({ ...item, read: true })));
+        this.unreadCount.set(0);
+      },
+      error: (err) => console.error('Failed to mark all read', err)
+    });
   }
 
   getTypeClass(type: string): string {

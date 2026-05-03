@@ -10,8 +10,8 @@ interface Doctor {
   lastName: string;
   email: string;
   specialties: string[];
-  qualifications: string;
-  biography: string;
+  qualifications?: string;
+  biography?: string;
   rating?: number;
   reviewCount?: number;
   onlineFee?: number;
@@ -24,13 +24,7 @@ interface Doctor {
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './search.html',
-  styles: [`
-    .doctor-card { transition: all 0.2s ease; cursor: pointer; }
-    .doctor-card:hover { transform: translateY(-4px); box-shadow: 0 4px 24px rgba(7,137,48,0.12); }
-    .filter-chip { cursor: pointer; transition: all 0.2s ease; }
-    .filter-chip:hover, .filter-chip.active { background: #078930; color: white; }
-    .star-filled { color: #FCD116; }
-  `]
+  styleUrls: ['./search.scss']
 })
 export class DoctorSearchComponent implements OnInit {
   private doctorService = inject(DoctorService);
@@ -55,7 +49,7 @@ export class DoctorSearchComponent implements OnInit {
     this.loadDoctors();
   }
 
-  // ✅ Load doctors from backend
+  // Load doctors from backend
   loadDoctors(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -64,8 +58,14 @@ export class DoctorSearchComponent implements OnInit {
       next: (response: any) => {
         this.isLoading.set(false);
         console.log('Doctors response:', response);
-        
-        const doctors = response?.data || response || [];
+        const rawDoctors = response?.data || response || [];
+
+        // Map backend DTO (which uses specialtyModel) to frontend format
+        const doctors = rawDoctors.map((d: any) => ({
+          ...d,
+          specialties: d.specialtyModel || d.specialties || []
+        }));
+
         this.allDoctors.set(doctors);
         this.applyFilters();
       },
@@ -128,7 +128,23 @@ export class DoctorSearchComponent implements OnInit {
     return `${first?.charAt(0) || ''}${last?.charAt(0) || ''}`;
   }
 
+  // Rating helpers
   getStars(rating: number): string {
-    return '⭐'.repeat(Math.floor(rating || 0));
+    const full = Math.floor(rating || 0);
+    const hasHalf = (rating || 0) % 1 >= 0.5;
+    let stars = '★'.repeat(full);
+    if (hasHalf) stars += '½';
+    return stars || '';
+  }
+
+  getRatingDisplay(rating: number): string {
+    return (rating || 0).toFixed(1);
+  }
+
+  getRatingColor(rating: number): string {
+    if (rating >= 4.5) return 'text-success';
+    if (rating >= 4.0) return 'text-primary';
+    if (rating >= 3.0) return 'text-warning';
+    return 'text-medium';
   }
 }

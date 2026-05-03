@@ -1,0 +1,209 @@
+@use "sass:color";
+$primary: #078930;
+$light-bg: #F8F9FA;
+
+.chat-container {
+    height: calc(100vh - 140px);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.4s ease-out;
+}
+
+.conversation-list {
+    width: 340px;
+    min-width: 340px;
+    background: white !important;
+}
+
+.chat-area {
+    flex: 1;
+    min-width: 0;
+    background: #F4FBF6 !important;
+    position: relative;
+
+    /* Subtle chat pattern background */
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background-image: radial-gradient(rgba($primary, 0.1) 1px, transparent 1px);
+        background-size: 20px 20px;
+        opacity: 0.5;
+        z-index: 0;
+    }
+
+    >* {
+        position: relative;
+        z-index: 1;
+    }
+}
+
+.conv-item {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    animation: slideInLeft 0.3s ease backwards;
+
+    &:hover {
+        background: rgba($primary, 0.03) !important;
+        padding-left: 1.2rem !important;
+    }
+
+    &.active {
+        background: rgba($primary, 0.05) !important;
+        border-left-color: $primary;
+    }
+}
+
+@for $i from 1 through 10 {
+    .conv-item:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.05}s;
+    }
+}
+
+.msg-sent {
+    background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -8%));
+    color: white;
+    border-radius: 1.2rem 1.2rem 0.3rem 1.2rem;
+    max-width: 75%;
+    padding: 0.8rem 1.2rem;
+    box-shadow: 0 5px 15px rgba($primary, 0.2);
+    animation: popInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+    transform-origin: bottom right;
+}
+
+.msg-received {
+    background: white;
+    border: none;
+    border-radius: 1.2rem 1.2rem 1.2rem 0.3rem;
+    max-width: 75%;
+    padding: 0.8rem 1.2rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    animation: popInLeft 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+    transform-origin: bottom left;
+}
+
+.online-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: $primary;
+    position: absolute;
+    bottom: -2px;
+    right: 0;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px rgba($primary, 0.2);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes popInRight {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateX(0);
+    }
+}
+
+/* Premium Input Styles */
+.form-control {
+    border-radius: 50px;
+    padding: 0.8rem 1.5rem;
+    border: 1px solid rgba($primary, 0.1);
+    background: #F8F9FA;
+    transition: all 0.3s ease;
+
+    &:focus {
+        background: white;
+        border-color: $primary;
+        box-shadow: 0 8px 25px rgba($primary, 0.15);
+    }
+}
+
+.btn-primary {
+    border-radius: 50px;
+    padding: 0.8rem 1.4rem;
+    background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -8%));
+    border: none;
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 8px 20px rgba($primary, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0) scale(1);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+/* Responsiveness for sidebar */
+@media (max-width: 768px) {
+    .conversation-list {
+        width: 80px;
+        min-width: 80px;
+    }
+
+    .conversation-list h5,
+    .conversation-list .flex-grow-1,
+    .conversation-list .online-dot {
+        display: none !important;
+    }
+
+    .conv-item {
+        padding: 1rem !important;
+        justify-content: center;
+    }
+
+    .chat-container {
+        height: calc(100vh - 100px);
+    }
+}
+
+@keyframes popInLeft {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateX(0);
+    }
+}

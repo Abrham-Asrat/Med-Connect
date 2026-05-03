@@ -25,16 +25,7 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
   standalone: true,
   imports: [CommonModule, RouterLink, ReactiveFormsModule],
   templateUrl: './register.component.html',
-  styles: [`
-    .brand-panel { background: linear-gradient(135deg, #078930, #056B24); }
-    .role-card { cursor: pointer; border: 2px solid #E5E7EB; border-radius: 16px; padding: 28px; text-align: center; transition: all 0.3s; }
-    .role-card:hover, .role-card.selected { border-color: #078930; background: #E8F5EC; }
-    .role-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 14px; }
-    .upload-zone { cursor: pointer; border: 2px dashed #E5E7EB; border-radius: 12px; transition: all 0.3s; }
-    .upload-zone:hover, .upload-zone.has-file { border-color: #078930; background: #E8F5EC; }
-    .strength-bar { height: 4px; border-radius: 2px; background: #E5E7EB; }
-    .strength-fill { height: 100%; border-radius: 2px; transition: all 0.3s; }
-  `]
+  styleUrls: ['./register.component.scss']
 })
 export class RegisterComponent {
   private authService = inject(AuthService);
@@ -42,6 +33,7 @@ export class RegisterComponent {
   private fb = inject(FormBuilder);
 
   selectedRole = signal<'Patient' | 'Doctor' | null>(null);
+  currentStep = signal(1);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
@@ -92,11 +84,24 @@ export class RegisterComponent {
     inPersonAppointmentFee: [500, Validators.required],
   }, { validators: passwordMatchValidator });
 
-  specialties = ['Cardiology','Neurology','Pediatrics','Dermatology','Orthopedics','Gynecology','Psychiatry','Ophthalmology','Internal Medicine','General Practice','ENT','Dentistry'];
+  specialties = ['Cardiology', 'Neurology', 'Pediatrics', 'Dermatology', 'Orthopedics', 'Gynecology', 'Psychiatry', 'Ophthalmology', 'Internal Medicine', 'General Practice', 'ENT', 'Dentistry'];
 
   getForm(): FormGroup { return this.selectedRole() === 'Patient' ? this.patientForm : this.doctorForm; }
-  selectRole(role: 'Patient' | 'Doctor'): void { this.selectedRole.set(role); }
-  backToRole(): void { this.selectedRole.set(null); this.errorMessage.set(null); this.successMessage.set(null); }
+  selectRole(role: 'Patient' | 'Doctor'): void { this.selectedRole.set(role); this.currentStep.set(2); }
+  backToRole(): void { this.selectedRole.set(null); this.currentStep.set(1); this.errorMessage.set(null); this.successMessage.set(null); }
+
+  nextStep(): void {
+    const form = this.getForm();
+    const step2Fields = ['firstName', 'lastName', 'email', 'password', 'confirmPassword', 'phone'];
+    let valid = true;
+    step2Fields.forEach(f => {
+      const ctrl = form.get(f);
+      if (ctrl?.invalid) { ctrl.markAsTouched(); valid = false; }
+    });
+    if (form.hasError('passwordMismatch')) { form.get('confirmPassword')?.markAsTouched(); valid = false; }
+    if (valid) this.currentStep.set(3);
+  }
+  prevStep(): void { this.currentStep.set(2); }
 
   onCVSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -157,14 +162,14 @@ export class RegisterComponent {
         if (r?.success) {
           if (r.data?.patientId) localStorage.setItem('patientId', r.data.patientId);
           if (r.data?.doctorId) localStorage.setItem('doctorId', r.data.doctorId);
-          
+
           const isDoctor = this.selectedRole() === 'Doctor';
           localStorage.setItem('pendingEmail', data.email);
           localStorage.setItem('pendingRole', this.selectedRole() || '');
-          
+
           this.successMessage.set(
-            isDoctor 
-              ? 'Application submitted! Check email to verify. Admin review within 1-3 days.' 
+            isDoctor
+              ? 'Application submitted! Check email to verify. Admin review within 1-3 days.'
               : 'Account created! Check email to verify, then login.'
           );
         } else {

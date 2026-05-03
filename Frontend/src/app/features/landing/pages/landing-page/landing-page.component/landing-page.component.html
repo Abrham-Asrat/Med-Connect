@@ -1,112 +1,292 @@
 <!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark hero sticky-top">
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top transition-all" [class.nav-scrolled]="isScrolled()"
+  style="transition: all 0.3s ease;">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="#"><i class="bi bi-heart-pulse me-2"></i>Med-Connect</a>
-    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#mainNav">
+    <a class="navbar-brand fw-bold fs-3" (click)="scrollTo('home')" style="cursor: pointer;">
+      <i class="bi bi-heart-pulse-fill text-warning me-2"></i>Med-Connect
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="mainNav">
-      <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-3">
         <li class="nav-item"><a class="nav-link-custom" (click)="scrollTo('home')">Home</a></li>
-        <li class="nav-item"><a class="nav-link-custom" (click)="scrollTo('about')">About</a></li>
-        <li class="nav-item"><a class="nav-link-custom" (click)="scrollTo('blogs')">Blogs</a></li>
-        <li class="nav-item"><a class="nav-link-custom" (click)="scrollTo('contact')">Contact</a></li>
-       
-        <li class="nav-item ms-lg-2"><a routerLink="/auth/login" class="btn btn-outline-light btn-sm px-3">Login</a></li>
-        <li class="nav-item"><a routerLink="/auth/register" class="btn btn-warning btn-sm px-3 fw-bold">Register</a></li>
+
+        <li class="nav-item"><a class="nav-link-custom" (click)="scrollTo('features')">Features</a></li>
+        <li class="nav-item"><a class="nav-link-custom" (click)="scrollTo('about')">About Us</a></li>
+        <li class="nav-item"><a class="nav-link-custom" (click)="scrollTo('blogs')">Articles</a></li>
+
+
+        <li class="nav-item ms-lg-3"><a routerLink="/auth/login"
+            class="btn btn-outline-light px-4 rounded-pill">Login</a></li>
+        <li class="nav-item"><a routerLink="/auth/register"
+            class="btn btn-warning px-4 rounded-pill fw-bold">Register</a></li>
       </ul>
     </div>
   </div>
 </nav>
 
 <!-- HERO -->
-<section id="home" class="hero text-white py-5">
+<section id="home" class="hero text-white py-5 min-vh-100 d-flex align-items-center position-relative">
   <div class="container py-5">
-    <div class="row align-items-center">
-      <div class="col-lg-7">
-        <h1 class="display-4 fw-bold">Your Health, Our Priority</h1>
-        <p class="lead mt-3">Connect with verified Ethiopian doctors. Book appointments online or in person. Quality healthcare at your fingertips.</p>
-        <div class="d-flex gap-3 mt-4">
-          <a routerLink="/auth/register" class="btn btn-warning btn-lg fw-bold">Get Started</a>
-          <a (click)="scrollTo('about')" class="btn btn-outline-light btn-lg">Learn More</a>
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7 animate fade-left" #animatedEl>
+        <div class="badge bg-white text-primary fw-bold px-3 py-2 rounded-pill mb-3 animate fade-up shadow-sm">
+          <i class="bi bi-globe me-2"></i>በአማርኛ እና በእንግሊዝኛ ይገኛል (Amharic & English)
+        </div>
+        <h1 class="display-4 fw-bold mb-3">Healthcare Excellence<br>for <span class="text-warning">Ethiopia</span>
+          <br><span class="fs-2 text-warning opacity-90 mt-2 d-block">ጤናዎ በቅድሚያ!</span>
+        </h1>
+        <p class="lead mb-4 opacity-90">Experience a new standard of healthcare. Connect with verified doctors, manage
+          your records securely, and book appointments instantly—all in one place.<br><span
+            class="fs-6 mt-2 d-block opacity-75">ከታመኑ ሀኪሞች ጋር ይገናኙ፣ የህክምና መረጃዎን በደህንነት ይያዙ እና ቀጠሮዎችን በቀላሉ ያስይዙ።</span>
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a routerLink="/auth/register" class="btn btn-warning btn-lg px-5 py-3 rounded-pill fw-bold"
+            style="box-shadow: 0 10px 20px rgba(252, 209, 22, 0.3);">Start Your Journey</a>
+          <a (click)="scrollTo('how-it-works')" class="btn btn-outline-light btn-lg px-5 py-3 rounded-pill">See How It
+            Works</a>
+        </div>
+        <div class="mt-5 d-flex gap-4 align-items-center">
+          <div class="d-flex -space-x-2">
+            <div
+              class="rounded-circle border border-2 border-white bg-light d-flex align-items-center justify-content-center"
+              style="width: 40px; height: 40px; margin-right: -15px;"><i class="bi bi-person-fill text-primary"></i>
+            </div>
+            <div
+              class="rounded-circle border border-2 border-white bg-light d-flex align-items-center justify-content-center"
+              style="width: 40px; height: 40px; margin-right: -15px;"><i class="bi bi-person-fill text-primary"></i>
+            </div>
+            <div
+              class="rounded-circle border border-2 border-white bg-light d-flex align-items-center justify-content-center"
+              style="width: 40px; height: 40px;"><i class="bi bi-person-fill text-primary"></i></div>
+          </div>
+          <span class="small opacity-75">Trusted by over 50,000+ Ethiopians</span>
         </div>
       </div>
-      <div class="col-lg-5 text-center d-none d-lg-block">
-        <i class="bi bi-heart-pulse" style="font-size:220px;opacity:0.15"></i>
+      <div class="col-lg-5 order-first order-lg-last animate fade-right delay-2" #animatedEl>
+        <div class="hero-image-container">
+          <img src="assets/hero-bg.png" alt="Trusted Ethiopian Doctor" class="hero-img img-fluid">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator d-none d-lg-block" (click)="scrollTo('how-it-works')">
+    <i class="bi bi-chevron-down"></i>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works" class="section-padding bg-white">
+  <div class="container text-center">
+    <h6 class="text-primary fw-bold text-uppercase mb-2 animate fade-up" #animatedEl>Simple Process / ቀላል አሰራር</h6>
+    <h2 class="display-5 fw-bold mb-5 animate fade-up delay-1" #animatedEl>How <span
+        class="text-gradient">Med-Connect</span> works</h2>
+
+    <div class="row g-4 timeline text-start mx-auto align-items-center" style="max-width: 800px;">
+      @for (step of howItWorks; track step.title; let i = $index) {
+      <div class="col-12 animate fade-up step-card" [class.delay-1]="i===0" [class.delay-2]="i===1"
+        [class.delay-3]="i===2" #animatedEl>
+        <div class="d-flex gap-4 p-4 bg-light rounded-4 shadow-sm align-items-center">
+          <div
+            class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+            style="width: 60px; height: 60px;">
+            <i class="bi {{ step.icon }} fs-3"></i>
+          </div>
+          <div>
+            <h4 class="fw-bold mb-1">{{ i + 1 }}. {{ step.title }}</h4>
+            <p class="text-muted mb-0">{{ step.desc }}</p>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section id="features" class="section-padding bg-light">
+  <div class="container text-center">
+    <h6 class="text-primary fw-bold text-uppercase mb-2 animate fade-up" #animatedEl>Our Services / አገልግሎታችን</h6>
+    <h2 class="display-5 fw-bold mb-5 animate fade-up delay-1" #animatedEl>Designed for Your <span
+        class="text-gradient">Well-being</span><br><span class="fs-4 mt-2 d-block text-muted">ለእርስዎ ጤንነት የተዘጋጀ</span>
+    </h2>
+    <div class="row g-4">
+      <div class="col-md-4 animate fade-up delay-1" #animatedEl>
+        <div class="glass-card p-5 h-100 text-center">
+          <div class="feature-icon mx-auto"><i class="bi bi-calendar-check-fill"></i></div>
+          <h4>Smart Appointments</h4>
+          <p class="text-muted">Book visits with top specialists across Ethiopia in just a few clicks. Real-time
+            availability at your fingertips.</p>
+        </div>
+      </div>
+      <div class="col-md-4 animate fade-up delay-2" #animatedEl>
+        <div class="glass-card p-5 h-100 text-center">
+          <div class="feature-icon mx-auto"><i class="bi bi-shield-lock-fill"></i></div>
+          <h4>Secure Records</h4>
+          <p class="text-muted">Your medical history is encrypted and accessible only to you and your authorized
+            healthcare providers.</p>
+        </div>
+      </div>
+      <div class="col-md-4 animate fade-up delay-3" #animatedEl>
+        <div class="glass-card p-5 h-100 text-center">
+          <div class="feature-icon mx-auto"><i class="bi bi-chat-dots-fill"></i></div>
+          <h4>Direct Connection</h4>
+          <p class="text-muted">Message your doctors directly and receive updates on your test results and prescriptions
+            instantly.</p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ABOUT US -->
-<section id="about" class="section-padding bg-white">
+<!-- ABOUT US & STATS -->
+<section id="about" class="section-padding bg-white overflow-hidden">
   <div class="container">
-    <div class="text-center mb-5">
-      <h2 class="fw-bold">About Med-Connect</h2>
-      <div class="mx-auto mt-2" style="width:60px;height:3px;background:#078930"></div>
-    </div>
-    <div class="row align-items-center mb-5">
-      <div class="col-lg-6">
-        <h4>Ethiopia's Most Trusted Healthcare Platform</h4>
-        <p>Med-Connect bridges the gap between patients and verified medical professionals. Every doctor on our platform undergoes rigorous credential verification before they can practice.</p>
-        <p>We believe quality healthcare should be accessible to everyone, anywhere in Ethiopia. Whether you need an online consultation or an in-person visit, Med-Connect makes it simple.</p>
-        <div class="row mt-4">
-          <div class="col-6 mb-3"><strong>Our Mission</strong><br><small>To make quality healthcare accessible to all Ethiopians</small></div>
-          <div class="col-6 mb-3"><strong>Our Vision</strong><br><small>To be Ethiopia's leading digital healthcare platform</small></div>
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 animate fade-right" #animatedEl>
+        <div class="position-relative">
+          <img src="assets/about-team.png" alt="Medical Team" class="img-fluid rounded-4 shadow-lg" id="about-img">
+          <div
+            class="position-absolute bottom-0 start-0 bg-primary text-white p-4 rounded-4 shadow translate-middle-y ms-4 d-none d-md-block">
+            <h3 class="fw-bold mb-0">10+ Years</h3>
+            <p class="small mb-0">of clinical excellence</p>
+          </div>
         </div>
       </div>
-      <div class="col-lg-6">
-        <div class="row g-3">
-          @for (stat of stats; track stat.label) {
-            <div class="col-6"><div class="card text-center p-4"><div class="counter">{{ stat.number }}</div><small>{{ stat.label }}</small></div></div>
+      <div class="col-lg-6 animate fade-left" #animatedEl>
+        <h2 class="display-6 fw-bold mb-4">Ethiopia's Most <span class="text-gradient">Trusted</span> Healthcare
+          Network<br><span class="fs-4 mt-2 d-block text-muted">ኢትዮጵያ ውስጥ የታመነ የጤና አውታር</span>
+        </h2>
+        <p class="lead text-muted mb-4">Med-Connect bridges the gap between patients and verified medical professionals.
+          Every doctor on our platform undergoes rigorous credential verification.</p>
+
+        <div class="row g-4 mt-2">
+          @for (stat of stats; track stat.label; let i = $index) {
+          <div class="col-6 animate zoom-in" [class.delay-1]="i===0" [class.delay-2]="i===1" [class.delay-3]="i===2"
+            [class.delay-4]="i===3" #animatedEl>
+            <div class="p-3 bg-light rounded-4 text-center">
+              <h2 class="fw-bold text-primary mb-0">{{ stat.number }}</h2>
+              <small class="text-uppercase fw-bold text-muted" style="font-size: 0.75rem;">{{ stat.label }}</small>
+            </div>
+          </div>
           }
         </div>
       </div>
     </div>
+  </div>
+</section>
 
-    <!-- Team -->
-    <h4 class="text-center mb-4">Our Team</h4>
+<!-- TESTIMONIALS -->
+<section class="section-padding" style="background-color: #F8F9FA;">
+  <div class="container">
+    <div class="text-center mb-5 animate fade-up" #animatedEl>
+      <h6 class="text-primary fw-bold text-uppercase mb-2">Patient Stories</h6>
+      <h2 class="display-5 fw-bold">Don't just take our word for it</h2>
+    </div>
     <div class="row g-4">
-      @for (member of teamMembers; track member.name) {
-        <div class="col-6 col-md-3">
-          <div class="card text-center p-3">
-            <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center mx-auto mb-3" style="width:64px;height:64px;font-size:24px;font-weight:700">{{ member.initials }}</div>
-            <h6 class="mb-1">{{ member.name }}</h6>
-            <small class="text-medium">{{ member.role }}</small>
+      @for (test of testimonials; track test.name; let i = $index) {
+      <div class="col-md-4 animate fade-up" [class.delay-1]="i===0" [class.delay-2]="i===1" [class.delay-3]="i===2"
+        #animatedEl>
+        <div class="testimonial-card h-100 d-flex flex-column">
+          <div class="text-warning mb-3">
+            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i
+              class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+          </div>
+          <p class="fst-italic text-muted flex-grow-1">"{{ test.quote }}"</p>
+          <div class="d-flex align-items-center gap-3 mt-4 pt-3 border-top">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+              style="width: 45px; height: 45px; font-weight: bold;">
+              {{ test.name.charAt(0) }}
+            </div>
+            <div>
+              <h6 class="fw-bold mb-0">{{ test.name }}</h6>
+              <small class="text-muted">{{ test.role }}</small>
+            </div>
           </div>
         </div>
+      </div>
       }
     </div>
   </div>
 </section>
 
 <!-- BLOGS -->
-<section id="blogs" class="section-padding bg-light-gray">
-  <div class="container">
-    <div class="text-center mb-5">
-      <h2 class="fw-bold">Latest Health Articles</h2>
-      <div class="mx-auto mt-2" style="width:60px;height:3px;background:#078930"></div>
-      <p class="text-medium mt-3">Written by our verified doctors</p>
+<section id="blogs" class="section-padding bg-white">
+  <div class="container animate fade-up" #animatedEl>
+    <div class="d-flex justify-content-between align-items-end mb-5">
+      <div>
+        <h6 class="text-primary fw-bold text-uppercase mb-2">Knowledge Base / የጤና መረጃ</h6>
+        <h2 class="display-6 fw-bold mb-0">Latest Health Insights</h2>
+      </div>
+      <a routerLink="/blogs" class="btn btn-outline-primary rounded-pill px-4 d-none d-md-block fw-bold">View All
+        Articles <i class="bi bi-arrow-right ms-1"></i></a>
     </div>
+
     <div class="row g-4">
-      @for (blog of blogs(); track blog.id) {
-        <div class="col-md-4">
-          <div class="card blog-card h-100">
-            <div class="card-body">
-              <span class="badge bg-primary-light text-primary mb-2">{{ blog.category || 'Health' }}</span>
-              <h5>{{ blog.title }}</h5>
-              <p class="text-medium small">{{ (blog.content || '').substring(0, 120) }}...</p>
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <small class="text-primary"><i class="bi bi-person me-1"></i>{{ blog.authorName || 'Doctor' }}</small>
-                <small class="text-medium">{{ blog.viewCount || 0 }} views</small>
+      @for (blog of blogs(); track blog.id; let i = $index) {
+      <div class="col-lg-4 col-md-6 animate fade-up" [class.delay-1]="i===0" [class.delay-2]="i===1"
+        [class.delay-3]="i===2" #animatedEl>
+        <div class="card blog-card h-100 border-0 bg-light" [routerLink]="['/blogs', blog.id]" style="cursor: pointer;">
+          <div class="card-body p-4">
+            <span class="badge bg-primary-light text-primary mb-3 px-3 py-2 rounded-pill">{{ blog.category || 'Health'
+              }}</span>
+            <h5 class="fw-bold mb-3 line-clamp-2" style="min-height: 3rem;">{{ blog.title }}</h5>
+            <p class="text-muted small mb-4 line-clamp-3">{{ (blog.content || '').substring(0, 120) }}...</p>
+            <hr class="opacity-10">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <div class="bg-white shadow-sm rounded-circle d-flex align-items-center justify-content-center"
+                  style="width: 32px; height: 32px;"><i class="bi bi-person text-primary"></i></div>
+                <small class="fw-bold">{{ blog.authorName || 'Dr. Abebe' }}</small>
               </div>
+              <small class="text-muted"><i class="bi bi-eye me-1"></i>{{ blog.viewCount || 0 }}</small>
             </div>
           </div>
         </div>
+      </div>
       }
       @if (blogs().length === 0) {
-        <div class="col-12 text-center py-4 text-medium">No articles yet. Check back soon!</div>
+      <div class="col-12 text-center py-5">
+        <i class="bi bi-journal-x display-4 text-muted mb-3 d-block"></i>
+        <p class="text-muted">No articles yet. Our doctors are preparing fresh content for you!</p>
+      </div>
       }
+    </div>
+    <div class="text-center mt-4 d-block d-md-none">
+      <a routerLink="/blogs" class="btn btn-outline-primary rounded-pill px-4 w-100 fw-bold">View All Articles</a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ SECTION -->
+<section id="faq" class="section-padding bg-light">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-5 mb-5 mb-lg-0 animate fade-right" #animatedEl>
+        <h6 class="text-primary fw-bold text-uppercase mb-2">Got Questions? / ጥያቄዎች አሉዎት?</h6>
+        <h2 class="display-5 fw-bold mb-4">Frequently Asked <span class="text-gradient">Questions</span></h2>
+        <p class="text-muted lead mb-4">Can't find the answer you're looking for? Reach out to our customer support
+          team.</p>
+        <a (click)="scrollTo('contact')" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-sm">Contact
+          Support</a>
+      </div>
+      <div class="col-lg-7 animate fade-left" #animatedEl>
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          @for (faq of faqs; track faq.q; let i = $index) {
+          <div class="faq-item bg-white" [class.active]="faq.open" [class.border-bottom]="i < faqs.length - 1">
+            <button class="faq-button" (click)="toggleFaq(i)">
+              {{ faq.q }}
+              <i class="bi bi-chevron-down fs-5"></i>
+            </button>
+            <div class="faq-content">
+              <p class="text-muted pb-3 mb-0">{{ faq.a }}</p>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -114,40 +294,69 @@
 <!-- CONTACT US -->
 <section id="contact" class="section-padding bg-white">
   <div class="container">
-    <div class="text-center mb-5">
-      <h2 class="fw-bold">Contact Us</h2>
-      <div class="mx-auto mt-2" style="width:60px;height:3px;background:#078930"></div>
-      <p class="text-medium mt-3">Have questions? We'd love to hear from you.</p>
-    </div>
-    <div class="row">
-      <div class="col-lg-5 mb-4">
-        <div class="card contact-card h-100 p-4">
-          <h5 class="text-primary mb-3">Get in Touch</h5>
-          <p class="mb-3"><i class="bi bi-envelope text-primary me-2"></i>support&#64;medconnect.com</p>
-          <p class="mb-3"><i class="bi bi-telephone text-primary me-2"></i>+251-XXX-XXX-XXX</p>
-          <p class="mb-0"><i class="bi bi-geo-alt text-primary me-2"></i>Addis Ababa, Ethiopia</p>
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-4 animate fade-right" #animatedEl>
+        <div class="pe-lg-5">
+          <h6 class="text-primary fw-bold text-uppercase mb-2">Get Help / እርዳታ ያግኙ</h6>
+          <h2 class="display-6 fw-bold mb-4">We're Here for You<br><span class="fs-4 mt-2 d-block text-muted">እኛ ለእርስዎ
+              እዚህ ነን</span></h2>
+          <p class="text-muted mb-5">Have questions or need assistance? Our support team is available 24/7 to help you
+            navigate your healthcare journey.</p>
+
+          <div class="mb-4 d-flex gap-3 align-items-center">
+            <div class="feature-icon mb-0 flex-shrink-0"><i class="bi bi-envelope"></i></div>
+            <div>
+              <h6 class="mb-0">Email Support</h6><small class="text-muted">support&#64;medconnect.com</small>
+            </div>
+          </div>
+          <div class="mb-4 d-flex gap-3 align-items-center">
+            <div class="feature-icon mb-0 flex-shrink-0"><i class="bi bi-telephone"></i></div>
+            <div>
+              <h6 class="mb-0">Phone</h6><small class="text-muted">+251-11-XXX-XXXX</small>
+            </div>
+          </div>
+          <div class="d-flex gap-3 align-items-center">
+            <div class="feature-icon mb-0 flex-shrink-0"><i class="bi bi-geo-alt"></i></div>
+            <div>
+              <h6 class="mb-0">Headquarters</h6><small class="text-muted">Addis Ababa, Ethiopia</small>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="col-lg-7">
-        <div class="card p-4">
+      <div class="col-lg-8 animate fade-left" #animatedEl>
+        <div class="card p-5 border-0 shadow-lg rounded-4 bg-light">
           @if (contactSuccess()) {
-            <div class="alert alert-success text-center"><i class="bi bi-check-circle-fill me-2"></i>Message sent successfully! We'll get back to you soon.</div>
+          <div class="alert alert-success border-0 bg-success-light text-success p-4 mb-4"><i
+              class="bi bi-check-circle-fill me-2"></i><strong>Thank you!</strong> Your message has been received. We'll
+            be in touch shortly.</div>
           }
           @if (contactError()) {
-            <div class="alert alert-danger">{{ contactError() }}</div>
+          <div class="alert alert-danger border-0 bg-danger-light text-danger p-4 mb-4">{{ contactError() }}</div>
           }
           <form [formGroup]="contactForm" (ngSubmit)="submitContact()">
             <div class="row">
-              <div class="col-md-6 mb-3"><label class="form-label">First Name *</label><input class="form-control" formControlName="firstName"></div>
-              <div class="col-md-6 mb-3"><label class="form-label">Last Name *</label><input class="form-control" formControlName="lastName"></div>
+              <div class="col-md-6 mb-4"><label class="form-label small fw-bold text-muted">First Name</label><input
+                  class="form-control border-0 py-3 rounded-3 shadow-none bg-white" formControlName="firstName"
+                  placeholder="e.g. Abebe"></div>
+              <div class="col-md-6 mb-4"><label class="form-label small fw-bold text-muted">Last Name</label><input
+                  class="form-control border-0 py-3 rounded-3 shadow-none bg-white" formControlName="lastName"
+                  placeholder="e.g. Bekele"></div>
             </div>
             <div class="row">
-              <div class="col-md-6 mb-3"><label class="form-label">Email *</label><input type="email" class="form-control" formControlName="email"></div>
-              <div class="col-md-6 mb-3"><label class="form-label">Phone *</label><input type="tel" class="form-control" formControlName="phone"></div>
+              <div class="col-md-6 mb-4"><label class="form-label small fw-bold text-muted">Email Address</label><input
+                  type="email" class="form-control border-0 py-3 rounded-3 shadow-none bg-white" formControlName="email"
+                  placeholder="name&#64;example.com"></div>
+              <div class="col-md-6 mb-4"><label class="form-label small fw-bold text-muted">Phone Number</label><input
+                  type="tel" class="form-control border-0 py-3 rounded-3 shadow-none bg-white" formControlName="phone"
+                  placeholder="+251 9.."></div>
             </div>
-            <div class="mb-3"><label class="form-label">Message *</label><textarea class="form-control" rows="4" formControlName="message"></textarea></div>
-            <button type="submit" class="btn btn-primary" [disabled]="contactLoading()">
-              @if (contactLoading()) { Sending... } @else { Send Message }
+            <div class="mb-4"><label class="form-label small fw-bold text-muted">Your Message</label><textarea
+                class="form-control border-0 py-3 rounded-3 shadow-none bg-white" rows="4" formControlName="message"
+                placeholder="How can we help you?"></textarea></div>
+            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow-sm"
+              [disabled]="contactLoading()">
+              @if (contactLoading()) { <span class="spinner-border spinner-border-sm me-2"></span>Sending Message... }
+              @else { Send Message }
             </button>
           </form>
         </div>
@@ -157,11 +366,59 @@
 </section>
 
 <!-- FOOTER -->
-<footer class="text-white py-4" style="background:#04521D">
+<footer class="text-white py-5" style="background:#04521D">
   <div class="container">
-    <div class="row">
-      <div class="col-md-6"><h6><i class="bi bi-heart-pulse me-2"></i>Med-Connect</h6><small class="opacity-75">Ethiopia's trusted healthcare platform.</small></div>
-      <div class="col-md-6 text-md-end"><small class="opacity-75">&copy; 2026 Med-Connect. All rights reserved.</small></div>
+    <div class="row g-4 mb-5">
+      <div class="col-lg-4">
+        <h5 class="fw-bold mb-4"><i class="bi bi-heart-pulse-fill text-warning me-2"></i>Med-Connect</h5>
+        <p class="opacity-75 small pe-lg-5">Empowering Ethiopia with digital healthcare solutions. We are committed to
+          making medical care accessible, secure, and human-centric.</p>
+        <div class="d-flex gap-3 mt-4">
+          <a href="#" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center"
+            style="width:35px;height:35px"><i class="bi bi-facebook text-primary"></i></a>
+          <a href="#" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center"
+            style="width:35px;height:35px"><i class="bi bi-twitter-x text-primary"></i></a>
+          <a href="#" class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center"
+            style="width:35px;height:35px"><i class="bi bi-linkedin text-primary"></i></a>
+        </div>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6 class="fw-bold mb-4">Platform</h6>
+        <ul class="list-unstyled mb-0 d-grid gap-3">
+          <li><a (click)="scrollTo('home')" class="text-white text-decoration-none opacity-75 small"
+              style="cursor: pointer;">Home</a></li>
+
+          <li><a (click)="scrollTo('features')" class="text-white text-decoration-none opacity-75 small"
+              style="cursor: pointer;">Features</a></li>
+          <li><a (click)="scrollTo('about')" class="text-white text-decoration-none opacity-75 small"
+              style="cursor: pointer;">About Us</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6 class="fw-bold mb-4">Resources</h6>
+        <ul class="list-unstyled mb-0 d-grid gap-3">
+          <li><a routerLink="/blogs" class="text-white text-decoration-none opacity-75 small">Articles</a></li>
+
+          <li><a href="#" class="text-white text-decoration-none opacity-75 small">Privacy Policy</a></li>
+          <li><a href="#" class="text-white text-decoration-none opacity-75 small">Terms of Service</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <h6 class="fw-bold mb-4">Join Newsletter</h6>
+        <p class="opacity-75 small mb-4">Stay updated with the latest health tips.</p>
+        <div class="input-group p-1 bg-white rounded-pill overflow-hidden shadow-sm">
+          <input type="email" class="form-control border-0 shadow-none px-4 text-dark" placeholder="Enter your email">
+          <button class="btn btn-primary rounded-pill px-4 fw-bold">Subscribe</button>
+        </div>
+      </div>
+    </div>
+    <hr class="opacity-10 mb-4 border-white">
+    <div class="row align-items-center">
+      <div class="col-md-6"><small class="opacity-50">&copy; 2026 Med-Connect Healthcare System. Addis Ababa,
+          Ethiopia.</small></div>
+      <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <small class="opacity-50">Built with ❤️ for a healthier Ethiopia.</small>
+      </div>
     </div>
   </div>
 </footer>

@@ -20,7 +20,6 @@ namespace BackendAPI.Source.Models.Entities
         public UserModel? User { get; set; }
      
         public virtual ICollection<ReviewModel> Reviews{ get; set; } = new HashSet<ReviewModel>(); 
-
-
+        public virtual ICollection<DocumentFileAssociation> Documents { get; set; } = new HashSet<DocumentFileAssociation>();
     }
 }

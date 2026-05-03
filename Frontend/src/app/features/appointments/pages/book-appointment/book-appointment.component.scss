@@ -1,0 +1,130 @@
+@use "sass:color";
+$primary: #078930;
+
+.step-dot {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    border: 2px solid #E5E7EB;
+    background: white;
+    color: #6B7280;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.step-dot.active {
+    background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -8%));
+    color: white;
+    border-color: $primary;
+    box-shadow: 0 4px 10px rgba($primary, 0.3);
+    transform: scale(1.1);
+}
+
+.step-dot.done {
+    background: $primary;
+    color: white;
+    border-color: $primary;
+    transform: scale(1.05);
+}
+
+.step-line {
+    width: 40px;
+    height: 3px;
+    background: #E5E7EB;
+    transition: all 0.4s ease;
+}
+
+.step-line.done {
+    background: $primary;
+}
+
+.type-card {
+    cursor: pointer;
+    border: 2px solid #E5E7EB;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: slideUpFade 0.4s ease backwards;
+
+    &:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    &:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+}
+
+.type-card:hover,
+.type-card.selected {
+    border-color: $primary;
+    background: rgba($primary, 0.05);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba($primary, 0.1);
+}
+
+.time-slot {
+    cursor: pointer;
+    padding: 0.6rem 1.2rem;
+    border-radius: 2rem;
+    border: 1px solid #E5E7EB;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.time-slot:hover:not(.booked) {
+    border-color: $primary;
+    background: rgba($primary, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba($primary, 0.1);
+}
+
+.time-slot.selected {
+    background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -8%));
+    color: white;
+    border-color: $primary;
+    box-shadow: 0 5px 15px rgba($primary, 0.2);
+}
+
+.time-slot.booked {
+    background: #F8F9FA;
+    color: #D1D5DB;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.card.shadow {
+    border: none;
+    border-radius: 1.2rem;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05) !important;
+    animation: fadeUp 0.5s ease-out;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

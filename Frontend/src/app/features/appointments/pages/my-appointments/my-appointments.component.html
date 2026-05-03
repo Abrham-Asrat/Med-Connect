@@ -1,125 +1,142 @@
 <div class="container-fluid p-4">
-  
+
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="text-primary mb-0"><i class="bi bi-calendar-check me-2"></i>My Appointments</h4>
+    <h4 class="text-primary mb-0"><i class="bi bi-calendar-check me-2"></i>My Appointments / የእኔ ቀጠሮዎች</h4>
     <a routerLink="/patient/book-appointment" class="btn btn-primary btn-sm">
-      <i class="bi bi-plus me-1"></i> Book New
+      <i class="bi bi-plus me-1"></i> Book New / አዲስ ቀጠሮ ያዙ
     </a>
   </div>
 
   <!-- Filters -->
   <div class="d-flex gap-2 mb-4">
-    <button class="btn btn-sm rounded-pill filter-btn" 
-            [class.active]="activeFilter()==='all'" (click)="filterAppointments('all')">
-      All ({{ appointments().length }})
+    <button class="btn btn-sm rounded-pill filter-btn" [class.active]="activeFilter()==='all'"
+      (click)="filterAppointments('all')">
+      All / ሁሉም ({{ appointments().length }})
     </button>
-    <button class="btn btn-sm rounded-pill filter-btn" 
-            [class.active]="activeFilter()==='upcoming'" (click)="filterAppointments('upcoming')">
-      Upcoming
+    <button class="btn btn-sm rounded-pill filter-btn" [class.active]="activeFilter()==='upcoming'"
+      (click)="filterAppointments('upcoming')">
+      Upcoming / ቀጣይ
     </button>
-    <button class="btn btn-sm rounded-pill filter-btn" 
-            [class.active]="activeFilter()==='past'" (click)="filterAppointments('past')">
-      Past
+    <button class="btn btn-sm rounded-pill filter-btn" [class.active]="activeFilter()==='past'"
+      (click)="filterAppointments('past')">
+      Past / ያለፈ
     </button>
   </div>
 
   <!-- Loading -->
   @if (isLoading()) {
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary mb-3"></div>
-      <p class="text-medium">Loading appointments...</p>
-    </div>
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary mb-3"></div>
+    <p class="text-medium">Loading appointments... / ቀጠሮዎችን በማምጣት ላይ...</p>
+  </div>
   }
 
   <!-- Error -->
   @if (errorMessage()) {
-    <div class="alert alert-danger d-flex align-items-center gap-2">
-      <i class="bi bi-exclamation-triangle"></i> {{ errorMessage() }}
-      <button class="btn btn-link btn-sm" (click)="loadAppointments()">Retry</button>
-    </div>
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle"></i> {{ errorMessage() }}
+    <button class="btn btn-link btn-sm" (click)="loadAppointments()">Retry / እንደገና ሞክር</button>
+  </div>
   }
 
   <!-- Appointments List -->
   @if (!isLoading() && !errorMessage()) {
-    @for (apt of filteredAppointments(); track apt.appointmentId) {
-      <div class="appointment-card card mb-3" 
-           [class.pending]="apt.status==='Pending'"
-           [class.cancelled]="apt.status==='Cancelled'">
-        <div class="card-body">
-          <div class="row align-items-center">
-            <div class="col-md-4">
-              <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center"
-                     style="width:44px;height:44px;font-size:18px;font-weight:700">
-                  <i [class]="'bi ' + getStatusIcon(apt.status)"></i>
-                </div>
-                <div>
-                  <h6 class="mb-0">{{ apt.doctorName || 'Doctor' }}</h6>
-                  <small class="text-medium">{{ apt.appointmentType || 'Virtual' }}</small>
-                </div>
-              </div>
+  @for (apt of filteredAppointments(); track apt.appointmentId) {
+  <div class="appointment-card card mb-3" [class.pending]="apt.status==='Pending'"
+    [class.cancelled]="apt.status==='Cancelled'">
+    <div class="card-body">
+      <div class="row align-items-center">
+        <div class="col-md-4">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center"
+              style="width:44px;height:44px;font-size:18px;font-weight:700">
+              <i [class]="'bi ' + getStatusIcon(apt.status)"></i>
             </div>
-            <div class="col-md-3">
-              <small class="text-medium"><i class="bi bi-calendar me-1"></i>{{ apt.appointmentDate }}</small><br>
-              <small class="text-medium"><i class="bi bi-clock me-1"></i>{{ apt.appointmentTime }}</small>
-            </div>
-            <div class="col-md-2">
-              <span class="badge rounded-pill px-3 py-2" [ngClass]="getStatusClass(apt.status)">
-                {{ apt.status }}
-              </span>
-            </div>
-            <div class="col-md-3 text-md-end mt-2 mt-md-0">
-              @if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
-                <button class="btn btn-outline-primary btn-sm me-1">Reschedule</button>
-                <button class="btn btn-outline-danger btn-sm">Cancel</button>
-              }
-              @if (apt.status === 'Completed') {
-                <button class="btn btn-outline-primary btn-sm">Review</button>
-              }
+            <div>
+              <h6 class="mb-0">{{ apt.doctorName || 'Doctor' }}</h6>
+              <small class="text-medium">{{ apt.appointmentType || 'Virtual' }}</small>
             </div>
           </div>
         </div>
+        <div class="col-md-3">
+          <small class="text-medium"><i class="bi bi-calendar me-1"></i>{{ apt.appointmentDate }}</small><br>
+          <small class="text-medium"><i class="bi bi-clock me-1"></i>{{ apt.appointmentTime }}</small>
+        </div>
+        <div class="col-md-2">
+          <span class="badge rounded-pill px-3 py-2" [ngClass]="getStatusClass(apt.status)">
+            {{ apt.status }}
+          </span>
+        </div>
+        <div class="col-md-3 text-md-end mt-2 mt-md-0">
+          @if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
+          <button class="btn btn-outline-primary btn-sm me-1">Reschedule / አስተካክል</button>
+          <button class="btn btn-outline-danger btn-sm">Cancel / ሰርዝ</button>
+          }
+          @if (apt.status === 'Completed') {
+          <button class="btn btn-outline-primary btn-sm">Review / ይገምግሙ</button>
+          }
+        </div>
       </div>
-    }
-
-    <!-- After the existing appointment list, add these modals: -->
-
-<!-- Reschedule Modal -->
-@if (showRescheduleModal()) {
-  <div class="modal d-block" style="background:rgba(0,0,0,0.5)"><div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header bg-primary text-white"><h6 class="modal-title">Reschedule Appointment</h6><button class="btn-close btn-close-white" (click)="showRescheduleModal.set(false)"></button></div>
-    <div class="modal-body">
-      <div class="mb-3"><label class="form-label">New Date</label><input type="date" class="form-control" [(ngModel)]="newDate"></div>
-      <div class="mb-3"><label class="form-label">New Time</label><input type="time" class="form-control" [(ngModel)]="newTime"></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="showRescheduleModal.set(false)">Cancel</button>
-      <button class="btn btn-primary" (click)="confirmReschedule()" [disabled]="!newDate() || !newTime()">Confirm Reschedule</button>
-    </div>
-  </div></div></div>
-}
+  </div>
+  }
 
-<!-- Cancel Confirmation -->
-@if (showCancelConfirm()) {
-  <div class="modal d-block" style="background:rgba(0,0,0,0.5)"><div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header bg-danger text-white"><h6 class="modal-title">Cancel Appointment</h6><button class="btn-close btn-close-white" (click)="showCancelConfirm.set(false)"></button></div>
-    <div class="modal-body">
-      <p>Are you sure you want to cancel this appointment?</p>
-      <p class="text-medium"><strong>Date:</strong> {{ cancelAppointment()?.appointmentDate }}<br><strong>Time:</strong> {{ cancelAppointment()?.appointmentTime }}</p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="showCancelConfirm.set(false)">Keep Appointment</button>
-      <button class="btn btn-danger" (click)="confirmCancel()">Cancel Appointment</button>
-    </div>
-  </div></div></div>
-}
+  <!-- After the existing appointment list, add these modals: -->
 
-    @if (filteredAppointments().length === 0) {
-      <div class="text-center py-5">
-        <i class="bi bi-calendar-x text-primary" style="font-size:48px;opacity:0.3"></i>
-        <p class="text-medium mt-3">No appointments found</p>
-        <a routerLink="/patient/book-appointment" class="btn btn-primary">Book an Appointment</a>
+  <!-- Reschedule Modal -->
+  @if (showRescheduleModal()) {
+  <div class="modal d-block" style="background:rgba(0,0,0,0.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h6 class="modal-title">Reschedule Appointment / ቀጠሮውን ያስተካክሉ</h6><button class="btn-close btn-close-white"
+            (click)="showRescheduleModal.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">New Date / አዲስ ቀን</label><input type="date" class="form-control"
+              [(ngModel)]="newDate"></div>
+          <div class="mb-3"><label class="form-label">New Time / አዲስ ሰዓት</label><input type="time" class="form-control"
+              [(ngModel)]="newTime"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="showRescheduleModal.set(false)">Cancel / ሰርዝ</button>
+          <button class="btn btn-primary" (click)="confirmReschedule()" [disabled]="!newDate() || !newTime()">Confirm
+            Reschedule / ማስተካከያውን አረጋግጥ</button>
+        </div>
       </div>
-    }
+    </div>
+  </div>
+  }
+
+  <!-- Cancel Confirmation -->
+  @if (showCancelConfirm()) {
+  <div class="modal d-block" style="background:rgba(0,0,0,0.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h6 class="modal-title">Cancel Appointment / ቀጠሮውን ይሰርዙ</h6><button class="btn-close btn-close-white"
+            (click)="showCancelConfirm.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to cancel this appointment? / እርግጠኛ ነዎት ይህንን ቀጠሮ መሰረዝ ይፈልጋሉ?</p>
+          <p class="text-medium"><strong>Date:</strong> {{ cancelAppointment()?.appointmentDate
+            }}<br><strong>Time:</strong> {{ cancelAppointment()?.appointmentTime }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="showCancelConfirm.set(false)">Keep Appointment / ቀጠሮውን ያቆዩ</button>
+          <button class="btn btn-danger" (click)="confirmCancel()">Cancel Appointment / ቀጠሮውን ይሰርዙ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  @if (filteredAppointments().length === 0) {
+  <div class="text-center py-5">
+    <i class="bi bi-calendar-x text-primary" style="font-size:48px;opacity:0.3"></i>
+    <p class="text-medium mt-3">No appointments found / ምንም ቀጠሮ አልተገኘም</p>
+    <a routerLink="/patient/book-appointment" class="btn btn-primary">Book an Appointment / ቀጠሮ ያዙ</a>
+  </div>
+  }
   }
 </div>

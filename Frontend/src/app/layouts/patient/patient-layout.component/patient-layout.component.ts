@@ -51,6 +51,6 @@ export class PatientLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    this.authService.logout();
+    this.authService.logout(true);
   }
 }

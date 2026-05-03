@@ -2,32 +2,25 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppointmentService } from '../../../../core/services/appointment.service';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { PaymentService } from '../../../../core/services/payment.service';
 
 @Component({
   selector: 'app-payment-history',
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './payment-history.component.html',
-  styles: [`
-    .stat-card { border-left: 4px solid #078930; }
-    .stat-card.pending { border-left-color: #FCD116; }
-    .transaction-row { transition: all 0.2s; }
-    .transaction-row:hover { background: #E8F5EC; }
-  `]
+  styleUrls: ['./payment-history.component.scss']
 })
 export class PaymentHistoryComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
+  private paymentService = inject(PaymentService);
 
   patientId = localStorage.getItem('patientId') || '';
-  private http = inject(HttpClient);
-private apiUrl = environment.apiUrl;
-successMessage = signal<string | null>(null);
-errorMessage = signal<string | null>(null);
+  successMessage = signal<string | null>(null);
+  errorMessage = signal<string | null>(null);
   isLoading = signal(false);
   appointments = signal<any[]>([]);
-  
+
   // Payment stats
   totalSpent = signal(0);
   pendingPayments = signal(0);
@@ -75,34 +68,44 @@ errorMessage = signal<string | null>(null);
   }
 
   showPaymentModal = signal(false);
-paymentAppointment = signal<any>(null);
-paymentLoading = signal(false);
+  paymentAppointment = signal<any>(null);
+  paymentLoading = signal(false);
 
-openPayment(apt: any): void {
-  this.paymentAppointment.set(apt);
-  this.showPaymentModal.set(true);
-}
+  openPayment(apt: any): void {
+    this.paymentAppointment.set(apt);
+    this.showPaymentModal.set(true);
+  }
 
-processPayment(): void {
-  this.paymentLoading.set(true);
-  // Call Chapa payment endpoint
-  this.http.post(`${this.apiUrl}/payments/charge`, {
-    amount: '500',
-    currency: 'ETB',
-    phoneNumber: '0911111111',
-    paymentProvider: 'Chapa',
-    paymentMethod: 'mobile'
-  }).subscribe({
-    next: () => {
-      this.paymentLoading.set(false);
-      this.showPaymentModal.set(false);
-      this.successMessage.set('Payment initiated! Check your phone.');
-      setTimeout(() => this.successMessage.set(null), 3000);
-    },
-    error: () => {
-      this.paymentLoading.set(false);
-      this.errorMessage.set('Payment failed. Try again.');
-    }
-  });
-}
+  processPayment(): void {
+    if (!this.paymentAppointment()) return;
+
+    this.paymentLoading.set(true);
+
+    // Get amount from appointment, fallback to 500
+    const fee = this.paymentAppointment().appointmentFee || this.paymentAppointment().onlineFee || '500';
+
+    this.paymentService.charge({
+      amount: fee.toString(),
+      currency: 'ETB',
+      phoneNumber: '0911111111', // This should ideally come from user profile, hardcoded for democartion
+      paymentProvider: 'Chapa',
+      paymentMethod: 'mobile'
+    }).subscribe({
+      next: (res: any) => {
+        this.paymentLoading.set(false);
+        this.showPaymentModal.set(false);
+        // If Chapa returns a checkout url, consider redirecting them
+        if (res?.data?.checkoutUrl) {
+          window.open(res.data.checkoutUrl, '_blank');
+        } else {
+          this.successMessage.set('Payment initiated! Check your phone.');
+          setTimeout(() => this.successMessage.set(null), 3000);
+        }
+      },
+      error: () => {
+        this.paymentLoading.set(false);
+        this.errorMessage.set('Payment failed. Try again.');
+      }
+    });
+  }
 }

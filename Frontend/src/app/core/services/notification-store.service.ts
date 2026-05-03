@@ -1,5 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { SignalRNotification } from './signalr.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 export interface StoredNotification extends SignalRNotification {
   id: string;
@@ -8,9 +10,38 @@ export interface StoredNotification extends SignalRNotification {
 
 @Injectable({ providedIn: 'root' })
 export class NotificationStoreService {
-  
+  private http = inject(HttpClient);
+  private apiUrl = environment.apiUrl;
+
   // Store all notifications in a signal
   notifications = signal<StoredNotification[]>([]);
+
+  // Load initial notifications from Database
+  loadInitialNotifications(): void {
+    this.http.get(`${this.apiUrl}/Notification/me`).subscribe({
+      next: (response: any) => {
+        const data = response?.data || [];
+        const parsedNotifs = data.map((n: any) => {
+          let mappedType = 'system';
+          switch (n.notificationType) {
+            case 0: case 'Payment': mappedType = 'payment'; break;
+            case 1: case 'Comment': case 3: case 'Chat': mappedType = 'message'; break;
+            case 2: case 'Appointment': mappedType = 'appointment'; break;
+          }
+          return {
+            id: n.notificationId || n.id,
+            type: mappedType,
+            title: mappedType.charAt(0).toUpperCase() + mappedType.slice(1) + ' Notification',
+            message: n.message,
+            timestamp: n.createdAt || new Date().toISOString(),
+            read: n.isRead
+          };
+        });
+        this.notifications.set(parsedNotifs);
+      },
+      error: err => console.error('Failed to load notifications', err)
+    });
+  }
 
   // Get unread count
   unreadCount(): number {
@@ -38,16 +69,26 @@ export class NotificationStoreService {
 
   // Mark a single notification as read
   markAsRead(id: string): void {
-    this.notifications.update(notifs =>
-      notifs.map(n => n.id === id ? { ...n, read: true } : n)
-    );
+    this.http.put(`${this.apiUrl}/Notification/${id}/read`, {}).subscribe({
+      next: () => {
+        this.notifications.update(notifs =>
+          notifs.map(n => n.id === id ? { ...n, read: true } : n)
+        );
+      },
+      error: err => console.error('Failed to mark read', err)
+    });
   }
 
   // Mark all notifications as read
   markAllAsRead(): void {
-    this.notifications.update(notifs =>
-      notifs.map(n => ({ ...n, read: true }))
-    );
+    this.http.put(`${this.apiUrl}/Notification/read-all`, {}).subscribe({
+      next: () => {
+        this.notifications.update(notifs =>
+          notifs.map(n => ({ ...n, read: true }))
+        );
+      },
+      error: err => console.error('Failed to mark all read', err)
+    });
   }
 
   // Delete a single notification

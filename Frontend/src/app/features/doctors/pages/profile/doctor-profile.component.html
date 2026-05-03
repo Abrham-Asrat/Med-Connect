@@ -1,32 +1,36 @@
-<div class="container-fluid p-0">
-  
+<div class="container-fluid p-0" *ngIf="!isLoading() && doctor(); else loading">
+
   <!-- Profile Header -->
   <div class="profile-header text-white p-4 p-md-5">
     <div class="container">
       <div class="row align-items-center">
         <div class="col-md-8">
           <div class="d-flex align-items-center gap-4">
-            <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:100px;height:100px;font-size:36px;font-weight:700">SJ</div>
+            <div
+              class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center flex-shrink-0"
+              style="width:100px;height:100px;font-size:36px;font-weight:700">
+              {{ doctor()?.firstName?.charAt(0) }}{{ doctor()?.lastName?.charAt(0) }}
+            </div>
             <div>
-              <h3 class="mb-1">Dr. {{ doctor.firstName }} {{ doctor.lastName }}</h3>
-              <p class="mb-1 opacity-90">{{ doctor.specialty }}</p>
+              <h3 class="mb-1">Dr. {{ doctor()?.firstName }} {{ doctor()?.lastName }}</h3>
+              <p class="mb-1 opacity-90">{{ doctor()?.specialties?.join(', ') }}</p>
               <div class="d-flex align-items-center gap-3">
-                <span class="star-filled">{{ getStars(doctor.rating) }}</span>
-                <span>{{ doctor.rating }} ({{ doctor.reviewCount }} reviews)</span>
+                <span class="star-filled">{{ getStars(doctor()?.rating) }}</span>
+                <span>{{ doctor()?.rating }} ({{ doctor()?.reviewCount }} reviews)</span>
               </div>
               <div class="mt-2">
-                <span class="badge bg-white text-primary me-2"><i class="bi bi-shield-check me-1"></i>Verified</span>
-                <span class="badge bg-white text-primary me-2">{{ doctor.experience }}+ yrs exp</span>
-                <span class="badge bg-white text-primary">{{ doctor.patientCount }}+ patients</span>
+                <span class="badge bg-white text-primary me-2"><i class="bi bi-shield-check me-1"></i>Verified /
+                  የተረጋገጠ</span>
+                <span class="badge bg-white text-primary me-2">{{ doctor()?.experience }}+ yrs exp / ዓመታት ልምድ</span>
+                <span class="badge bg-white text-primary">{{ doctor()?.patientCount }}+ patients / ታካሚዎች</span>
               </div>
             </div>
           </div>
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
           <div class="d-flex gap-2 justify-content-md-end">
-            <button class="btn btn-outline-light btn-sm"><i class="bi bi-share me-1"></i>Share</button>
-            <button class="btn btn-warning btn-sm"><i class="bi bi-heart me-1"></i>Save</button>
+            <button class="btn btn-outline-light btn-sm"><i class="bi bi-share me-1"></i>Share / አጋራ</button>
+            <button class="btn btn-warning btn-sm"><i class="bi bi-heart me-1"></i>Save / አስቀምጥ</button>
           </div>
         </div>
       </div>
@@ -37,120 +41,144 @@
     <div class="row g-4">
       <!-- Main Content -->
       <div class="col-lg-8">
-        
+
         <!-- Tabs -->
         <div class="d-flex gap-4 mb-4 border-bottom">
-          <a class="text-decoration-none pb-2 cursor-pointer" [class.tab-active]="activeTab() === 'about'" (click)="activeTab.set('about')">About</a>
-          <a class="text-decoration-none pb-2 cursor-pointer text-medium" [class.tab-active]="activeTab() === 'reviews'" (click)="activeTab.set('reviews')">Reviews ({{ doctor.reviewCount }})</a>
-          <a class="text-decoration-none pb-2 cursor-pointer text-medium" [class.tab-active]="activeTab() === 'availability'" (click)="activeTab.set('availability')">Availability</a>
+          <a class="text-decoration-none pb-2 cursor-pointer" [class.tab-active]="activeTab() === 'about'"
+            (click)="activeTab.set('about')">About / ስለ ሀኪሙ</a>
+          <a class="text-decoration-none pb-2 cursor-pointer text-medium" [class.tab-active]="activeTab() === 'reviews'"
+            (click)="activeTab.set('reviews')">Reviews / ግምገማዎች ({{ reviews().length || doctor()?.reviewCount }})</a>
+          <a class="text-decoration-none pb-2 cursor-pointer text-medium"
+            [class.tab-active]="activeTab() === 'availability'" (click)="activeTab.set('availability')">Availability /
+            ተገኝነት</a>
         </div>
 
         <!-- ABOUT TAB -->
         @if (activeTab() === 'about') {
-          <div class="card mb-4"><div class="card-body">
-            <h5 class="text-primary mb-3">About Dr. {{ doctor.firstName }}</h5>
-            <p>{{ doctor.bio }}</p>
-            
-            <h6 class="text-primary mt-4">Education & Training</h6>
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="text-primary mb-3">About Dr. {{ doctor()?.firstName }} / ስለ ዶ/ር {{ doctor()?.firstName }} መረጃ
+            </h5>
+            <p>{{ doctor()?.biography || doctor()?.bio }}</p>
+
+            <h6 class="text-primary mt-4">Education & Training / ትምህርት እና ስልጠና</h6>
             <ul>
-              @for (edu of doctor.education; track edu) { <li class="mb-1">{{ edu }}</li> }
+              @for (edu of (doctor()?.education || []); track edu) { <li class="mb-1">{{ edu }}</li> }
             </ul>
 
-            <h6 class="text-primary mt-4">Languages</h6>
+            <h6 class="text-primary mt-4">Languages / ቋንቋዎች</h6>
             <div class="d-flex gap-2">
-              @for (lang of doctor.languages; track lang) { <span class="badge bg-primary-light text-primary px-3 py-2">{{ lang }}</span> }
+              @for (lang of (doctor()?.languages || []); track lang) { <span
+                class="badge bg-primary-light text-primary px-3 py-2">{{ lang }}</span> }
             </div>
 
-            <h6 class="text-primary mt-4">Professional Memberships</h6>
+            <h6 class="text-primary mt-4">Professional Memberships / የሙያ አባልነቶች</h6>
             <ul>
-              @for (m of doctor.memberships; track m) { <li>{{ m }}</li> }
+              @for (m of (doctor()?.memberships || []); track m) { <li>{{ m }}</li> }
             </ul>
 
-            <h6 class="text-primary mt-4">Awards & Recognition</h6>
+            <h6 class="text-primary mt-4">Awards & Recognition / ሽልማቶች እና እውቅና</h6>
             <ul>
-              @for (a of doctor.awards; track a) { <li class="text-warning-dark"><i class="bi bi-trophy me-1"></i>{{ a }}</li> }
+              @for (a of (doctor()?.awards || []); track a) { <li class="text-warning-dark"><i
+                  class="bi bi-trophy me-1"></i>{{ a }}</li> }
             </ul>
 
-            <h6 class="text-primary mt-4">Clinic Information</h6>
+            <h6 class="text-primary mt-4">Clinic Information / ክሊኒክ መረጃ</h6>
             <div class="bg-light rounded p-3">
-              <p class="mb-1"><strong>{{ doctor.clinic.name }}</strong></p>
-              <p class="mb-1 text-medium">{{ doctor.clinic.address }}</p>
-              <p class="mb-1 text-medium"><i class="bi bi-telephone me-1"></i>{{ doctor.clinic.phone }}</p>
-              <p class="mb-0 text-medium"><i class="bi bi-clock me-1"></i>{{ doctor.clinic.hours }}</p>
+              <p class="mb-1"><strong>{{ doctor()?.clinic?.name || 'N/A' }}</strong></p>
+              <p class="mb-1 text-medium">{{ doctor()?.clinic?.address || '' }}</p>
+              <p class="mb-1 text-medium"><i class="bi bi-telephone me-1"></i>{{ doctor()?.clinic?.phone || '' }}</p>
+              <p class="mb-0 text-medium"><i class="bi bi-clock me-1"></i>{{ doctor()?.clinic?.hours || '' }}</p>
             </div>
-          </div></div>
+          </div>
+        </div>
         }
 
         <!-- REVIEWS TAB -->
         @if (activeTab() === 'reviews') {
-          <div class="card mb-4"><div class="card-body">
+        <div class="card mb-4">
+          <div class="card-body">
             <div class="row mb-4">
               <div class="col-md-4 text-center">
-                <h1 class="text-primary display-4 fw-bold">{{ doctor.rating }}</h1>
-                <div class="star-filled mb-1">{{ getStars(doctor.rating) }}</div>
-                <small class="text-medium">{{ doctor.reviewCount }} reviews</small>
+                <h1 class="text-primary display-4 fw-bold">{{ doctor()?.rating }}</h1>
+                <div class="star-filled mb-1">{{ getStars(doctor()?.rating) }}</div>
+                <small class="text-medium">{{ reviews().length || doctor()?.reviewCount }} reviews / ግምገማዎች</small>
               </div>
               <div class="col-md-8">
-                @for (i of [5,4,3,2,1]; track i) {
-                  <div class="d-flex align-items-center gap-2 mb-1">
-                    <small style="width:60px">{{ i }} star</small>
-                    <div class="rating-bar flex-grow-1"><div class="rating-bar-fill" [style.width.%]="i===5?70:i===4?20:i===3?7:i===2?2:1"></div></div>
-                    <small style="width:30px">{{ i===5?112:i===4?35:i===3?5:i===2?2:1 }}</small>
+                @for (star of [5,4,3,2,1]; track star) {
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <small style="width:60px">{{ star }} star</small>
+                  <div class="rating-bar flex-grow-1">
+                    <div class="rating-bar-fill" [style.width.%]="getRatingPercentage(star)"></div>
                   </div>
+                  <small style="width:30px">{{ getRatingCount(star) }}</small>
+                </div>
                 }
               </div>
             </div>
-            
-            @for (r of showAllReviews() ? reviews() : reviews().slice(0, 3); track r.id) {
-              <div class="review-card card mb-3"><div class="card-body">
+
+            @for (r of (showAllReviews() ? reviews() : reviews().slice(0, 3)); track r.reviewId || r.id) {
+            <div class="review-card card mb-3">
+              <div class="card-body">
                 <div class="d-flex justify-content-between">
-                  <strong>{{ r.patient }}</strong>
+                  <strong>{{ r.patientName || 'Patient' }}</strong>
                   <div>
-                    <span class="star-filled">{{ getStars(r.rating) }}</span>
-                    <small class="text-medium ms-2">{{ r.date }}</small>
+                    <span class="star-filled">{{ getStars(r.rating || r.starRating) }}</span>
+                    <small class="text-medium ms-2">{{ r.createdAt | date }}</small>
                   </div>
                 </div>
-                <p class="mt-2 mb-2">{{ r.text }}</p>
+                <p class="mt-2 mb-2">{{ r.reviewText || r.text }}</p>
                 <div class="d-flex align-items-center gap-3">
-                  @if (r.verified) { <small class="text-primary"><i class="bi bi-shield-check me-1"></i>Verified Visit</small> }
-                  <small class="text-medium"><i class="bi bi-hand-thumbs-up me-1"></i>{{ r.helpful }} found helpful</small>
+                  <small class="text-primary"><i class="bi bi-shield-check me-1"></i>Verified Visit / የተረጋገጠ
+                    ጉብኝት</small>
+                  <small class="text-medium"><i class="bi bi-hand-thumbs-up me-1"></i>{{ r.helpfulCount || 0 }} helpful
+                    / ጠቃሚ</small>
                 </div>
-              </div></div>
+              </div>
+            </div>
             }
             @if (reviews().length > 3) {
-              <button class="btn btn-outline-primary btn-sm w-100" (click)="showAllReviews.set(!showAllReviews())">
-                {{ showAllReviews() ? 'Show Less' : 'Show All ' + reviews().length + ' Reviews' }}
-              </button>
+            <button class="btn btn-outline-primary btn-sm w-100" (click)="showAllReviews.set(!showAllReviews())">
+              {{ showAllReviews() ? 'Show Less / ትንሽ አሳይ' : 'Show All ' + reviews().length + ' Reviews / ሁሉንም ግምገማዎች
+              አሳይ' }}
+            </button>
             }
-          </div></div>
+          </div>
+        </div>
         }
 
         <!-- AVAILABILITY TAB -->
         @if (activeTab() === 'availability') {
-          <div class="card"><div class="card-body">
-            <h5 class="text-primary mb-3">Available Time Slots</h5>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="text-primary mb-3">Available Time Slots / የሚገኙ የሰዓት ክፍተቶች</h5>
+            <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>Availability is based on doctor's
+              schedule. Please select a date and time. / ተገኝነት በሀኪሙ የጊዜ ሰሌዳ ላይ የተመሰረተ ነው። እባክዎ ቀን እና ሰዓት ይምረጡ።</div>
+
+            <!-- Simple date selector (you can keep your existing date picker) -->
             <div class="d-flex gap-2 overflow-auto pb-3 mb-3">
-              @for (d of availableDates(); track d.date) {
-                <div class="text-center p-2 rounded-3 flex-shrink-0" style="cursor:pointer; min-width:70px"
-                     [class.bg-primary]="selectedDate() === d.date" [class.text-white]="selectedDate() === d.date"
-                     [class.bg-light]="selectedDate() !== d.date" (click)="selectDate(d.date)">
-                  <small>{{ d.day }}</small><br><strong>{{ d.dayNum }}</strong><br><small>{{ d.month }}</small>
-                </div>
-              }
+              <input type="date" class="form-control w-auto" [ngModel]="selectedDate()"
+                (ngModelChange)="selectDate($event)">
             </div>
-            <h6 class="mb-2"><i class="bi bi-sun me-1"></i>Morning</h6>
+
+            <h6 class="mb-2"><i class="bi bi-sun me-1"></i>Morning / ጥዋት</h6>
             <div class="d-flex flex-wrap gap-2 mb-3">
               @for (slot of morningSlots; track slot) {
-                <span class="badge rounded-pill p-2 px-3 time-slot" [class.selected]="selectedTime()===slot" [class.booked]="isBooked(slot)" [class.bg-light]="!isBooked(slot)&&selectedTime()!==slot" (click)="selectTime(slot)">{{ slot }}</span>
+              <span class="badge rounded-pill p-2 px-3 time-slot" [class.selected]="selectedTime()===slot"
+                [class.booked]="isBooked(slot)" [class.bg-light]="!isBooked(slot) && selectedTime()!==slot"
+                (click)="selectTime(slot)">{{ slot }}</span>
               }
             </div>
-            <h6 class="mb-2"><i class="bi bi-sunset me-1"></i>Afternoon</h6>
+            <h6 class="mb-2"><i class="bi bi-sunset me-1"></i>Afternoon / ከሰዓት</h6>
             <div class="d-flex flex-wrap gap-2">
               @for (slot of afternoonSlots; track slot) {
-                <span class="badge rounded-pill p-2 px-3 time-slot" [class.selected]="selectedTime()===slot" [class.booked]="isBooked(slot)" [class.bg-light]="!isBooked(slot)&&selectedTime()!==slot" (click)="selectTime(slot)">{{ slot }}</span>
+              <span class="badge rounded-pill p-2 px-3 time-slot" [class.selected]="selectedTime()===slot"
+                [class.booked]="isBooked(slot)" [class.bg-light]="!isBooked(slot) && selectedTime()!==slot"
+                (click)="selectTime(slot)">{{ slot }}</span>
               }
             </div>
-          </div></div>
+          </div>
+        </div>
         }
       </div>
 
@@ -158,36 +186,61 @@
       <div class="col-lg-4">
         <div class="card booking-card shadow">
           <div class="card-body">
-            <h6 class="text-primary mb-3">Book Appointment</h6>
+            <h6 class="text-primary mb-3">Book Appointment / ቀጠሮ ያዙ</h6>
             <div class="d-flex justify-content-between mb-2">
-              <span class="text-medium">Online Consultation</span>
-              <strong class="text-primary">{{ doctor.onlineFee }} ETB</strong>
+              <span class="text-medium">Online Consultation / የኦንላይን ምክክር</span>
+              <strong class="text-primary">{{ doctor()?.onlineFee || 500 }} ETB</strong>
             </div>
             <div class="d-flex justify-content-between mb-3">
-              <span class="text-medium">In-Person Visit</span>
-              <strong class="text-primary">{{ doctor.inPersonFee }} ETB</strong>
+              <span class="text-medium">In-Person Visit / በአካል ጉብኝት</span>
+              <strong class="text-primary">{{ doctor()?.inPersonFee || 800 }} ETB</strong>
             </div>
             <hr>
-            <p class="text-medium mb-1"><i class="bi bi-calendar-check me-1"></i>Next Available</p>
-            <strong class="text-primary">Today, 4:30 PM</strong>
-            <button class="btn btn-primary w-100 mt-3 fw-bold" routerLink="/patient/book-appointment">
-              <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+            <button class="btn btn-primary w-100 mt-3 fw-bold btn-book" routerLink="/patient/book-appointment">
+              <i class="bi bi-calendar-plus me-2"></i>Book Appointment / ቀጠሮ ያዙ
             </button>
-            <button class="btn btn-outline-primary w-100 mt-2">
-              <i class="bi bi-chat-dots me-2"></i>Send Message
+            <button class="btn btn-outline-primary w-100 mt-2 btn-message">
+              <i class="bi bi-chat-dots me-2"></i>Send Message / መልዕክት ይላኩ
             </button>
           </div>
         </div>
 
         <!-- Quick Stats -->
-        <div class="card mt-3"><div class="card-body text-center">
-          <div class="row">
-            <div class="col-4"><h5 class="text-primary mb-0">97%</h5><small class="text-medium">Satisfaction</small></div>
-            <div class="col-4"><h5 class="text-primary mb-0">{{ doctor.patientCount }}+</h5><small class="text-medium">Patients</small></div>
-            <div class="col-4"><h5 class="text-primary mb-0">{{ doctor.experience }}</h5><small class="text-medium">Years Exp</small></div>
+        <div class="card mt-3">
+          <div class="card-body text-center">
+            <div class="row">
+              <div class="col-4 stat-col">
+                <h5 class="text-primary mb-0">{{ doctor()?.satisfaction || 97 }}%</h5><small
+                  class="text-medium">Satisfaction / እርካታ</small>
+              </div>
+              <div class="col-4 stat-col">
+                <h5 class="text-primary mb-0">{{ doctor()?.patientCount || 2500 }}+</h5><small
+                  class="text-medium">Patients / ታካሚዎች</small>
+              </div>
+              <div class="col-4 stat-col">
+                <h5 class="text-primary mb-0">{{ doctor()?.experience }}</h5><small class="text-medium">Years Exp / ዓመታት
+                  ልምድ</small>
+              </div>
+            </div>
           </div>
-        </div></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Loading Template -->
+<ng-template #loading>
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" style="width:48px;height:48px"></div>
+    <p class="text-medium mt-3">Loading doctor profile... / የሀኪሙን መገለጫ በማምጣት ላይ...</p>
+  </div>
+</ng-template>
+
+<!-- Error Template -->
+@if (errorMessage()) {
+<div class="container py-5 text-center">
+  <div class="alert alert-danger d-inline-block">{{ errorMessage() }}</div>
+  <br><a routerLink="/patient/doctors" class="btn btn-primary mt-3">Back to Doctors / ወደ ሀኪሞች ይመለሱ</a>
+</div>
+}

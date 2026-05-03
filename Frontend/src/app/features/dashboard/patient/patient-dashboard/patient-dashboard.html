@@ -1,11 +1,11 @@
 <div class="container-fluid p-4">
-  
+
   <!-- Welcome Card -->
   <div class="welcome-card rounded-4 p-4 text-white mb-4">
     <div class="row align-items-center">
       <div class="col-md-8">
-        <h4 class="mb-1">{{ getGreeting() }}, {{ user()?.firstName || 'Patient' }}! 👋</h4>
-        <p class="mb-2 opacity-75">Here's your health overview</p>
+        <h4 class="mb-1">{{ getGreeting() }}, {{ user()?.firstName || 'Patient / ታካሚ' }}! 👋</h4>
+        <p class="mb-2 opacity-75">Here's your health overview / የጤናዎ አጠቃላይ እይታ እነሆ</p>
       </div>
       <div class="col-md-4 text-end d-none d-md-block">
         <i class="bi bi-heart-pulse" style="font-size: 80px; opacity: 0.2;"></i>
@@ -16,94 +16,113 @@
   <!-- Stats -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-4">
-      <div class="card stat-card h-100"><div class="card-body">
-        <p class="text-medium mb-0" style="font-size:13px">Upcoming</p>
-        <h3 class="text-primary mb-0">{{ upcomingAppointments() }}</h3>
-      </div></div>
+      <div class="card stat-card h-100">
+        <div class="card-body">
+          <p class="text-medium mb-0" style="font-size:13px">Upcoming / ቀጣይ ቀጠሮዎች</p>
+          <h3 class="text-primary mb-0">{{ upcomingAppointments() }}</h3>
+        </div>
+      </div>
     </div>
     <div class="col-6 col-md-4">
-      <div class="card stat-card h-100"><div class="card-body">
-        <p class="text-medium mb-0" style="font-size:13px">Completed</p>
-        <h3 class="text-primary mb-0">{{ completedAppointments() }}</h3>
-      </div></div>
+      <div class="card stat-card h-100">
+        <div class="card-body">
+          <p class="text-medium mb-0" style="font-size:13px">Completed / የተጠናቀቁ</p>
+          <h3 class="text-primary mb-0">{{ completedAppointments() }}</h3>
+        </div>
+      </div>
     </div>
     <div class="col-6 col-md-4">
-      <div class="card stat-card pending h-100"><div class="card-body">
-        <p class="text-medium mb-0" style="font-size:13px">Total</p>
-        <h3 class="text-primary mb-0">{{ totalAppointments() }}</h3>
-      </div></div>
+      <div class="card stat-card pending h-100">
+        <div class="card-body">
+          <p class="text-medium mb-0" style="font-size:13px">Total / ጠቅላላ</p>
+          <h3 class="text-primary mb-0">{{ totalAppointments() }}</h3>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Quick Actions -->
-  <div class="card mb-4"><div class="card-body">
-    <h5 class="text-primary mb-3">Quick Actions</h5>
-    <div class="row g-3">
-      <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/doctors">
-        <i class="bi bi-search text-primary fs-4 d-block mb-1"></i><small>Find Dr</small>
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="text-primary mb-3">Quick Actions / ፈጣን እርምጃዎች</h5>
+      <div class="row g-3">
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/doctors">
+          <i class="bi bi-search text-primary fs-4 d-block mb-1"></i><small>Find Dr / ሀኪም ፈልግ</small>
+        </div>
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/book-appointment">
+          <i class="bi bi-calendar-plus text-primary fs-4 d-block mb-1"></i><small>Book / ቀጠሮ ያዙ</small>
+        </div>
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/chat">
+          <i class="bi bi-chat-dots text-primary fs-4 d-block mb-1"></i><small>Chat / ውይይት</small>
+        </div>
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/medical-records">
+          <i class="bi bi-file-medical text-primary fs-4 d-block mb-1"></i><small>Records / መዝገብ</small>
+        </div>
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/payments">
+          <i class="bi bi-wallet2 text-primary fs-4 d-block mb-1"></i><small>Pay / ክፍያ</small>
+        </div>
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" (click)="showEmergency.set(true)">
+          <i class="bi bi-telephone text-danger fs-4 d-block mb-1"></i>
+          <small class="text-danger">Emergency / አደጋ ጊዜ</small>
+        </div>
       </div>
-      <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/book-appointment">
-        <i class="bi bi-calendar-plus text-primary fs-4 d-block mb-1"></i><small>Book</small>
-      </div>
-      <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/chat">
-        <i class="bi bi-chat-dots text-primary fs-4 d-block mb-1"></i><small>Chat</small>
-      </div>
-      <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/medical-records">
-        <i class="bi bi-file-medical text-primary fs-4 d-block mb-1"></i><small>Records</small>
-      </div>
-      <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/payments">
-        <i class="bi bi-wallet2 text-primary fs-4 d-block mb-1"></i><small>Pay</small>
-      </div>
-      <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" (click)="showEmergency.set(true)">
-  <i class="bi bi-telephone text-danger fs-4 d-block mb-1"></i>
-  <small class="text-danger">Emergency</small>
-</div>
     </div>
-  </div></div>
+  </div>
 
   <!-- Appointments -->
   <div class="card">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-      <h5 class="text-primary mb-0"><i class="bi bi-calendar-check me-2"></i>My Appointments</h5>
-      <a routerLink="/patient/appointments" class="btn btn-outline-primary btn-sm">See All</a>
+      <h5 class="text-primary mb-0"><i class="bi bi-calendar-check me-2"></i>My Appointments / የእኔ ቀጠሮዎች</h5>
+      <a routerLink="/patient/appointments" class="btn btn-outline-primary btn-sm">See All / ሁሉንም እይ</a>
     </div>
     <div class="card-body">
       @if (isLoading()) {
-        <div class="text-center py-3"><div class="spinner-border text-primary"></div></div>
+      <div class="text-center py-3">
+        <div class="spinner-border text-primary"></div>
+      </div>
       }
       @for (apt of appointments(); track apt.appointmentId) {
-        <div class="appointment-card card mb-2">
-          <div class="card-body py-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <strong>{{ apt.doctorName || 'Doctor' }}</strong>
-                <br><small class="text-medium">{{ apt.appointmentDate }} · {{ apt.appointmentTime }}</small>
-              </div>
-              <span class="badge rounded-pill" [ngClass]="getStatusClass(apt.status)">{{ apt.status }}</span>
+      <div class="appointment-card card mb-2">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ apt.doctorName || 'Doctor' }}</strong>
+              <br><small class="text-medium">{{ apt.appointmentDate }} · {{ apt.appointmentTime }}</small>
             </div>
+            <span class="badge rounded-pill" [ngClass]="getStatusClass(apt.status)">{{ apt.status }}</span>
           </div>
         </div>
+      </div>
       }
       @if (appointments().length === 0 && !isLoading()) {
-        <p class="text-center text-medium py-3">No appointments yet. <a routerLink="/patient/doctors">Find a doctor</a></p>
+      <p class="text-center text-medium py-3">No appointments yet. / አሁንም ምንም ቀጠሮ የለም። <a
+          routerLink="/patient/doctors">Find a doctor / ሀኪም ፈልግ</a></p>
       }
     </div>
 
 
     <!-- // emergence modals -->
-     @if (showEmergency()) {
-  <div class="modal d-block" style="background:rgba(0,0,0,0.5)"><div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header bg-danger text-white"><h6 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Emergency Contacts</h6><button class="btn-close btn-close-white" (click)="showEmergency.set(false)"></button></div>
-    <div class="modal-body">
-      <div class="alert alert-danger"><strong>For life-threatening emergencies, call immediately!</strong></div>
-      @for (c of emergencyContacts(); track c.phone) {
-        <div class="d-flex justify-content-between align-items-center p-3 border rounded mb-2">
-          <div><i [class]="'bi ' + c.icon + ' text-danger fs-5 me-2'"></i><strong>{{ c.name }}</strong></div>
-          <a [href]="'tel:' + c.phone" class="btn btn-danger btn-sm">{{ c.phone }}</a>
+    @if (showEmergency()) {
+    <div class="modal d-block" style="background:rgba(0,0,0,0.5)">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h6 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Emergency Contacts / የአደጋ ጊዜ አድራሻዎች
+            </h6><button class="btn-close btn-close-white" (click)="showEmergency.set(false)"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-danger"><strong>For life-threatening emergencies, call immediately! / ህይወትን አደጋ ላይ
+                የሚጥሉ ሁኔታዎች ካሉ፣ ወዲያውኑ ይደውሉ!</strong></div>
+            @for (c of emergencyContacts(); track c.phone) {
+            <div class="d-flex justify-content-between align-items-center p-3 border rounded mb-2">
+              <div><i [class]="'bi ' + c.icon + ' text-danger fs-5 me-2'"></i><strong>{{ c.name }}</strong></div>
+              <a [href]="'tel:' + c.phone" class="btn btn-danger btn-sm">{{ c.phone }}</a>
+            </div>
+            }
+          </div>
         </div>
-      }
+      </div>
     </div>
-  </div></div></div>
-}
+    }
   </div>
 </div>

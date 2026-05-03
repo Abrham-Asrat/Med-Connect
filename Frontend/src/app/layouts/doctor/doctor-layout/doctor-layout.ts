@@ -28,7 +28,8 @@ import { NotificationBellComponent } from '../../../shared/components/notificati
           <a routerLink="/doctor/schedule" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3"><i class="bi bi-calendar-week me-2"></i>Schedule</a>
           <a routerLink="/doctor/blog" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3"><i class="bi bi-pencil-square me-2"></i>Blog</a>
           <a routerLink="/doctor/chat" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3"><i class="bi bi-chat-dots me-2"></i>Messages</a>
-          <a routerLink="/doctor/earnings" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mt-auto px-3"><i class="bi bi-wallet2 me-2"></i>Earnings</a>
+          <a routerLink="/doctor/earnings" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3"><i class="bi bi-wallet2 me-2"></i>Earnings</a>
+          <a routerLink="/doctor/settings" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mt-auto px-3"><i class="bi bi-gear me-2"></i>Settings</a>
         </nav>
         <div class="p-3 border-top border-white border-opacity-25">
           <button (click)="logout()" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
@@ -67,6 +68,7 @@ import { NotificationBellComponent } from '../../../shared/components/notificati
         <a routerLink="/doctor/blog" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-pencil-square me-2"></i>Blog</a>
         <a routerLink="/doctor/chat" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-chat-dots me-2"></i>Messages</a>
         <a routerLink="/doctor/earnings" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-wallet2 me-2"></i>Earnings</a>
+        <a routerLink="/doctor/settings" (click)="toggleSidebar()" class="nav-link text-white rounded mt-auto"><i class="bi bi-gear me-2"></i>Settings</a>
       </nav>
       <div class="p-3 border-top border-white border-opacity-25">
         <button (click)="logout()" class="btn btn-outline-light btn-sm w-100">Logout</button>
@@ -81,5 +83,5 @@ export class DoctorLayoutComponent {
   user = this.authService.currentUser;
   sidebarOpen = signal(false);
   toggleSidebar(): void { this.sidebarOpen.update(v => !v); }
-  logout(): void { this.authService.logout(); }
+  logout(): void { this.authService.logout(true); }
 }

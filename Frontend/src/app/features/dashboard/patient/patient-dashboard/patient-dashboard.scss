@@ -1,0 +1,172 @@
+@use "sass:color";
+$primary: #078930;
+$warning: #FCD116;
+
+.container-fluid {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.welcome-card {
+    background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -10%));
+    box-shadow: 0 15px 30px rgba($primary, 0.2);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+    position: relative;
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba($primary, 0.25);
+    }
+
+    i {
+        animation: heartPulse 3s infinite;
+    }
+}
+
+@keyframes heartPulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.2;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.2;
+    }
+}
+
+.stat-card {
+    border-left: 4px solid $primary;
+    border-radius: 1rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+    animation: slideUpFade 0.5s ease backwards;
+
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 25px rgba($primary, 0.1);
+    }
+
+    &.pending {
+        border-left-color: $warning;
+    }
+}
+
+/* Stagger stat cards */
+.row.g-3>div:nth-child(1) .stat-card {
+    animation-delay: 0.1s;
+}
+
+.row.g-3>div:nth-child(2) .stat-card {
+    animation-delay: 0.2s;
+}
+
+.row.g-3>div:nth-child(3) .stat-card {
+    animation-delay: 0.3s;
+}
+
+.quick-action {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    background: white;
+    border: 1px solid transparent;
+    animation: slideUpFade 0.5s ease backwards;
+
+    &:nth-child(1) {
+        animation-delay: 0.25s;
+    }
+
+    &:nth-child(2) {
+        animation-delay: 0.3s;
+    }
+
+    &:nth-child(3) {
+        animation-delay: 0.35s;
+    }
+
+    &:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    &:nth-child(5) {
+        animation-delay: 0.45s;
+    }
+
+    &:nth-child(6) {
+        animation-delay: 0.5s;
+    }
+
+    &:hover {
+        background: rgba($primary, 0.04);
+        transform: translateY(-5px);
+        border-color: rgba($primary, 0.15);
+        box-shadow: 0 10px 20px rgba($primary, 0.08);
+
+        i {
+            transform: scale(1.15) translateY(-2px);
+        }
+    }
+
+    i {
+        transition: transform 0.3s ease;
+    }
+}
+
+.appointment-card {
+    border-left: 4px solid $primary;
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+    animation: slideUpFade 0.4s ease backwards;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.02);
+
+    &:nth-child(1) {
+        animation-delay: 0.3s;
+    }
+
+    &:nth-child(2) {
+        animation-delay: 0.4s;
+    }
+
+    &:nth-child(3) {
+        animation-delay: 0.5s;
+    }
+
+    &:hover {
+        transform: translateX(5px);
+        background: #fdfdfd;
+        box-shadow: 0 5px 15px rgba($primary, 0.1);
+    }
+}
+
+.card {
+    border-radius: 1rem;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

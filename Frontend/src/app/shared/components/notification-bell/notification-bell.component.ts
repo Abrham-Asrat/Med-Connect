@@ -1,4 +1,4 @@
-import { Component, Input, inject, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, Input, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -20,10 +20,10 @@ import { NotificationStoreService, StoredNotification } from '../../../core/serv
         <i class="bi bi-bell fs-5"></i>
         
         <!-- Unread Badge -->
-        @if (unreadCount > 0) {
+        @if (unreadCount() > 0) {
           <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger pulse-red"
                 style="font-size: 0.65rem; padding: 0.25em 0.5em;">
-            {{ unreadCount > 99 ? '99+' : unreadCount }}
+            {{ unreadCount() > 99 ? '99+' : unreadCount() }}
           </span>
         }
       </button>
@@ -43,7 +43,7 @@ import { NotificationStoreService, StoredNotification } from '../../../core/serv
           <!-- Header -->
           <div class="dropdown-header d-flex justify-content-between align-items-center bg-light rounded-top">
             <span class="fw-bold text-primary">Notifications</span>
-            @if (unreadCount > 0) {
+            @if (unreadCount() > 0) {
               <small class="text-primary" style="cursor: pointer;" (click)="markAllRead()">
                 Mark all read
               </small>
@@ -135,17 +135,19 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   private subscription!: Subscription;
 
   @Input() count: number = 0;
-  
+
   isOpen = signal(false);
-  unreadCount = 0;
-  latestNotifications = signal<StoredNotification[]>([]);
+
+  // Reactively track latest notifications and unread counts
+  latestNotifications = computed(() => this.store.getLatest(10));
+  unreadCount = computed(() => this.store.unreadCount());
 
   ngOnInit(): void {
-    this.updateNotifications();
-    
+    // Load initial ones from db
+    this.store.loadInitialNotifications();
+
     this.subscription = this.signalRService.notificationReceived$.subscribe(notification => {
       this.store.addNotification(notification);
-      this.updateNotifications();
     });
   }
 
@@ -159,16 +161,9 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   markRead(id: string): void {
     this.store.markAsRead(id);
-    this.updateNotifications();
   }
 
   markAllRead(): void {
     this.store.markAllAsRead();
-    this.updateNotifications();
-  }
-
-  private updateNotifications(): void {
-    this.latestNotifications.set(this.store.getLatest(10));
-    this.unreadCount = this.store.unreadCount();
   }
 }

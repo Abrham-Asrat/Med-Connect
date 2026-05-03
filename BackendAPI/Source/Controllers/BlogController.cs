@@ -33,6 +33,7 @@ public class BlogController : ControllerBase
   /// </summary>
   /// <returns></returns>
   [HttpGet("all")]
+  [AllowAnonymous]
   public async Task<IActionResult> GetAllBlogs()
   {
     try
@@ -53,6 +54,7 @@ public class BlogController : ControllerBase
   /// <param name="blogId"></param>
   /// <returns></returns>
   [HttpGet("{blogId}")]
+  [AllowAnonymous]
   public async Task<IActionResult> GetBlogById([FromRoute] [Required] [Guid] Guid blogId)
   {
     try
@@ -148,6 +150,7 @@ public class BlogController : ControllerBase
   }
 
   [HttpGet("{blogId}/comments")]
+  [AllowAnonymous]
   public async Task<IActionResult> GetBlogComments([FromRoute] [Required] [Guid] Guid blogId)
   {
     try

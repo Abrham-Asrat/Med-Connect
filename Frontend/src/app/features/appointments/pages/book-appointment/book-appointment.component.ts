@@ -9,19 +9,7 @@ import { AppointmentService } from '../../../../core/services/appointment.servic
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './book-appointment.component.html',
-  styles: [`
-    .step-dot { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; border: 2px solid #E5E7EB; background: white; color: #6B7280; }
-    .step-dot.active { background: #078930; color: white; border-color: #078930; }
-    .step-dot.done { background: #078930; color: white; border-color: #078930; }
-    .step-line { width: 40px; height: 2px; background: #E5E7EB; }
-    .step-line.done { background: #078930; }
-    .type-card { cursor: pointer; border: 2px solid #E5E7EB; border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s ease; }
-    .type-card:hover, .type-card.selected { border-color: #078930; background: #E8F5EC; }
-    .time-slot { cursor: pointer; padding: 8px 16px; border-radius: 20px; border: 1px solid #E5E7EB; font-size: 14px; transition: all 0.2s; }
-    .time-slot:hover:not(.booked) { border-color: #078930; background: #E8F5EC; }
-    .time-slot.selected { background: #078930; color: white; border-color: #078930; }
-    .time-slot.booked { background: #F8F9FA; color: #D1D5DB; cursor: not-allowed; text-decoration: line-through; }
-  `]
+  styleUrls: ['./book-appointment.component.scss']
 })
 export class BookAppointmentComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
@@ -38,8 +26,8 @@ export class BookAppointmentComponent implements OnInit {
 
   // Get from localStorage
   patientId = localStorage.getItem('patientId') || '';
- doctorId = 'c2cba4dc-3521-4b7c-aea6-2706b83ab22d';
-doctorName = 'Mekdes'; // We can make this dynamic later
+  doctorId = 'c2cba4dc-3521-4b7c-aea6-2706b83ab22d';
+  doctorName = 'Mekdes'; // We can make this dynamic later
   // Dates for next 7 days
   dates = signal<{ date: string; day: string; dayNum: number; month: string }[]>([]);
 

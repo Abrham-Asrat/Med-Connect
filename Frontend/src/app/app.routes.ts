@@ -1,4 +1,7 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
+import { UserRole } from './core/enums/user-role.enum';
 
 export const routes: Routes = [
   // Public landing page
@@ -30,6 +33,7 @@ export const routes: Routes = [
   // Patient routes (lazy loaded)
   {
     path: 'patient',
+    canActivate: [authGuard, roleGuard([UserRole.Patient])],
     loadChildren: () => import('./features/dashboard/patient/patient.routes')
       .then(m => m.PATIENT_ROUTES)
   },
@@ -37,6 +41,7 @@ export const routes: Routes = [
   // Doctor routes (lazy loaded)
   {
     path: 'doctor',
+    canActivate: [authGuard, roleGuard([UserRole.Doctor])],
     loadChildren: () => import('./features/dashboard/doctor/doctor.routes')
       .then(m => m.DOCTOR_ROUTES)
   },
@@ -44,9 +49,11 @@ export const routes: Routes = [
   // Admin routes (lazy loaded)
   {
     path: 'admin',
+    canActivate: [authGuard, roleGuard([UserRole.Admin])],
     loadChildren: () => import('./features/dashboard/admin/admin.routes')
       .then(m => m.ADMIN_ROUTES)
   },
+
 
   // Error pages
   {

@@ -830,5 +830,36 @@ namespace BackendAPI.Source.Service
   }
 
 
+  public async Task<ServiceResponse<bool>> UpdateAvailabilitiesAsync(Guid doctorId, List<DoctorAvailabilityDto> availabilities)
+  {
+    try
+    {
+       var doctor = await appContext.Doctors.Include(d => d.DoctorAvailabilities).FirstOrDefaultAsync(d => d.DoctorId == doctorId);
+       if (doctor == null) return new ServiceResponse<bool>(false, 404, false, "Doctor not found");
+
+       // Clear old availabilities
+       appContext.DoctorAvailabilities.RemoveRange(doctor.DoctorAvailabilities);
+
+       // Add new ones
+       foreach (var slot in availabilities)
+       {
+           doctor.DoctorAvailabilities.Add(new DoctorAvailabilityModel
+           {
+               DoctorId = doctorId,
+               AvailableDay = slot.AvailableDay.ConvertToEnum<DayOfWeek>(),
+               StartTime = TimeOnly.Parse(slot.startTime),
+               EndTime = TimeOnly.Parse(slot.EndTime)
+           });
+       }
+
+       await appContext.SaveChangesAsync();
+       return new ServiceResponse<bool>(true, 200, true, "Schedule updated successfully");
     }
+    catch (Exception ex)
+    {
+       logger.LogError(ex, "Failed to update availabilities");
+       return new ServiceResponse<bool>(false, 500, false, "Error saving schedule");
+    }
+  }
+}
 }

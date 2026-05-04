@@ -288,6 +288,8 @@ builder.Services.AddCors(options =>
   builder.Services.AddScoped<IReviewService, ReviewService>();
   builder.Services.AddScoped<IBlogService, BlogService>();
   builder.Services.AddScoped<IChatService, ChatService>();
+  builder.Services.AddScoped<NotificationService>();
+
 
   // Register Global Exception Filter
   builder.Services.AddScoped<GlobalExceptionFilter>();

@@ -142,12 +142,70 @@ a {
   top: 0;
   z-index: 1020;
   overflow-y: auto;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex !important; // Ensure it behaves correctly when collapsed
+}
+
+// Collapsed Sidebar Logic (Desktop Desktop Only)
+@media (min-width: 992px) {
+  .sidebar.sidebar-collapsed {
+    width: 85px !important;
+
+    // Hide text labels inside nav links
+    .nav-link {
+      justify-content: center !important;
+      text-align: center;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+
+      span.nav-text {
+        display: none !important;
+      }
+
+      i {
+        margin-right: 0 !important;
+        font-size: 1.4rem;
+      }
+    }
+
+    // Hide branding text and profile text
+    .brand-text,
+    .profile-name,
+    .profile-role {
+      display: none !important;
+    }
+
+    // Shrink the avatar
+    .rounded-circle {
+      width: 45px !important;
+      height: 45px !important;
+      font-size: 16px !important;
+    }
+
+    // Fix logout button
+    .btn-logout {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+
+      span {
+        display: none !important;
+      }
+
+      i {
+        margin-right: 0 !important;
+      }
+    }
+  }
 }
 
 .main-content {
   margin-left: 280px;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.sidebar-collapsed {
+    margin-left: 85px;
+  }
 }
 
 // Overlay fade animation
@@ -203,5 +261,209 @@ a {
 
   &.open {
     transform: rotate(90deg);
+  }
+}
+
+// =============================================
+// Global Dark Mode Enhancements & Overrides
+// =============================================
+[data-bs-theme="dark"] {
+  body {
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
+  }
+
+  .bg-light {
+    background-color: #1e1e1e !important;
+  }
+
+  .bg-white {
+    background-color: #242424 !important;
+  }
+
+  .text-dark,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: #f8f9fa !important;
+  }
+
+  .text-muted {
+    color: #adb5bd !important;
+  }
+
+  .card:not(.bg-primary):not(.bg-success):not(.bg-danger):not(.bg-warning):not(.bg-info) {
+    background-color: #242424 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .border,
+  .border-bottom,
+  .border-top,
+  .border-end,
+  .border-start {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .shadow,
+  .shadow-sm {
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .form-control,
+  .form-select {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+
+    &:disabled,
+    &[readonly] {
+      background-color: #1a1a1a !important;
+    }
+
+    &:focus {
+      background-color: #333 !important;
+      color: #fff !important;
+    }
+  }
+
+  .modal-content,
+  .offcanvas {
+    background-color: #242424 !important;
+    color: #f8f9fa !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .table {
+    --bs-table-bg: transparent !important;
+    --bs-table-color: #f8f9fa !important;
+    --bs-table-border-color: rgba(255, 255, 255, 0.1) !important;
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.05) !important;
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .table> :not(caption)>*>* {
+    background-color: transparent !important;
+    color: #f8f9fa !important;
+  }
+
+  .status-badge-pending {
+    background: #3a2e0a !important;
+    color: #fcd116 !important;
+  }
+
+  .dropdown-menu {
+    background-color: #2a2a2a !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .dropdown-item {
+    color: #e0e0e0 !important;
+
+    &:hover {
+      background-color: #333 !important;
+      color: #fff !important;
+    }
+  }
+
+  .list-group-item {
+    background-color: #242424 !important;
+    color: #e0e0e0 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  // Ensure Glassmorphism components remain sleek
+  .backdrop-blur {
+    background-color: rgba(30, 30, 30, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  // ===================================
+  // Navigation & Sidebars Defaults
+  // ===================================
+  .sidebar.bg-primary {
+    background-color: #161616 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .sidebar {
+
+    // Specifically target borders that rely on white opacity
+    .border-white {
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    // Adapt Active Nav Links from Warning/Yellow to Sleek Dark Mode Tones
+    .nav-link.bg-warning {
+      background-color: rgba(255, 255, 255, 0.15) !important;
+      color: #fff !important;
+      box-shadow: none !important;
+    }
+
+    // Dim the text white slightly when inactive
+    .nav-link.text-white:not(.bg-warning) {
+      color: rgba(255, 255, 255, 0.6) !important;
+
+      &:hover {
+        color: #fff !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+      }
+    }
+  }
+
+  // Top Navbars must cleanly fade to dark panels
+  .navbar {
+    background-color: #1a1a1a !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+    .text-primary {
+      color: #e0e0e0 !important; // Fade bright branding on topbar
+    }
+  }
+
+  // ===================================
+  // Chat Messaging Overrides
+  // ===================================
+  .conversation-list {
+    background-color: #161616 !important;
+    border-right-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .chat-area {
+    background-color: #121212 !important;
+
+    &::before {
+      opacity: 0.05 !important;
+    }
+
+    .bg-white {
+      background-color: #161616 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+  }
+
+  .conv-item {
+    border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    &.active {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+  }
+
+  .msg-received {
+    background-color: #242424 !important;
+    color: #f8f9fa !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .msg-sent {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.6) !important;
   }
 }

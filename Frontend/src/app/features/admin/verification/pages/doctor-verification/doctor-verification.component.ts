@@ -9,12 +9,63 @@ import { AdminService } from '../../../../../core/services/admin.service';
   imports: [CommonModule, FormsModule],
   templateUrl: './doctor-verification.component.html',
   styles: [`
-    .verification-card { border-left: 4px solid #FCD116; transition: all 0.2s; }
-    .verification-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-    .stat-card { border-left: 4px solid #DA121A; }
-    .stat-card.approved { border-left-color: #078930; }
-    .stat-card.review { border-left-color: #FCD116; }
-    .stat-card.rejected { border-left-color: #DA121A; opacity: 0.7; }
+    .stat-card { 
+       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+       border-bottom: 5px solid transparent !important;
+    }
+    .stat-card.pending { border-bottom-color: #ffc107 !important; }
+    .stat-card.review { border-bottom-color: #0dcaf0 !important; }
+    .stat-card.approved { border-bottom-color: #198754 !important; }
+    .stat-card.rejected { border-bottom-color: #dc3545 !important; }
+    
+    .hover-lift:hover {
+       transform: translateY(-8px);
+       box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1) !important;
+    }
+    
+    .hover-lift-sm:hover {
+       transform: translateY(-2px);
+    }
+    
+    .avatar-circle {
+       width: 45px;
+       height: 45px;
+       background: linear-gradient(135deg, #0d6efd, #0a58ca);
+       color: white;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       font-weight: 800;
+       border-radius: 50%;
+       font-size: 1.1rem;
+       box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+    }
+    
+    .custom-table th {
+       background: transparent;
+    }
+    .modern-row {
+       transition: all 0.2s;
+       background: #fff;
+    }
+    .modern-row:hover {
+       background: #f8f9fa !important;
+       transform: scale(1.002);
+       box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+    
+    .modal-glassmorphism {
+       background: rgba(15, 23, 42, 0.6) !important;
+       backdrop-filter: blur(8px);
+    }
+    
+    .slide-down {
+       animation: slideDown 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+    @keyframes slideDown {
+       from { transform: translateY(-20px); opacity: 0; }
+       to { transform: translateY(0); opacity: 1; }
+    }
   `]
 })
 export class DoctorVerificationComponent implements OnInit {

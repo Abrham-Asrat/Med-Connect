@@ -306,7 +306,9 @@ namespace BackendAPI.Source.Helpers.Extensions
       AppointmentDate = appointment.AppointmentDate,
       AppointmentTime = appointment.AppointmentTime,
       AppointmentType = appointment.AppointmentType,
+      Status = appointment.Status
     };
+
   }
 
   public static AppointmentDto ToAppointmentDto(
@@ -322,7 +324,9 @@ namespace BackendAPI.Source.Helpers.Extensions
       AppointmentDate = appointment.AppointmentDate,
       AppointmentTime = appointment.AppointmentTime,
       AppointmentType = appointment.AppointmentType,
+      Status = appointment.Status
     };
+
   }
 
   public static AppointmentDto ToAppointmentDto(
@@ -339,7 +343,9 @@ namespace BackendAPI.Source.Helpers.Extensions
       AppointmentDate = appointment.AppointmentDate,
       AppointmentTime = appointment.AppointmentTime,
       AppointmentType = appointment.AppointmentType,
+      Status = appointment.Status
     };
+
   }
 
 

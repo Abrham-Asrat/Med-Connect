@@ -41,18 +41,21 @@ public record EditAppointmentDto
   public string? AppointmentDate { get; init; }
   public string? AppointmentTime { get; init; }
   public string? AppointmentType { get; init; }
+  public string? Status { get; init; }
 
   public void Deconstruct(
     out string? doctorId,
     out string? appointmentDate,
     out string? appointmentTime,
-    out string? appointmentType
+    out string? appointmentType,
+    out string? status
   )
   {
     doctorId = DoctorId;
     appointmentDate = AppointmentDate;
     appointmentTime = AppointmentTime;
     appointmentType = AppointmentType;
+    status = Status;
   }
 }
 
@@ -64,4 +67,6 @@ public record AppointmentDto
   public required DateOnly AppointmentDate { get; init; }
   public required TimeOnly AppointmentTime { get; init; }
   public required AppointmentType AppointmentType { get; init; }
+  public AppointmentStatus Status { get; init; }
 }
+

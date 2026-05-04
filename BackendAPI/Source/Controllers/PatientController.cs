@@ -13,7 +13,12 @@ namespace BackendAPI.Source.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize] // All patient endpoints require authentication
-    public class PatientController(PatientService patientService , FileService fileService, ILogger<PatientController> logger): ControllerBase
+    public class PatientController(
+        PatientService patientService, 
+        FileService fileService, 
+        AppointmentService appointmentService,
+        ILogger<PatientController> logger
+    ): ControllerBase
     {
         // <Summary>
         // To Get all patient record in the system 
@@ -43,6 +48,31 @@ namespace BackendAPI.Source.Controllers
                 return StatusCode(500, "An error occurred while fetching patients.");
             }
         }
+
+        [HttpGet("{patientId}/medical-records")]
+        public async Task<IActionResult> GetMedicalRecords(Guid patientId)
+        {
+            try
+            {
+                // Load appointment history
+                var appointmentsResponse = await appointmentService.GetPatientAppointmentsAsync(patientId);
+                
+                // Load uploaded documents
+                var files = await fileService.GetPatientFilesAsync(patientId);
+                
+                return Ok(new { 
+                    success = true, 
+                    appointments = appointmentsResponse.Data ?? [], 
+                    files = files.Select(f => f.ToFileDto()).ToList() 
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while fetching medical records for patient {PatientId}", patientId);
+                return StatusCode(500, "An error occurred while fetching medical records.");
+            }
+        }
+
 
         [HttpPost("{patientId}/medical-records")]
         public async Task<IActionResult> UploadMedicalRecord(Guid patientId, [FromBody] CreateFileDto fileDto)

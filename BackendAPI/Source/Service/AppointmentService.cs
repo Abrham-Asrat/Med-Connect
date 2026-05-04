@@ -18,8 +18,10 @@ public class AppointmentService(
   ApplicationDbContext appContext,
   DoctorService doctorService,
   PatientService patientService,
+  NotificationService notificationService,
   ILogger<AppointmentService> logger
 )
+
 {
   /// <summary>
   /// Creates an appointment given createAppointmentDto payload
@@ -145,7 +147,7 @@ public class AppointmentService(
         .Select(ds => ds.Specialty!)
         .ToListAsync();
 
-      return new ServiceResponse<AppointmentDto>
+      var response = new ServiceResponse<AppointmentDto>
       {
         StatusCode = 201,
         Success = true,
@@ -158,8 +160,21 @@ public class AppointmentService(
         ),
         Message = "Appointment created successfully",
       };
+
+      // Send real-time notification to the doctor
+      await notificationService.SendNotificationAsync(
+          doctorId,
+          "New Appointment",
+          $"You have a new {appointmentType} appointment with {patient.Data.User?.FirstName} {patient.Data.User?.LastName} on {appointmentDate} at {appointmentTime}.",
+          NotificationType.Appointment,
+          new { appointmentId = appointment.Entity.AppointmentId }
+      );
+
+      return response;
     }
     catch (Exception ex)
+
+
     {
       logger.LogError(ex, "Failed to create an appointment");
       throw;
@@ -468,7 +483,26 @@ public class AppointmentService(
       if (appointmentType != null)
         appointment.AppointmentType = appointmentType.Value;
 
+      if (!string.IsNullOrEmpty(editAppointmentDto.Status))
+      {
+        var oldStatus = appointment.Status;
+        appointment.Status = editAppointmentDto.Status.ConvertToEnum<AppointmentStatus>();
+        
+        // Notify patient if appointment is completed or cancelled
+        if (appointment.Status != oldStatus)
+        {
+            await notificationService.SendNotificationAsync(
+                appointment.Patient.UserId,
+                "Appointment Status Updated",
+                $"Your appointment with {appointment.Doctor.User?.FirstName} {appointment.Doctor.User?.LastName} is now {appointment.Status}.",
+                NotificationType.Appointment,
+                new { appointmentId = appointment.AppointmentId, status = appointment.Status }
+            );
+        }
+      }
+
       await appContext.SaveChangesAsync(); // Save the updates
+
 
       return new ServiceResponse<AppointmentDto>
       {

@@ -24,4 +24,8 @@ export class DoctorScheduleService {
       params: { timeFrame: timeFrame.toString() }
     });
   }
+  // POST /api/doctors/availabilities/{doctorId}
+  updateAvailabilities(doctorId: string, availabilities: any[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/doctors/availabilities/${doctorId}`, availabilities);
+  }
 }

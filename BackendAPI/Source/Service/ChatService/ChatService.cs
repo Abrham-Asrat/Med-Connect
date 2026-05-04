@@ -7,6 +7,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq;
+
 
 namespace BackendAPI.Source.Service.ChatService
 {
@@ -24,6 +26,33 @@ public class ChatService(
   {
     try
     {
+      // --- STRICT MESSAGING PRECONDITION ---
+      if (createConversationDto.Participants.Count == 2)
+      {
+          var participantIds = createConversationDto.Participants.ToArray();
+          var p1 = participantIds[0];
+          var p2 = participantIds[1];
+
+
+
+          var doctor = await appContext.Doctors.FirstOrDefaultAsync(d => d.UserId == p1 || d.UserId == p2);
+          var patient = await appContext.Patients.FirstOrDefaultAsync(p => p.UserId == p1 || p.UserId == p2);
+
+          // If this is specifically a Doctor <-> Patient conversation request
+          if (doctor != null && patient != null)
+          {
+              // Verify they have an actual appointment relationship
+              bool hasRelationship = await appContext.Appointments.AnyAsync(a => 
+                  a.DoctorId == doctor.DoctorId && a.PatientId == patient.PatientId);
+                  
+              if (!hasRelationship)
+              {
+                  throw new InvalidOperationException("Messaging Precondition Failed: Patients and Doctors can only communicate if an Appointment links them.");
+              }
+          }
+      }
+      // -------------------------------------
+
       var conversationId = Guid.NewGuid();
       var conversation = await appContext.Conversations.AddAsync(
         new Conversation() { ConversationId = conversationId }

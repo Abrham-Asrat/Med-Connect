@@ -1,118 +1,256 @@
 <div class="container-fluid p-4">
-  
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="text-primary mb-0"><i class="bi bi-calendar-week me-2"></i>Manage Schedule</h4>
-    <div class="d-flex gap-2 align-items-center">
-      <span class="text-medium">Accepting:</span>
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" [checked]="acceptingAppointments()" (change)="toggleAppointments()">
+    <div>
+      <h3 class="text-primary fw-bold mb-1"><i class="bi bi-clock-history me-3"></i>Shift & Schedule / የሥራ ሰዓት</h3>
+      <p class="text-muted small">Manage your availability, appointments, and time-off requests.</p>
+    </div>
+    <div class="d-flex align-items-center gap-3 bg-white p-3 rounded-4 shadow-sm">
+      <div class="d-flex flex-column text-end">
+        <span class="small fw-bold">Accepting Appointments</span>
+        <small class="text-success" [class.text-danger]="!acceptingAppointments()">{{ acceptingAppointments() ? 'Active
+          & Visible' : 'Currently Paused' }}</small>
       </div>
-      <button class="btn btn-outline-primary btn-sm" [class.active]="viewMode()==='week'" (click)="viewMode.set('week')">Week</button>
-      <button class="btn btn-outline-primary btn-sm" [class.active]="viewMode()==='month'" (click)="viewMode.set('month')">Month</button>
+      <div class="form-check form-switch fs-4">
+        <input class="form-check-input mb-0" type="checkbox" [checked]="acceptingAppointments()"
+          (change)="toggleAppointments()">
+      </div>
     </div>
   </div>
 
   @if (successMessage()) {
-    <div class="alert alert-success d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill"></i> {{ successMessage() }}</div>
-  }
-
-  @if (errorMessage()) {
-    <div class="alert alert-danger">{{ errorMessage() }}</div>
-  }
-
-  <!-- Stats -->
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-4">
-      <div class="card bg-primary text-white text-center p-3">
-        <small>Available Days</small><h3 class="mb-0">{{ days().filter(d=>d.enabled).length }}</h3>
-      </div>
-    </div>
-    <div class="col-6 col-md-4">
-      <div class="card text-center p-3" style="border-left:4px solid #078930">
-        <small class="text-medium">Appointments</small><h3 class="text-primary mb-0">{{ appointments().length }}</h3>
-      </div>
-    </div>
-    <div class="col-6 col-md-4">
-      <div class="card text-center p-3" style="border-left:4px solid #FCD116">
-        <small class="text-medium">Status</small><h5 class="text-warning-dark mb-0">{{ acceptingAppointments() ? 'Active' : 'Paused' }}</h5>
-      </div>
-    </div>
+  <div class="alert alert-success d-flex align-items-center gap-3 rounded-4 border-0 shadow-sm animate-fade-in">
+    <div class="bg-success text-white rounded-circle p-2 d-flex"><i class="bi bi-check-lg"></i></div>
+    <span class="fw-bold">{{ successMessage() }}</span>
   </div>
+  }
 
-  <!-- Weekly Schedule -->
-  <div class="card mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-      <h5 class="text-primary mb-0">Weekly Schedule</h5>
-      <button class="btn btn-primary btn-sm" (click)="saveSchedule()"><i class="bi bi-check-lg me-1"></i>Save</button>
+  <!-- Tabs Navigation -->
+  <ul class="nav nav-pills gap-2 mb-4 bg-white p-2 rounded-pill shadow-sm d-inline-flex border">
+    <li class="nav-item">
+      <button class="nav-link rounded-pill px-4 fw-bold d-flex align-items-center"
+        [class.active]="activeTab() === 'appointments'" (click)="activeTab.set('appointments')">
+        <i class="bi bi-calendar2-check me-2"></i> Appointments
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link rounded-pill px-4 fw-bold d-flex align-items-center"
+        [class.active]="activeTab() === 'availability'" (click)="activeTab.set('availability')">
+        <i class="bi bi-grid-3x3-gap me-2"></i> Weekly Hours
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link rounded-pill px-4 fw-bold d-flex align-items-center"
+        [class.active]="activeTab() === 'timeoff'" (click)="activeTab.set('timeoff')">
+        <i class="bi bi-calendar-x me-2"></i> Block Time / Away
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content animate-fade-in">
+
+    <!-- Appointments Tab -->
+    @if (activeTab() === 'appointments') {
+    <div class="row g-4">
+      <div class="col-lg-12">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">Scheduled Consultations</h5>
+            <div class="btn-group rounded-pill overflow-hidden border">
+              <button class="btn btn-sm px-3" [class.btn-primary]="viewMode()==='week'"
+                (click)="viewMode.set('week')">List View</button>
+              <button class="btn btn-sm px-3" [class.btn-primary]="viewMode()==='month'"
+                (click)="viewMode.set('month')">Calendar Mode</button>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                  <tr>
+                    <th class="ps-4">Patient Name</th>
+                    <th>Date</th>
+                    <th>Time Slot</th>
+                    <th>Booking Type</th>
+                    <th>Status</th>
+                    <th class="text-end pe-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (apt of appointments(); track apt.appointmentId) {
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center gap-3">
+                        <div
+                          class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center"
+                          style="width: 35px; height: 35px;">
+                          <i class="bi bi-person"></i>
+                        </div>
+                        <span class="fw-bold">{{ apt.patientName || 'Patient' }}</span>
+                      </div>
+                    </td>
+                    <td>{{ apt.appointmentDate | date:'mediumDate' }}</td>
+                    <td><span class="badge bg-light text-dark fw-bold">{{ apt.appointmentTime }}</span></td>
+                    <td>Consultation</td>
+                    <td>
+                      <span class="status-badge" [class.status-badge-confirmed]="apt.status==='Scheduled'">{{ apt.status
+                        }}</span>
+                    </td>
+                    <td class="text-end pe-4">
+                      <button class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2">Video Call</button>
+                      <button class="btn btn-sm btn-light rounded-circle"><i class="bi bi-three-dots"></i></button>
+                    </td>
+                  </tr>
+                  }
+                  @if (appointments().length === 0) {
+                  <tr>
+                    <td colspan="6" class="text-center py-5">
+                      <i class="bi bi-calendar2-x display-4 text-muted opacity-25"></i>
+                      <p class="text-muted mt-3">No upcoming appointments found for this period.</p>
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="card-body">
-      @for (day of days(); track day.name) {
-        <div class="day-card card p-3 mb-2" [class.disabled]="!day.enabled">
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-3">
-              <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" [checked]="day.enabled" (change)="toggleDay(day.name)">
+    }
+
+    <!-- Availability Tab -->
+    @if (activeTab() === 'availability') {
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">Weekly Recurring Hours</h5>
+            <button class="btn btn-primary rounded-pill px-4" (click)="saveSchedule()">
+              <i class="bi bi-save me-2"></i> Save Changes
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info border-0 rounded-4 bg-primary bg-opacity-10 text-primary">
+              <i class="bi bi-info-circle-fill me-2"></i> These hours repeat every week. Patients will be able to book
+              you during these slots.
+            </div>
+
+            <div class="schedule-grid mt-4">
+              @for (day of days(); track day.name) {
+              <div class="day-row p-3 rounded-4 mb-3 border bg-white shadow-sm transition-all"
+                [class.disabled-row]="!day.enabled">
+                <div class="row align-items-center">
+                  <div class="col-md-3">
+                    <div class="form-check form-switch d-flex align-items-center gap-3">
+                      <input class="form-check-input" type="checkbox" [checked]="day.enabled"
+                        (change)="toggleDay(day.name)">
+                      <span class="fw-bold fs-5">{{ day.name }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-7">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                      @for (slot of day.slots; track $index) {
+                      <div class="glass-slot px-3 py-1 rounded-pill d-flex align-items-center gap-2">
+                        <span class="small fw-bold">{{ slot }}</span>
+                        <i class="bi bi-x-circle-fill text-danger opacity-50" style="cursor:pointer"
+                          (click)="removeTimeSlot(day.name, $index)"></i>
+                      </div>
+                      }
+
+                      @if (day.enabled) {
+                      <div class="d-flex gap-2 align-items-center ms-2 p-2 bg-light rounded-3 shadow-sm border">
+                        <input type="time" #startTime class="form-control form-control-sm border-0 bg-transparent"
+                          style="width: 85px" value="09:00">
+                        <span class="small text-muted">to</span>
+                        <input type="time" #endTime class="form-control form-control-sm border-0 bg-transparent"
+                          style="width: 85px" value="17:00">
+                        <button class="btn btn-sm btn-primary rounded-circle p-1 d-flex"
+                          (click)="addTimeSlot(day.name, startTime.value, endTime.value)">
+                          <i class="bi bi-plus fs-5"></i>
+                        </button>
+                      </div>
+                      }
+                    </div>
+                  </div>
+                  <div class="col-md-2 text-end">
+                    @if (day.enabled) {
+                    <small class="text-muted">{{ day.slots.length }} slots</small>
+                    }
+                  </div>
+
+                </div>
               </div>
-              <strong style="width:100px">{{ day.name }}</strong>
-              <div class="d-flex flex-wrap gap-1">
-                @for (slot of day.slots; track $index) {
-                  <span class="time-slot">
-                    {{ slot }}
-                    <i class="bi bi-x ms-1" style="cursor:pointer" (click)="removeTimeSlot(day.name, $index)"></i>
-                  </span>
-                }
-                @if (day.enabled && day.slots.length === 0) {
-                  <span class="text-medium">No time slots set</span>
-                }
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 bg-primary text-white p-4">
+          <h5 class="fw-bold mb-3">Schedule Statistics</h5>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Weekly Work Days</span>
+            <strong>{{ days().filter(d=>d.enabled).length }} Days</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Total Available Slots</span>
+            <strong>{{ appointments().length * 2 }} Slots</strong>
+          </div>
+          <hr class="opacity-25">
+          <p class="small opacity-75">Your schedule is currently optimized. Most patients prefer morning slots (08:00 -
+            11:00 AM).</p>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Time Off Tab -->
+    @if (activeTab() === 'timeoff') {
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+          <div class="card-header bg-white py-3 border-0">
+            <h5 class="fw-bold mb-0">Block Special Dates</h5>
+          </div>
+          <div class="card-body">
+            <p class="text-muted small">Select a date range to block yourself as "Away". Existing appointments will need
+              to be rescheduled manually.</p>
+
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label fw-bold small">Away From</label>
+                <input type="date" class="form-control rounded-3" [(ngModel)]="awayFrom">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-bold small">Away Until</label>
+                <input type="date" class="form-control rounded-3" [(ngModel)]="awayTo">
+              </div>
+              <div class="col-12 mt-4">
+                <button class="btn btn-warning w-100 py-3 rounded-3 fw-bold shadow-sm" (click)="blockDates()"
+                  [disabled]="!awayFrom() || !awayTo()">
+                  <i class="bi bi-shield-lock-fill me-2"></i> CONFIRM BLOCK DATES
+                </button>
               </div>
             </div>
-            @if (day.enabled) {
-              <button class="btn btn-outline-primary btn-sm rounded-pill" (click)="addTimeSlot(day.name)">+ Add</button>
-            }
           </div>
         </div>
-      }
-    </div>
-  </div>
-
-  <!-- Today's Appointments -->
-  <div class="card mb-4">
-    <div class="card-header bg-white"><h5 class="text-primary mb-0"><i class="bi bi-list-check me-2"></i>Scheduled Appointments</h5></div>
-    <div class="card-body">
-      @if (appointments().length === 0) {
-        <p class="text-medium text-center py-3">No appointments scheduled</p>
-      }
-      @for (apt of appointments().slice(0, 5); track apt.appointmentId) {
-        <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
-          <div>
-            <strong>{{ apt.patientName || 'Patient' }}</strong>
-            <small class="text-medium ms-2">{{ apt.appointmentDate }} · {{ apt.appointmentTime }}</small>
+      </div>
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+          <div class="card-header bg-white py-3 border-0">
+            <h5 class="fw-bold mb-0">Recent Block History</h5>
           </div>
-          <span class="badge rounded-pill" [class.bg-primary-light]="apt.status==='Scheduled'" [class.text-primary]="apt.status==='Scheduled'">{{ apt.status }}</span>
-        </div>
-      }
-    </div>
-  </div>
-
-  <!-- Away Mode -->
-  <div class="card">
-    <div class="card-header bg-white"><h5 class="text-primary mb-0"><i class="bi bi-airplane me-2"></i>Away / Block Dates</h5></div>
-    <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label">From</label>
-          <input type="date" class="form-control" [(ngModel)]="awayFrom">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">To</label>
-          <input type="date" class="form-control" [(ngModel)]="awayTo">
-        </div>
-        <div class="col-md-4">
-          <button class="btn btn-warning w-100" (click)="blockDates()" [disabled]="!awayFrom() || !awayTo()">
-            <i class="bi bi-lock me-1"></i>Block Dates
-          </button>
+          <div class="card-body">
+            <div class="text-center py-5 opacity-50">
+              <i class="bi bi-archive display-4"></i>
+              <p class="mt-3">No active or future blocks scheduled.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    }
+
   </div>
 </div>

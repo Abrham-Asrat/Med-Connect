@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/blogs")]
-[Authorize] // All blog endpoints require authentication
+// [Authorize] // All blog endpoints require authentication
 public class BlogController : ControllerBase
 {
   private readonly IBlogService _blogService;
@@ -47,6 +47,27 @@ public class BlogController : ControllerBase
       throw;
     }
   }
+
+  /// <summary>
+  /// Get trending blogs (most liked)
+  /// </summary>
+  /// <returns></returns>
+  [HttpGet("trending")]
+  [AllowAnonymous]
+  public async Task<IActionResult> GetTrendingBlogs([FromQuery] int count = 5)
+  {
+    try
+    {
+      var result = await _blogService.GetTrendingBlogsAsync(count);
+      return Ok(new ApiResponse<List<BlogDto>>(true, "Trending blogs retrieved successfully", result));
+    }
+    catch (System.Exception ex)
+    {
+      _logger.LogError(ex, "An error occured trying to get trending blogs.");
+      throw;
+    }
+  }
+
 
   /// <summary>
   /// Get blog by id

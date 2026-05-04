@@ -69,6 +69,31 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
     }
   }
 
+  public async Task<List<BlogDto>> GetTrendingBlogsAsync(int count = 5)
+  {
+    try
+    {
+      var blogs = await appContext
+        .Blogs.Include(b => b.Author)
+        .Include(b => b.BlogLikes)
+        .ThenInclude(b => b.User)
+        .Include(b => b.BlogTags)
+        .ThenInclude(bt => bt.Tag)
+        .Where(b => b.Author != null)
+        .OrderByDescending(b => b.BlogLikes.Count)
+        .Take(count)
+        .Select(b => b.ToBlogDto(b.Author!, b.BlogLikes, b.BlogTags.Select(bt => bt.Tag!).ToList()))
+        .ToListAsync();
+      return blogs;
+    }
+    catch (System.Exception ex)
+    {
+      logger.LogError(ex, "An error occured trying to get trending blogs");
+      throw;
+    }
+  }
+
+
   public async Task<BlogDto> GetBlogAsync(Guid blogId)
   {
     try

@@ -196,9 +196,11 @@
               <strong class="text-primary">{{ doctor()?.inPersonFee || 800 }} ETB</strong>
             </div>
             <hr>
-            <button class="btn btn-primary w-100 mt-3 fw-bold btn-book" routerLink="/patient/book-appointment">
+            <button class="btn btn-primary w-100 mt-3 fw-bold btn-book" [routerLink]="['/patient/book-appointment']"
+              [queryParams]="{ doctorId: doctor()?.doctorId || doctor()?.id }">
               <i class="bi bi-calendar-plus me-2"></i>Book Appointment / ቀጠሮ ያዙ
             </button>
+
             <button class="btn btn-outline-primary w-100 mt-2 btn-message">
               <i class="bi bi-chat-dots me-2"></i>Send Message / መልዕክት ይላኩ
             </button>

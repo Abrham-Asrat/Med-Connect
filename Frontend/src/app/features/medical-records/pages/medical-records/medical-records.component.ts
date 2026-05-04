@@ -38,12 +38,12 @@ export class MedicalRecordsComponent implements OnInit {
 
     this.isLoading.set(true);
 
-    this.appointmentService.getPatientAppointments(this.patientId).subscribe({
-      next: (response: any) => {
+    this.http.get<{ success: boolean, appointments: any[], files: any[] }>(`${this.apiUrl}/Patient/${this.patientId}/medical-records`).subscribe({
+      next: (response) => {
         this.isLoading.set(false);
-        const data = response?.data || [];
-        this.appointments.set(Array.isArray(data) ? data : []);
-        this.filterCategory('all');
+        const appointments = response.appointments || [];
+        const files = response.files || [];
+        this.processRecords(appointments, files);
       },
       error: (error: any) => {
         this.isLoading.set(false);
@@ -52,30 +52,57 @@ export class MedicalRecordsComponent implements OnInit {
     });
   }
 
+  processRecords(appointments: any[], files: any[]): void {
+    const records = [
+      ...appointments.map((apt: any) => ({
+        id: apt.appointmentId,
+        category: apt.status === 'Completed' ? 'diagnosis' : 'general',
+        title: `${apt.appointmentType || 'Virtual'} Consultation`,
+        date: new Date(apt.appointmentDate).toISOString().split('T')[0],
+        doctor: apt.doctorName ? `Dr. ${apt.doctorName}` : 'Assigning Doctor',
+        description: apt.status === 'Completed'
+          ? `Post-consultation summary record for your appointment on ${apt.appointmentDate}.`
+          : `Appointment scheduled at ${apt.appointmentTime}. Status: ${apt.status}.`,
+        status: apt.status,
+        isFile: false
+      })),
+      ...files.map((file: any) => ({
+        id: file.fileId,
+        category: this.inferCategory(file.fileName, file.mimeType),
+        title: file.fileName,
+        date: new Date().toISOString().split('T')[0], // File model needs a proper upload date if available
+        doctor: 'Uploaded By Patient',
+        description: 'Personally uploaded medical document.',
+        status: 'Completed',
+        isFile: true,
+        fileData: file.fileDataBase64,
+        mimeType: file.mimeType
+      }))
+    ];
+
+    this.appointments.set(records); // Keep all records in one signal for filtering
+    this.filterCategory('all');
+  }
+
+  inferCategory(fileName: string, mimeType: string): string {
+    const name = fileName.toLowerCase();
+    if (name.includes('prescription') || name.includes('med')) return 'prescription';
+    if (name.includes('lab') || name.includes('test') || name.includes('blood')) return 'lab';
+    if (name.includes('diag') || name.includes('report')) return 'diagnosis';
+    return 'general';
+  }
+
   filterCategory(category: string): void {
     this.activeCategory.set(category);
-    const appointments = this.appointments();
+    const allRecords = this.appointments();
 
-    // Convert appointments to medical record format securely mapped from Backend entities
-    let records = appointments.map((apt: any) => ({
-      id: apt.appointmentId,
-      // Differentiate completed as diagnosis vs pending tracking
-      category: apt.status === 'Completed' ? 'diagnosis' : 'general',
-      title: `${apt.appointmentType || 'Virtual'} Consultation`,
-      date: new Date(apt.appointmentDate).toISOString().split('T')[0],
-      doctor: apt.doctorName ? `Dr. ${apt.doctorName}` : 'Assigning Doctor',
-      description: apt.status === 'Completed'
-        ? `Post-consultation summary record for your appointment on ${apt.appointmentDate}.`
-        : `Appointment scheduled at ${apt.appointmentTime}. Status is currently: ${apt.status}.`,
-      status: apt.status
-    }));
-
-    if (category !== 'all') {
-      records = records.filter((r: any) => r.category === category);
+    if (category === 'all') {
+      this.filteredRecords.set(allRecords);
+    } else {
+      this.filteredRecords.set(allRecords.filter((r: any) => r.category === category));
     }
-
-    this.filteredRecords.set(records);
   }
+
 
   getCategoryIcon(category: string): string {
     switch (category) {
@@ -90,7 +117,34 @@ export class MedicalRecordsComponent implements OnInit {
     return `record-card ${category}`;
   }
 
+  viewRecord(record: any): void {
+    if (record.isFile && record.fileData) {
+      // Decode base64 and trigger download or view
+      const blob = this.base64ToBlob(record.fileData, record.mimeType);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = record.title;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } else {
+      // Show appointment details (modal or navigation)
+      alert(`Consultation Details: ${record.description}`);
+    }
+  }
+
+  private base64ToBlob(base64: string, mimeType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
+  }
+
   isUploading = signal(false);
+
 
   triggerFileInput(): void {
     const fileInput = document.getElementById('recordUpload') as HTMLInputElement;

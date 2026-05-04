@@ -132,5 +132,20 @@ namespace BackendAPI.Source.Controllers
         }
     
  
+        [HttpPost("availabilities/{doctorId}")]
+        public async Task<IActionResult> UpdateDoctorAvailabilities([FromRoute] Guid doctorId, [FromBody] List<DoctorAvailabilityDto> availabilities)
+        {
+            try
+            {
+                var response = await doctorService.UpdateAvailabilitiesAsync(doctorId, availabilities);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to update availabilities.");
+                return StatusCode(500, new ServiceResponse<bool>(false, 500, false, ex.Message));
+            }
+        }
     }
 }
+

@@ -8,6 +8,8 @@ public interface IBlogService
   Task<BlogDto> CreateBlogAsync(CreateBlogDto createBlogDto);
 
   Task<List<BlogDto>> GetAllBlogsAsync();
+  Task<List<BlogDto>> GetTrendingBlogsAsync(int count = 5);
+
 
   Task<BlogDto> GetBlogAsync(Guid blogId);
 

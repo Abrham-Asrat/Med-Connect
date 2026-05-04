@@ -19,7 +19,11 @@ export class AuthService {
 
   readonly currentUser = computed(() => this.currentUserSignal());
   readonly token = computed(() => this.tokenSignal());
-  readonly isAuthenticated = computed(() => !!this.tokenSignal());
+  readonly isAuthenticated = computed(() => {
+    const token = this.tokenSignal();
+    return !!token && token !== 'null' && token !== 'undefined';
+  });
+
   readonly userRole = computed(() => this.currentUserSignal()?.role ?? null);
   readonly patientId = computed(() => this.patientIdSignal());
   readonly doctorId = computed(() => this.doctorIdSignal());

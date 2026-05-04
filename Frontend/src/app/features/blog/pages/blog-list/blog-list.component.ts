@@ -1,17 +1,21 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { BlogService } from '../../../../core/services/blog.service';
 
 @Component({
     selector: 'app-blog-list',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule],
+
     templateUrl: './blog-list.component.html',
     styleUrl: './blog-list.component.scss'
 })
 export class BlogListComponent implements OnInit {
     private blogService = inject(BlogService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+
 
     blogs = signal<any[]>([]);
     isLoading = signal(true);
@@ -59,4 +63,25 @@ export class BlogListComponent implements OnInit {
         if (this.selectedCategory() === 'All') return this.blogs();
         return this.blogs().filter(b => b.category === this.selectedCategory());
     }
+
+    get featuredBlog() {
+        return this.blogs().length > 0 ? this.blogs()[0] : null;
+    }
+
+    get remainingBlogs() {
+        return this.blogs().slice(1);
+    }
+
+
+    navigateToBlog(blogId: string): void {
+        const currentUrl = this.router.url;
+        if (currentUrl.includes('/patient/')) {
+            this.router.navigate(['/patient/blog', blogId]);
+        } else if (currentUrl.includes('/doctor/')) {
+            this.router.navigate(['/doctor/health-blogs', blogId]);
+        } else {
+            this.router.navigate(['/blogs', blogId]);
+        }
+    }
 }
+

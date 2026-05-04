@@ -17,8 +17,19 @@
     <div class="alert alert-danger">{{ errorMessage() }}</div>
     }
 
-    <div class="card shadow">
+    <div class="card shadow overflow-hidden">
+      <div class="bg-primary-light p-3 border-bottom d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center fw-bold"
+          style="width:40px;height:40px">
+          <i class="bi bi-person-badge"></i>
+        </div>
+        <div>
+          <small class="text-primary d-block fw-bold uppercase" style="font-size: 0.65rem;">Booking with</small>
+          <span class="fw-bold text-primary">{{ doctorName() }}</span>
+        </div>
+      </div>
       <div class="card-body p-4">
+
 
         <!-- STEP 1: Type -->
         @if (step() === 1) {
@@ -85,10 +96,12 @@
         @if (step() === 3) {
         <h5 class="text-primary mb-4">Confirm Details / ዝርዝሮች ያረጋግጡ</h5>
         <div class="bg-light rounded-3 p-4">
+          <p><strong>Doctor / ሐኪም:</strong> {{ doctorName() }}</p>
           <p><strong>Type / አይነት:</strong> {{ appointmentType() }}</p>
           <p><strong>Date / ቀን:</strong> {{ selectedDate() }}</p>
           <p><strong>Time / ሰዓት:</strong> {{ selectedTime() }}</p>
         </div>
+
         <div class="d-flex justify-content-between mt-4">
           <button class="btn btn-outline-secondary" (click)="step.set(2)">Back / ወደኋላ</button>
           <button class="btn btn-primary" (click)="goToPayment()">Proceed to Payment / ወደ ክፍያ ይቀጥሉ</button>
@@ -114,9 +127,22 @@
             style="width:80px;height:80px">
             <i class="bi bi-check-lg text-white" style="font-size:40px"></i>
           </div>
-          <h4 class="text-primary">Appointment Booked! / ቀጠሮ ተይዟል! 🎉</h4>
-          <p class="text-medium">Your appointment has been scheduled. / የቀጠሮዎ መርሐግብር ተይዟል።</p>
-          <button class="btn btn-primary mt-3" (click)="goToDashboard()">Go to Dashboard / ወደ ዳሽቦርድ ይሂዱ</button>
+          <h4 class="text-primary">Appointment Booked! 🎉</h4>
+          <p class="text-muted mb-4">Your visit with <strong>{{ doctorName() }}</strong> has been scheduled
+            successfully.</p>
+
+          <div class="bg-light p-3 rounded-4 mb-4 text-start">
+            <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Date:</span> <span>{{
+                selectedDate() }}</span></div>
+            <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Time:</span> <span>{{
+                selectedTime() }}</span></div>
+            <div class="d-flex justify-content-between small"><span class="text-muted">Type:</span> <span>{{
+                appointmentType() }}</span></div>
+          </div>
+
+          <button class="btn btn-primary w-100 rounded-pill py-3 fw-bold" (click)="goToDashboard()">Back to
+            Dashboard</button>
+
         </div>
         }
 

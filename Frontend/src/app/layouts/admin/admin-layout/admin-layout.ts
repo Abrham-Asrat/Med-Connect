@@ -3,45 +3,56 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
+import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, ThemeToggleComponent],
   template: `
     <div class="d-flex min-vh-100">
-      <aside class="sidebar bg-primary d-none d-lg-flex flex-column">
-        <div class="p-3 text-center border-bottom border-white border-opacity-25">
-          <span class="h5 text-white mb-0"><i class="bi bi-shield-check me-2"></i>Admin</span>
+      <aside class="sidebar bg-primary d-none d-lg-flex flex-column" [class.sidebar-collapsed]="desktopSidebarCollapsed()">
+        <div class="p-3 d-flex align-items-center border-bottom border-white border-opacity-25" 
+             [class.justify-content-between]="!desktopSidebarCollapsed()" 
+             [class.flex-column]="desktopSidebarCollapsed()" 
+             [class.gap-3]="desktopSidebarCollapsed()">
+          
+          <span class="h5 text-white mb-0 brand-text fw-bold text-truncate">
+            <i class="bi bi-shield-check me-2"></i>Admin
+          </span>
+          <i class="bi bi-shield-check text-white fs-3 d-none" [class.d-block]="desktopSidebarCollapsed()"></i>
+          
+          <button (click)="toggleDesktopSidebar()" class="btn btn-sm text-white d-none d-lg-flex align-items-center justify-content-center rounded-circle transition-all hover-lift-sm" style="background: rgba(255,255,255,0.15); width: 30px; height: 30px;">
+            <i class="bi" [class.bi-chevron-left]="!desktopSidebarCollapsed()" [class.bi-chevron-right]="desktopSidebarCollapsed()" style="margin: 0 !important; font-size: 1rem;"></i>
+          </button>
         </div>
         <div class="p-3 text-white text-center border-bottom border-white border-opacity-25">
           <div class="rounded-circle bg-white text-primary d-inline-flex align-items-center justify-content-center mb-2"
                style="width:56px;height:56px;font-size:20px;font-weight:700">AD</div>
-          <h6 class="mb-0">Administrator</h6>
-          <small class="text-warning">Super Admin</small>
+          <h6 class="mb-0 profile-name">Administrator</h6>
+          <small class="text-warning profile-role">Super Admin</small>
         </div>
         <nav class="nav flex-column p-3 flex-grow-1">
-          <a routerLink="/admin/dashboard" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
-          <a routerLink="/admin/verification" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3"><i class="bi bi-person-check me-2"></i>Doctor Approvals</a>
-          <a routerLink="/admin/doctors" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3"><i class="bi bi-people me-2"></i>Doctors</a>
-          <a routerLink="/admin/patients" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3"><i class="bi bi-people-fill me-2"></i>Patients</a>
-          <a routerLink="/admin/finance" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3"><i class="bi bi-graph-up me-2"></i>Finance</a>
-          <a routerLink="/admin/moderation" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mt-auto px-3"><i class="bi bi-shield me-2"></i>Moderation</a>
+          <a routerLink="/admin/dashboard" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-speedometer2 me-2"></i><span class="nav-text">Dashboard</span></a>
+          <a routerLink="/admin/verification" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-person-check me-2"></i><span class="nav-text">Approvals</span></a>
+          <a routerLink="/admin/doctors" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-people me-2"></i><span class="nav-text">Doctors</span></a>
+          <a routerLink="/admin/patients" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-people-fill me-2"></i><span class="nav-text">Patients</span></a>
+          <a routerLink="/admin/finance" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-graph-up me-2"></i><span class="nav-text">Finance</span></a>
+          <a routerLink="/admin/moderation" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-shield me-2"></i><span class="nav-text">Moderation</span></a>
+          <a routerLink="/admin/settings" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mt-auto px-3 d-flex align-items-center"><i class="bi bi-gear-fill me-2"></i><span class="nav-text">Settings</span></a>
         </nav>
         <div class="p-3 border-top border-white border-opacity-25">
-          <button (click)="logout()" class="btn btn-outline-light btn-sm w-100"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+          <button (click)="logout()" class="btn btn-outline-light btn-sm w-100 btn-logout d-flex justify-content-center align-items-center"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></button>
         </div>
       </aside>
 
-      <div class="main-content flex-grow-1 d-flex flex-column">
-        <nav class="navbar navbar-light bg-white shadow-sm px-3 py-2">
+      <div class="main-content flex-grow-1 d-flex flex-column" [class.sidebar-collapsed]="desktopSidebarCollapsed()">
+        <nav class="navbar navbar-light sticky-top bg-white shadow-sm px-3 py-2" style="z-index: 1030;">
           <div class="d-flex align-items-center w-100">
-            <!-- Mobile toggle button with animation -->
-<button (click)="toggleSidebar()" class="btn btn-link text-primary d-lg-none p-0 me-2">
-  <i class="bi fs-4" [class.bi-list]="!sidebarOpen()" [class.bi-x-lg]="sidebarOpen()"></i>
-</button>
+            <button (click)="toggleSidebar()" class="btn btn-link text-primary d-lg-none p-0 me-2"><i class="bi fs-4" [class.bi-list]="!sidebarOpen()" [class.bi-x-lg]="sidebarOpen()"></i></button>
             <span class="h5 text-primary mb-0 d-lg-none">Admin Panel</span>
-            <div class="ms-auto">
+            <div class="ms-auto d-flex align-items-center">
+              <app-theme-toggle></app-theme-toggle>
               <app-notification-bell [count]="12"></app-notification-bell>
             </div>
           </div>
@@ -55,9 +66,7 @@ import { NotificationBellComponent } from '../../../shared/components/notificati
     <aside class="sidebar bg-primary d-flex flex-column show" (click)="$event.stopPropagation()">
       <div class="p-3 text-center border-bottom border-white border-opacity-25 d-flex justify-content-between align-items-center">
         <span class="h5 text-white mb-0"><i class="bi bi-shield-check me-2"></i>Admin</span>
-        <button class="btn btn-link text-white p-0" (click)="toggleSidebar()">
-          <i class="bi bi-x-lg fs-5"></i>
-        </button>
+        <button class="btn btn-link text-white p-0" (click)="toggleSidebar()"><i class="bi bi-x-lg fs-5"></i></button>
       </div>
       <nav class="nav flex-column p-3 flex-grow-1">
         <a routerLink="/admin/dashboard" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
@@ -66,6 +75,7 @@ import { NotificationBellComponent } from '../../../shared/components/notificati
         <a routerLink="/admin/patients" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-people-fill me-2"></i>Patients</a>
         <a routerLink="/admin/finance" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-graph-up me-2"></i>Finance</a>
         <a routerLink="/admin/moderation" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-shield me-2"></i>Moderation</a>
+        <a routerLink="/admin/settings" (click)="toggleSidebar()" class="nav-link text-white rounded mt-auto"><i class="bi bi-gear-fill me-2"></i>Settings</a>
       </nav>
       <div class="p-3 border-top border-white border-opacity-25">
         <button (click)="logout()" class="btn btn-outline-light btn-sm w-100">Logout</button>
@@ -79,6 +89,8 @@ export class AdminLayoutComponent {
   private authService = inject(AuthService);
   user = this.authService.currentUser;
   sidebarOpen = signal(false);
+  desktopSidebarCollapsed = signal(false);
   toggleSidebar(): void { this.sidebarOpen.update(v => !v); }
+  toggleDesktopSidebar(): void { this.desktopSidebarCollapsed.update(v => !v); }
   logout(): void { this.authService.logout(true); }
 }

@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { NotificationStoreService } from '../../../core/services/notification-store.service';
+import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-patient-layout',
@@ -15,7 +16,8 @@ import { NotificationStoreService } from '../../../core/services/notification-st
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    NotificationBellComponent
+    NotificationBellComponent,
+    ThemeToggleComponent
   ],
   templateUrl: './patient-layout.component.html'
 })
@@ -27,6 +29,7 @@ export class PatientLayoutComponent implements OnInit, OnDestroy {
 
   user = this.authService.currentUser;
   sidebarOpen = signal(false);
+  desktopSidebarCollapsed = signal(false);
   unreadCount = 0;
 
   ngOnInit(): void {
@@ -48,6 +51,10 @@ export class PatientLayoutComponent implements OnInit, OnDestroy {
 
   toggleSidebar(): void {
     this.sidebarOpen.update(v => !v);
+  }
+
+  toggleDesktopSidebar(): void {
+    this.desktopSidebarCollapsed.update(v => !v);
   }
 
   logout(): void {

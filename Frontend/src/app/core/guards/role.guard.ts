@@ -10,7 +10,7 @@ export function roleGuard(allowedRoles: UserRole[]): CanActivateFn {
 
     if (authService.hasRole(allowedRoles)) return true;
 
-    router.navigate(['/404']);
+    router.navigate(['/']);
     return false;
   };
 }

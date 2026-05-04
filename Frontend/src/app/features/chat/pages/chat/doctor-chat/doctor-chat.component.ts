@@ -28,16 +28,7 @@ interface PatientConversation {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './doctor-chat.component.html',
-  styles: [`
-    .chat-container { height: calc(100vh - 140px); }
-    .conv-list { width: 340px; min-width: 340px; }
-    .chat-area { flex: 1; min-width: 0; }
-    .conv-item { cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
-    .conv-item:hover, .conv-item.active { background: #E8F5EC; border-left-color: #078930; }
-    .msg-sent { background: #078930; color: white; border-radius: 16px 16px 4px 16px; max-width: 75%; }
-    .msg-received { background: #F8F9FA; border: 1px solid #E5E7EB; border-radius: 16px 16px 16px 4px; max-width: 75%; }
-    .online-dot { width: 10px; height: 10px; border-radius: 50%; background: #078930; position: absolute; bottom: 0; right: 0; border: 2px solid white; }
-  `]
+  styleUrls: ['../chat.component.scss']
 })
 export class DoctorChatComponent implements OnInit {
   private chatService = inject(ChatService);

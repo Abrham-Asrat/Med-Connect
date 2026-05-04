@@ -14,32 +14,33 @@ namespace BackendAPI.Source.Data
     
         }
 
-        public DbSet<UserModel> Users { get; set; }
-        public DbSet<DoctorModel> Doctors { get; set; }
-        public DbSet<EducationModel> Educations { get; set; }
-        public DbSet<ExperienceModel> Experiences { get; set; }
-        public DbSet<ReviewModel> Reviews { get; set; }
-        public DbSet<DoctorAvailabilityModel> DoctorAvailabilities { get; set; }
-        public DbSet<Appointment> Appointments { get; set; }
-        public DbSet<SpecialtyModel> Specializations { get; set; }
-        public DbSet<DoctorSpecialtyModel> DoctorSpecialties { get; set; }
-        public DbSet<DoctorPreference> DoctorPreferences { get; set; }
-        public DbSet<FileModel> Files { get; set; }
-        public DbSet<PatientModel> Patients { get; set; }
-        public DbSet<Admin> Admins { get; set; }
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<Blog> Blogs { get; set; }
-        public DbSet<BlogComment> BlogComments { get; set; }
-        public DbSet<BlogLike> BlogLikes { get; set; }
-        public DbSet<BlogTag> BlogTags { get; set; }
-        public DbSet<Tag> Tags { get; set; }
-        public DbSet<Conversation> Conversations { get; set; }
-        public DbSet<Message> Messages { get; set; }
-        public DbSet<ConversationMembershipModel> ConversationMemberships { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<UserModel> Users { get; set; } = null!;
+        public DbSet<DoctorModel> Doctors { get; set; } = null!;
+        public DbSet<EducationModel> Educations { get; set; } = null!;
+        public DbSet<ExperienceModel> Experiences { get; set; } = null!;
+        public DbSet<ReviewModel> Reviews { get; set; } = null!;
+        public DbSet<DoctorAvailabilityModel> DoctorAvailabilities { get; set; } = null!;
+        public DbSet<Appointment> Appointments { get; set; } = null!;
+        public DbSet<SpecialtyModel> Specializations { get; set; } = null!;
+        public DbSet<DoctorSpecialtyModel> DoctorSpecialties { get; set; } = null!;
+        public DbSet<DoctorPreference> DoctorPreferences { get; set; } = null!;
+        public DbSet<FileModel> Files { get; set; } = null!;
+        public DbSet<PatientModel> Patients { get; set; } = null!;
+        public DbSet<Admin> Admins { get; set; } = null!;
+        public DbSet<Payment> Payments { get; set; } = null!;
+        public DbSet<Blog> Blogs { get; set; } = null!;
+        public DbSet<BlogComment> BlogComments { get; set; } = null!;
+        public DbSet<BlogLike> BlogLikes { get; set; } = null!;
+        public DbSet<BlogTag> BlogTags { get; set; } = null!;
+        public DbSet<Tag> Tags { get; set; } = null!;
+        public DbSet<Conversation> Conversations { get; set; } = null!;
+        public DbSet<Message> Messages { get; set; } = null!;
+        public DbSet<ConversationMembershipModel> ConversationMemberships { get; set; } = null!;
+        public DbSet<Notification> Notifications { get; set; } = null!;
 
-        public DbSet<MessageFileAssociation> MessageFileAssociations { get; set; }
-        public DbSet<DocumentFileAssociation> DocumentFileAssociations { get; set; }    
+        public DbSet<MessageFileAssociation> MessageFileAssociations { get; set; } = null!;
+        public DbSet<DocumentFileAssociation> DocumentFileAssociations { get; set; } = null!;
+    
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

@@ -9,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using BackendAPI.Source.Helpers.Extensions;
 using BackendAPI.Source.Helpers.Default;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore;
+
 
 
 
@@ -85,15 +87,59 @@ namespace BackendAPI.Source.Service
       else if (fa is DocumentFileAssociation d) await appContext.DocumentFileAssociations.AddAsync(d);
       
       await appContext.SaveChangesAsync();
-
-      return fa;
-    }
-    catch (Exception ex)
+ 
+       return fa;
+     }
+     catch (Exception ex)
+     {
+       logger.LogError($"{ex}: Error occurred while creating file association");
+       throw;
+     }
+   }
+ 
+    public async Task<List<FileModel>> GetPatientFilesAsync(Guid patientId)
     {
-      logger.LogError($"{ex}: Error occurred while creating file association");
-      throw;
+      try
+      {
+        return await appContext.DocumentFileAssociations
+          .Where(d => d.PatientId == patientId)
+          .Include(d => d.File)
+          .Select(d => d.File!)
+          .ToListAsync();
+      }
+      catch (Exception ex)
+      {
+        logger.LogError(ex, "Error occurred while fetching files for patient {PatientId}", patientId);
+        throw;
+      }
     }
-  }
+
+    public async Task<List<FileModel>> GetFilesForAssociationAsync(Guid assocId, DiscriminatorTypes entityType)
+    {
+      try
+      {
+        return entityType switch
+        {
+          DiscriminatorTypes.Message => await appContext.MessageFileAssociations
+            .Where(m => m.MessageId == assocId)
+            .Include(m => m.File)
+            .Select(m => m.File!)
+            .ToListAsync(),
+          DiscriminatorTypes.Document => await appContext.DocumentFileAssociations
+            .Where(d => d.PatientId == assocId)
+            .Include(d => d.File)
+            .Select(d => d.File!)
+            .ToListAsync(),
+          _ => throw new ArgumentException($"Unsupported Discriminator Type: {entityType}")
+        };
+      }
+      catch (Exception ex)
+      {
+        logger.LogError(ex, "Error occurred while fetching files for assoc {AssocId}", assocId);
+        throw;
+      }
+    }
+
 
     }
 }

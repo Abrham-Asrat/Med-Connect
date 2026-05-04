@@ -1,86 +1,187 @@
-<div class="container-fluid p-4">
+<div class="container-fluid p-4 bg-light min-vh-100">
+  <!-- Title Section -->
+  <div class="d-flex justify-content-between align-items-center mb-5">
+    <div>
+      <span class="badge bg-primary bg-opacity-10 text-primary mb-2 px-3 py-2 rounded-pill fw-bold">EHR System</span>
+      <h3 class="fw-bolder text-dark mb-0"><i class="bi bi-folder2-open me-2 text-primary"></i>Medical Records (የሕክምና
+        መዝገቦች)</h3>
+      <p class="text-muted mt-2 mb-0">Securely access and upload your health history, prescriptions, and diagnostics.
+      </p>
+    </div>
+  </div>
 
-  <h4 class="text-primary mb-4"><i class="bi bi-file-medical me-2"></i>Medical Records / የሕክምና መዝገቦች</h4>
-
-  <!-- Patient Summary -->
-  <div class="card bg-primary text-white mb-4">
-    <div class="card-body">
+  <!-- Premium Patient Summary Card -->
+  <div class="card border-0 rounded-4 overflow-hidden mb-5 position-relative hover-lift-sm shadow-sm"
+    style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);">
+    <div class="position-absolute top-0 end-0 p-4 opacity-25">
+      <i class="bi bi-heart-pulse-fill" style="font-size: 8rem; color: white;"></i>
+    </div>
+    <div class="card-body p-4 p-md-5 text-white position-relative z-index-1">
       <div class="row align-items-center">
-        <div class="col-md-8">
-          <h5 class="mb-1">{{ user()?.firstName }} {{ user()?.lastName }}</h5>
-          <span class="me-3"><i class="bi bi-envelope me-1"></i>{{ user()?.email }}</span>
-          <span class="me-3"><i class="bi bi-telephone me-1"></i>{{ user()?.phone || 'N/A' }}</span>
-          <br><small class="opacity-75">Patient ID: {{ patientId }}</small>
+        <div class="col-md-7 d-flex align-items-center gap-4">
+          <div
+            class="avatar-circle bg-white text-primary rounded-circle d-flex align-items-center justify-content-center shadow"
+            style="width: 80px; height: 80px;">
+            <i class="bi bi-person-bounding-box fs-2"></i>
+          </div>
+          <div>
+            <h4 class="fw-bold mb-1">{{ user()?.firstName }} {{ user()?.lastName }}</h4>
+            <div class="d-flex align-items-center gap-3 text-white-50 small mt-2">
+              <span><i class="bi bi-envelope me-1"></i> {{ user()?.email }}</span>
+              <span><i class="bi bi-telephone me-1"></i> {{ user()?.phone || '+251 XXX XXXX' }}</span>
+              <span><i class="bi bi-upc-scan me-1"></i> ID: #{{ patientId | slice:0:8 }}</span>
+            </div>
+          </div>
         </div>
-        <div class="col-md-4 text-md-end mt-2 mt-md-0">
-          <span class="badge bg-white text-primary me-2">{{ appointments().length }} Appointments / ቀጠሮዎች</span>
-          <span class="badge bg-white text-primary">Records / መዛግብት</span>
+        <div class="col-md-5 text-md-end mt-4 mt-md-0">
+          <div class="d-flex justify-content-md-end gap-3">
+            <div
+              class="bg-white bg-opacity-25 px-4 py-3 rounded-4 backdrop-blur text-center border border-white border-opacity-10">
+              <h3 class="fw-bolder mb-0 lh-1">{{ appointments().length }}</h3>
+              <small class="text-uppercase fw-bold opacity-75"
+                style="letter-spacing: 1px; font-size: 0.7rem;">Visits</small>
+            </div>
+            <div
+              class="bg-white bg-opacity-25 px-4 py-3 rounded-4 backdrop-blur text-center border border-white border-opacity-10">
+              <h3 class="fw-bolder mb-0 lh-1">{{ filteredRecords().length }}</h3>
+              <small class="text-uppercase fw-bold opacity-75"
+                style="letter-spacing: 1px; font-size: 0.7rem;">Records</small>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Categories & Actions -->
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <div class="d-flex gap-2 flex-wrap">
+  <!-- Filter & Action Bar -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <!-- Beautiful Segmented Control for Categories -->
+    <div class="p-1 bg-white rounded-pill shadow-sm d-inline-flex border">
       @for (cat of categories; track cat) {
-      <button class="btn btn-sm rounded-pill category-btn" [class.active]="activeCategory()===cat"
+      <button class="btn btn-sm rounded-pill px-4 fw-bold transition-all" [class.btn-primary]="activeCategory() === cat"
+        [class.text-muted]="activeCategory() !== cat" [class.btn-light]="activeCategory() !== cat" style="border: none;"
         (click)="filterCategory(cat)">
-        {{ cat === 'all' ? 'All / ሁሉም' : (cat === 'prescription' ? 'Prescriptions / ማዘዣዎች' : cat === 'lab' ? 'Lab
-        Results
-        / የላቦራቶሪ ውጤቶች' : 'Diagnoses / ምርመራዎች') }}
+        @if(cat === 'all') { <i class="bi bi-collection me-1"></i> All }
+        @else if(cat === 'prescription') { <i class="bi bi-capsule me-1"></i> Prescriptions }
+        @else if(cat === 'lab') { <i class="bi bi-droplet-half me-1"></i> Labs }
+        @else { <i class="bi bi-file-medical me-1"></i> General }
       </button>
       }
     </div>
 
+    <!-- Upload Button -->
     <div>
       <input type="file" id="recordUpload" class="d-none" accept=".pdf,image/*" (change)="onFileSelected($event)">
-      <button class="btn btn-primary rounded-pill px-4 btn-sm" (click)="triggerFileInput()" [disabled]="isUploading()">
-        <i class="bi bi-cloud-upload me-2"></i>
-        @if (isUploading()) { Uploading... } @else { Upload Record / መዝገብ ይጫኑ }
+      <button class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm hover-lift-sm" (click)="triggerFileInput()"
+        [disabled]="isUploading()">
+        @if (isUploading()) {
+        <span class="spinner-border spinner-border-sm me-2"></span> Securing Upload...
+        } @else {
+        <i class="bi bi-cloud-arrow-up-fill me-2"></i> Upload External Record
+        }
       </button>
     </div>
   </div>
 
-  <!-- Loading -->
+  <!-- Loading State -->
   @if (isLoading()) {
-  <div class="text-center py-5">
-    <div class="spinner-border text-primary"></div>
+  <div class="py-5 d-flex justify-content-center">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
   </div>
   }
 
-  <!-- Records -->
+  <!-- Records Grid -->
   @if (!isLoading()) {
-  <div class="row g-3">
+  <div class="row g-4 animation-fade-in">
     @for (record of filteredRecords(); track record.id) {
-    <div class="col-md-6">
-      <div class="card record-card h-100" [class]="getCategoryClass(record.category)">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <span class="badge bg-primary-light text-primary">{{ record.category }}</span>
-            <small class="text-medium">{{ record.date }}</small>
-          </div>
-          <h6>{{ record.title }}</h6>
-          <p class="text-medium small mb-2">{{ record.description }}</p>
-          <div class="d-flex justify-content-between align-items-center">
-            <small class="text-primary"><i class="bi bi-person me-1"></i>{{ record.doctor }}</small>
-            <span class="badge rounded-pill" [class.bg-primary-light]="record.status==='Completed'"
-              [class.text-primary]="record.status==='Completed'" [class.bg-warning-light]="record.status==='Scheduled'"
-              [class.text-warning-dark]="record.status==='Scheduled'">
-              {{ record.status }}
+    <div class="col-md-6 col-lg-4">
+      <div
+        class="card border-0 shadow-sm rounded-4 h-100 hover-lift-sm cursor-pointer position-relative overflow-hidden">
+        <!-- Left color strip based on category -->
+        <div class="position-absolute top-0 bottom-0 start-0" style="width: 6px;"
+          [class.bg-primary]="record.category === 'general'" [class.bg-success]="record.category === 'prescription'"
+          [class.bg-warning]="record.category === 'lab'" [class.bg-info]="record.category === 'diagnosis'">
+        </div>
+
+        <div class="card-body p-4 ps-5">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <span class="badge rounded-pill fw-bold" [class.bg-primary-light]="record.category === 'general'"
+              [class.text-primary]="record.category === 'general'"
+              [class.bg-success-light]="record.category === 'prescription'"
+              [class.text-success]="record.category === 'prescription'"
+              [class.bg-info-light]="record.category === 'diagnosis'"
+              [class.text-info]="record.category === 'diagnosis'" [class.bg-warning-light]="record.category === 'lab'"
+              [class.text-warning-dark]="record.category === 'lab'">
+              <i class="bi me-1" [class]="getCategoryIcon(record.category)"></i>
+              {{ record.category | uppercase }}
+            </span>
+            @if(record.isFile) {
+            <span class="badge bg-secondary rounded-pill fw-bold ms-2">
+              <i class="bi bi-paperclip me-1"></i> External
+            </span>
+            }
+
+            <span class="text-muted small fw-bold d-flex align-items-center">
+              <i class="bi bi-calendar3 me-1"></i> {{ record.date | date:'mediumDate' }}
             </span>
           </div>
+
+          <h5 class="fw-bolder mb-2 text-dark">{{ record.title }}</h5>
+          <p class="text-muted small mb-4 line-clamp-2">{{ record.description }}</p>
+
+          <div class="d-flex justify-content-between mt-auto align-items-center pt-3 border-top">
+            <div class="d-flex align-items-center">
+              <div
+                class="avatar-circle bg-light text-primary rounded-circle me-2 d-flex align-items-center justify-content-center"
+                style="width: 32px; height: 32px;">
+                <i class="bi bi-person-fill"></i>
+              </div>
+              <span class="small fw-bold text-dark">{{ record.doctor }}</span>
+            </div>
+            <div>
+              @if(record.status === 'Completed') {
+              <i class="bi bi-check-circle-fill text-success fs-5" title="Verified"></i>
+              } @else {
+              <span class="badge bg-light text-secondary border border-secondary">{{ record.status }}</span>
+              }
+            </div>
+          </div>
         </div>
+
+        <!-- Hover Action Overlay -->
+        <div
+          class="card-img-overlay d-flex align-items-center justify-content-center opacity-0 transition-all bg-white bg-opacity-75 backdrop-blur hover-overlay"
+          (click)="viewRecord(record)">
+          <button class="btn btn-primary rounded-pill px-4 fw-bold shadow">
+            <i class="bi" [class]="record.isFile ? 'bi-download' : 'bi-eye-fill'"></i>
+            <span class="ms-2">{{ record.isFile ? 'Download Record' : 'View Summary' }}</span>
+          </button>
+        </div>
+
       </div>
     </div>
     }
 
+    <!-- Empty State -->
     @if (filteredRecords().length === 0) {
-    <div class="col-12 text-center py-5">
-      <i class="bi bi-file-medical text-primary" style="font-size:48px;opacity:0.3"></i>
-      <p class="text-medium mt-3">No records found / ምንም መዝገብ አልተገኘም</p>
-      <p class="text-medium small">Medical records are created from your appointments / የሕክምና መዝገቦች የሚፈጠሩት ከቀጠሮዎችዎ ነው
-      </p>
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4 text-center py-5 bg-white">
+        <div class="card-body">
+          <div
+            class="d-inline-flex justify-content-center align-items-center rounded-circle bg-primary bg-opacity-10 mb-4"
+            style="width: 100px; height: 100px;">
+            <i class="bi bi-clipboard2-x-fill text-primary" style="font-size: 3rem;"></i>
+          </div>
+          <h4 class="fw-bolder text-dark mb-2">No Medical Records Found</h4>
+          <p class="text-muted mx-auto" style="max-width: 400px;">
+            There are no strictly verified medical records or active prescriptions attached to this category yet.
+          </p>
+          <button class="btn btn-outline-primary rounded-pill px-4 mt-3 fw-bold"
+            (click)="activeCategory.set('all'); filterCategory('all')">
+            Clear Filters
+          </button>
+        </div>
+      </div>
     </div>
     }
   </div>

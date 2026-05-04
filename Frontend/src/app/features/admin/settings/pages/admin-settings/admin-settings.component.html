@@ -1,0 +1,228 @@
+<div class="container-fluid p-4 bg-light min-vh-100">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <span class="badge bg-dark bg-opacity-10 text-dark mb-2 px-3 py-2 rounded-pill fw-bold">Configuration</span>
+            <h3 class="fw-bolder text-dark mb-0"><i class="bi bi-gear-fill me-2 text-primary"></i>Platform Settings</h3>
+            <p class="text-muted mt-2 mb-0">Manage your admin profile, security, and global platform defaults.</p>
+        </div>
+    </div>
+
+    @if (successMessage()) {
+    <div class="alert alert-success border-0 shadow-sm rounded-4 d-flex align-items-center py-3 mb-4">
+        <i class="bi bi-check-circle-fill fs-4 me-3 text-success"></i>
+        <div class="fw-bold">{{ successMessage() }}</div>
+    </div>
+    }
+    @if (errorMessage()) {
+    <div class="alert alert-danger border-0 shadow-sm rounded-4 d-flex align-items-center py-3 mb-4">
+        <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
+        <div class="fw-bold">{{ errorMessage() }}</div>
+    </div>
+    }
+
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 position-sticky" style="top: 20px;">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.8rem; letter-spacing: 1px;">
+                        Settings Menu</h6>
+                    <nav class="nav flex-column settings-nav gap-2">
+                        <a class="nav-link cursor-pointer d-flex align-items-center"
+                            [class.active]="activeTab() === 'profile'" (click)="setTab('profile')">
+                            <i class="bi bi-person-badge fs-5 me-3"></i> Admin Profile
+                        </a>
+                        <a class="nav-link cursor-pointer d-flex align-items-center"
+                            [class.active]="activeTab() === 'security'" (click)="setTab('security')">
+                            <i class="bi bi-shield-lock fs-5 me-3"></i> Security & Access
+                        </a>
+                        <a class="nav-link cursor-pointer d-flex align-items-center"
+                            [class.active]="activeTab() === 'system'" (click)="setTab('system')">
+                            <i class="bi bi-sliders fs-5 me-3"></i> Global Settings
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="col-12 col-md-9">
+
+            <!-- PROFILE TAB -->
+            @if (activeTab() === 'profile') {
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden animation-fade-in">
+                <div class="card-header bg-white border-bottom p-4">
+                    <h5 class="fw-bolder mb-0 text-dark">Profile Information</h5>
+                    <p class="text-muted small mb-0 mt-1">Update your personal administrator details.</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex align-items-center gap-4 mb-5 pb-3 border-bottom">
+                        <div
+                            class="avatar-upload bg-primary-light d-flex align-items-center justify-content-center border-primary shadow">
+                            <i class="bi bi-camera-fill fs-2 text-primary"></i>
+                            <div class="avatar-overlay"><i class="bi bi-upload fs-4"></i></div>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">Administrator Avatar</h5>
+                            <p class="text-muted small mb-3">JPG, GIF or PNG. Max size of 2MB.</p>
+                            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">Upload
+                                New</button>
+                        </div>
+                    </div>
+
+                    <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">First Name</label>
+                                <input type="text" class="form-control rounded-3 py-2 bg-light border-0"
+                                    formControlName="firstName">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Last Name</label>
+                                <input type="text" class="form-control rounded-3 py-2 bg-light border-0"
+                                    formControlName="lastName">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Email Address <i
+                                        class="bi bi-lock-fill text-muted ms-1" title="Unchangeable"></i></label>
+                                <input type="email" class="form-control rounded-3 py-2 text-muted"
+                                    formControlName="email">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Phone Number</label>
+                                <input type="text" class="form-control rounded-3 py-2 bg-light border-0"
+                                    formControlName="phone">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-dark">Address / Location</label>
+                                <input type="text" class="form-control rounded-3 py-2 bg-light border-0"
+                                    formControlName="address">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow hover-lift-sm"
+                                [disabled]="profileForm.invalid || isLoading()">
+                                @if (isLoading()) { <span class="spinner-border spinner-border-sm me-2"></span>
+                                Saving... }
+                                @else { <i class="bi bi-check2-circle me-2"></i> Save Changes }
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            }
+
+            <!-- SECURITY TAB -->
+            @if (activeTab() === 'security') {
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden animation-fade-in">
+                <div class="card-header bg-white border-bottom p-4">
+                    <h5 class="fw-bolder mb-0 text-dark">Security Settings</h5>
+                    <p class="text-muted small mb-0 mt-1">Manage your password and platform 2FA.</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Current Password</label>
+                            <input type="password" class="form-control rounded-3 py-2 bg-light border-0"
+                                formControlName="currentPassword">
+                        </div>
+                        <div class="row g-4 mb-5 pb-4 border-bottom">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">New Password</label>
+                                <input type="password" class="form-control rounded-3 py-2 bg-light border-0"
+                                    formControlName="newPassword">
+                                <div class="text-muted mt-1 small">Minimum 8 characters.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-dark">Confirm New Password</label>
+                                <input type="password" class="form-control rounded-3 py-2 bg-light border-0"
+                                    formControlName="confirmPassword">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mb-5">
+                            <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold shadow hover-lift-sm"
+                                [disabled]="passwordForm.invalid || isLoading()">
+                                Update Password
+                            </button>
+                        </div>
+                    </form>
+
+                    <div
+                        class="bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-4 p-4 d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="fw-bold text-primary mb-1">Two-Factor Authentication (2FA)</h6>
+                            <p class="text-muted small mb-0">Enhance your account security by requiring an OTP.</p>
+                        </div>
+                        <div class="form-check form-switch fs-4">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                [(ngModel)]="systemSettings.twoFactorAuth">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+
+            <!-- SYSTEM TAB -->
+            @if (activeTab() === 'system') {
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden animation-fade-in">
+                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bolder mb-0 text-dark">Global Configuration</h5>
+                        <p class="text-muted small mb-0 mt-1">These settings affect all clients on Med-Connect.</p>
+                    </div>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded-4 bg-light mb-3">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1">Maintenance Mode</h6>
+                                <p class="text-muted small mb-0">Suspend patient and doctor logins temporarily.</p>
+                            </div>
+                            <div class="form-check form-switch fs-5"><input class="form-check-input" type="checkbox"
+                                    [(ngModel)]="systemSettings.maintenanceMode"></div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded-4 bg-light mb-3">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1">Allow New Registrations</h6>
+                                <p class="text-muted small mb-0">Toggle if new doctors and patients can sign up.</p>
+                            </div>
+                            <div class="form-check form-switch fs-5"><input class="form-check-input" type="checkbox"
+                                    [(ngModel)]="systemSettings.allowRegistration"></div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded-4 bg-light mb-4">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-1">Strict Email Verification</h6>
+                                <p class="text-muted small mb-0">Require OTP confirmation before accessing dashboards.
+                                </p>
+                            </div>
+                            <div class="form-check form-switch fs-5"><input class="form-check-input" type="checkbox"
+                                    [(ngModel)]="systemSettings.requireEmailVerification"></div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark">Max File Upload Size (MB)</label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" class="form-control rounded-start-3 bg-light border-0"
+                                    [(ngModel)]="systemSettings.maxUploadSize">
+                                <span class="input-group-text bg-light border-0 rounded-end-3 text-muted">MB</span>
+                            </div>
+                            <small class="text-muted mt-1">Affects CVs, receipts, and avatars.</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end pt-3 border-top">
+                        <button class="btn btn-primary rounded-pill px-4 fw-bold shadow hover-lift-sm"
+                            (click)="saveSystemSettings()" [disabled]="isLoading()">
+                            @if (isLoading()) { <span class="spinner-border spinner-border-sm me-2"></span> Applying...
+                            }
+                            @else { <i class="bi bi-cloud-check-fill me-2"></i> Apply Globally }
+                        </button>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>

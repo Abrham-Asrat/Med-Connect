@@ -17,18 +17,22 @@
 - **OTP Verification**: Enhanced security via MailKit-powered email verification.
 - **Role-Based Guards**: Strict route protection (Auth, Role, Pending Doctor).
 
-### �‍⚕️ Patient Portal
-- **Smart Dashboard**: Real-time appointment stats and quick actions.
-- **Doctor Discovery**: Advanced search with specialty filters and rating-based sorting.
-- **Seamless Booking**: Intuitive 5-step flow (Type → Schedule → Confirm → Payment).
-- **Medical Portfolio**: Access to prescriptions, lab results, and health history.
-- **Telemedicine & Chat**: Real-time messaging and video call capabilities via SignalR.
+### 🏥 Support & Corporate Identity (New)
+- **Support Hub**: Dedicated "Contact Us" and "About Us" modules for both portals.
+- **Dynamic Contact Data**: Real-time retrieval of official support contact information from backend.
+- **Contact Form Integration**: Direct submission of inquiries to the centralized Contact Controller.
+- **Corporate Profile**: Professional "About Us" with mission statements, core values, and leadership bios.
 
-### 🩺 Doctor Portal
+### 🩺 Doctor Portal & Scheduling
 - **Practice Management**: Today's schedule overview and pending appointment confirmations.
-- **Availability Control**: Manage weekly slots and vacation modes.
-- **Healthcare Blog**: Knowledge sharing platform with image uploads and community engagement.
+- **Schedule Synchronization**: Real-time synchronization of doctor availabilities with the backend database.
+- **Shift Management**: Intuitive UI for adding/removing time slots with automated validation.
 - **Financial Tracking**: Detailed earnings summary and transaction history.
+
+### 📝 Health Blog & Engagement (Enhanced)
+- **Knowledge Sharing**: Practitioner-authored medical insights with multi-tag support.
+- **Social Interaction**: Hospital-grade engagement with **Likes**, **Live Comments**, and **View Statistics**.
+- **Community Safety**: Integrated **Flagging System** allowing users to report medical misinformation or inappropriate content.
 
 ### 🛡️ Admin Portal
 - **Verification Engine**: Streamlined CV/Certificate review for new practitioners.
@@ -55,7 +59,7 @@ Our application follows a custom design system inspired by **Ethiopian aesthetic
 ## 🛠️ Technology Stack
 
 - **Framework**: Angular 19+ (Standalone Components)
-- **Styling**: Bootstrap 5.3 + Custom SCSS
+- **Styling**: Bootstrap 5.3 + Custom CSS (Modern Aesthetic)
 - **Real-time**: SignalR (@microsoft/signalr)
 - **Payments**: Chapa Integration
 - **State Management**: Angular Signals & RxJS
@@ -71,15 +75,14 @@ Our application follows a custom design system inspired by **Ethiopian aesthetic
 src/
 ├── app/
 │   ├── core/           # Singleton services, guards, interceptors, models
-│   ├── design-system/  # Design tokens (colors, spacing, breakpoints)
 │   ├── shared/         # Reusable UI components and utilities
 │   ├── layouts/        # Patient, Doctor, Admin, and Auth layouts
 │   └── features/       # Lazy-loaded business modules
 │       ├── auth/       # Login, Register, OTP Flows
 │       ├── appointments/# Booking & Management
-│       ├── chat/        # Real-time Messaging
-│       ├── ai-assistant/# Intelligent Health Chatbot
-│       └── ...         # Other domain features
+│       ├── blog/        # Engagement & Insights
+│       ├── support/     # About/Contact Support
+│       └── doctor-schedule # Availability Management
 ├── environments/       # Environment-specific configurations
 └── styles.scss         # Global styles & theme overrides
 ```
@@ -90,16 +93,17 @@ src/
 
 The frontend communicates with a **.NET 8 Web API**. Authentication is handled via JWT tokens, which are automatically included in all outgoing requests using the `AuthInterceptor`.
 
-### Key Endpoints (Partial List)
+### Key Endpoints (Latest)
 
 | Method | Endpoint | Feature |
 | :--- | :--- | :--- |
 | `POST` | `/api/User/Register` | User Registration |
 | `POST` | `/api/User/login` | Secure Login |
-| `POST` | `/api/verify-otp` | Identity Verification |
-| `GET` | `/api/doctors/all` | Provider Directory |
-| `POST` | `/api/appointments/book`| Appointment Scheduling |
-| `POST` | `/api/admin/doctors/approve`| Practitioner Verification |
+| `POST` | `/api/doctors/availabilities/{id}`| Schedule Synchronization |
+| `POST` | `/api/blogs/{id}/like` | Blog Engagement |
+| `POST` | `/api/blogs/comment` | Blog Discussions |
+| `POST` | `/api/Contact` | Support Submissions |
+| `GET` | `/api/Contact/info` | Support Metadata |
 
 ---
 

@@ -9,6 +9,9 @@ export const DOCTOR_ROUTES: Routes = [
       { path: 'dashboard', loadComponent: () => import('./doctor-dashboard/doctor-dashboard').then(m => m.DoctorDashboardComponent) },
       { path: 'schedule', loadComponent: () => import('../../doctor-schedule/pages/schedule-management/schedule-management.component').then(m => m.ScheduleManagementComponent) },
       { path: 'blog', loadComponent: () => import('../../blog/pages/blog-management/blog-management.component').then(m => m.BlogManagementComponent) },
+      { path: 'health-blogs', loadComponent: () => import('../../blog/pages/blog-list/blog-list.component').then(m => m.BlogListComponent) },
+      { path: 'health-blogs/:id', loadComponent: () => import('../../blog/pages/blog-detail/blog-detail.component').then(m => m.BlogDetailComponent) },
+
       {
         path: 'chat',
         loadComponent: () => import('../../chat/pages/chat/doctor-chat/doctor-chat.component').then(m => m.DoctorChatComponent)
@@ -21,7 +24,10 @@ export const DOCTOR_ROUTES: Routes = [
         path: 'settings',
         loadComponent: () => import('../../settings/pages/doctor-settings/doctor-settings.component').then(m => m.DoctorSettingsComponent)
       },
+      { path: 'about', loadComponent: () => import('../../support/pages/about-us/about-us.component').then(m => m.AboutUsComponent) },
+      { path: 'contact', loadComponent: () => import('../../support/pages/contact-us/contact-us.component').then(m => m.ContactUsComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+
     ]
   }
 ];

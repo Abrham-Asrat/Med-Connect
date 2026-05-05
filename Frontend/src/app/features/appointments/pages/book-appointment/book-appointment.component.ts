@@ -31,16 +31,19 @@ export class BookAppointmentComponent implements OnInit {
   successData = signal<any>(null);
 
   // Dynamic from route
-  patientId = localStorage.getItem('userId') || '';
+  patientId = localStorage.getItem('patientId') || localStorage.getItem('userId') || '';
   doctorId = signal<string | null>(null);
   doctorName = signal<string>('Selected Doctor');
 
-  // Dates for next 7 days
   dates = signal<{ date: string; day: string; dayNum: number; month: string }[]>([]);
+  morningSlots = signal<string[]>([]);
+  afternoonSlots = signal<string[]>([]);
+  eveningSlots = signal<string[]>([]);
+  schedules = signal<any>(null);
 
-  morningSlots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
-  afternoonSlots = ['13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
-  eveningSlots = ['17:00', '17:30', '18:00', '18:30'];
+  private allMorningSlots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
+  private allAfternoonSlots = ['13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
+  private allEveningSlots = ['17:00', '17:30', '18:00', '18:30'];
 
   ngOnInit(): void {
     const id = this.route.snapshot.queryParamMap.get('doctorId');
@@ -50,16 +53,14 @@ export class BookAppointmentComponent implements OnInit {
     }
     this.doctorId.set(id);
     this.loadDoctorDetails(id);
-    this.generateDates();
-    this.selectedDate.set(this.dates()[0]?.date || '');
+    this.loadSchedules(id);
   }
 
   loadDoctorDetails(id: string): void {
     this.doctorService.getDoctorById(id).subscribe({
       next: (res: any) => {
-        const list = res?.data || [];
-        const doctor = list.find((d: any) => (d.doctorId || d.id) === id);
-        if (doctor) {
+        const doctor = res?.data || res;
+        if (doctor && (doctor.doctorId || doctor.userId || doctor.id)) {
           this.doctorName.set(`Dr. ${doctor.firstName} ${doctor.lastName}`);
         }
       }
@@ -67,6 +68,48 @@ export class BookAppointmentComponent implements OnInit {
   }
 
 
+
+  loadSchedules(id: string): void {
+    this.appointmentService.getDoctorSchedules(id).subscribe({
+      next: (res: any) => {
+        const scheduleData = res?.data || {};
+        this.schedules.set(scheduleData);
+        this.generateAvailableDates(scheduleData);
+      },
+      error: (err) => {
+        console.error('Error loading schedules:', err);
+        this.generateDates(); // Fallback to generic dates if error
+      }
+    });
+  }
+
+  generateAvailableDates(scheduleData: any): void {
+    const dates = [];
+    const today = new Date();
+    // Check next 14 days for availability
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+
+      // Only add if the date exists in schedule and has free slots
+      if (scheduleData[dateStr]) {
+        const hasFree = scheduleData[dateStr].some((s: any) => s.isFree);
+        if (hasFree) {
+          dates.push({
+            date: dateStr,
+            day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+            dayNum: d.getDate(),
+            month: d.toLocaleDateString('en-US', { month: 'short' })
+          });
+        }
+      }
+    }
+    this.dates.set(dates);
+    if (dates.length > 0) {
+      this.selectDate(dates[0].date);
+    }
+  }
 
   generateDates(): void {
     const dates = [];
@@ -82,6 +125,9 @@ export class BookAppointmentComponent implements OnInit {
       });
     }
     this.dates.set(dates);
+    this.morningSlots.set(this.allMorningSlots);
+    this.afternoonSlots.set(this.allAfternoonSlots);
+    this.eveningSlots.set(this.allEveningSlots);
   }
 
   selectType(type: 'Virtual' | 'InPerson'): void {
@@ -92,6 +138,38 @@ export class BookAppointmentComponent implements OnInit {
   selectDate(date: string): void {
     this.selectedDate.set(date);
     this.selectedTime.set('');
+    this.updateAvailableSlots(date);
+  }
+
+  updateAvailableSlots(date: string): void {
+    const schedule = this.schedules();
+    if (!schedule || !schedule[date]) {
+      // If no schedule for this date, show all as fallback or show none?
+      // Better none to respect availability.
+      this.morningSlots.set([]);
+      this.afternoonSlots.set([]);
+      this.eveningSlots.set([]);
+      return;
+    }
+
+    const daySchedules = schedule[date];
+
+    const filterSlots = (slots: string[]) => {
+      return slots.filter(slot => {
+        // Slot is e.g. "08:30"
+        // Check if it falls into any isFree: true range
+        return daySchedules.some((s: any) => {
+          if (!s.isFree) return false;
+          const start = s.timeRange.startTime; // "09:00:00"
+          const end = s.timeRange.endTime;     // "17:00:00"
+          return slot >= start.substring(0, 5) && slot < end.substring(0, 5);
+        });
+      });
+    };
+
+    this.morningSlots.set(filterSlots(this.allMorningSlots));
+    this.afternoonSlots.set(filterSlots(this.allAfternoonSlots));
+    this.eveningSlots.set(filterSlots(this.allEveningSlots));
   }
 
   selectTime(time: string): void {

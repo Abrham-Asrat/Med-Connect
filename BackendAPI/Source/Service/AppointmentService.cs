@@ -335,7 +335,7 @@ public class AppointmentService(
       }
 
       var result = await appContext
-        .Appointments.Where(ap => ap.PatientId == patientId)
+        .Appointments.Where(ap => ap.PatientId == patientId || ap.Patient.UserId == patientId)
         .Include(ap => ap.Doctor)
         .ThenInclude(d => d.User)
         .Include(ap => ap.Doctor.DoctorSpecialties)
@@ -379,7 +379,7 @@ public class AppointmentService(
       }
 
       var result = await appContext
-        .Appointments.Where(ap => ap.DoctorId == doctorId)
+        .Appointments.Where(ap => ap.DoctorId == doctorId || ap.Doctor.UserId == doctorId)
         .Include(ap => ap.Patient)
         .ThenInclude(p => p.User) // populate user
         .Select(ap => ap.ToAppointmentDto(ap.Patient, ap.Patient.User!))

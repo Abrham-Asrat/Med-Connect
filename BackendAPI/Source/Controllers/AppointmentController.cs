@@ -19,7 +19,7 @@ namespace BackendAPI.Source.Controllers
 
 [ApiController]
 [Route("api/appointments")]
-[Authorize] // All appointment endpoints require authentication
+// [Authorize] // All appointment endpoints require authentication
 public class AppointmentController(
   AppointmentService appointmentService,
   ILogger<AppointmentController> logger,

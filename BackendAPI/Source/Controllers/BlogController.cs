@@ -8,6 +8,7 @@ using BackendAPI.Source.Service.BlogService;
 using BackendAPI.Source.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using BackendAPI.Source.Data;
 
 [ApiController]
 [Route("api/blogs")]
@@ -16,15 +17,18 @@ public class BlogController : ControllerBase
 {
   private readonly IBlogService _blogService;
   private readonly AuthService _authService;
+  private readonly ApplicationDbContext _context;
   private readonly ILogger<BlogController> _logger;
 
   public BlogController(
     IBlogService blogService,
     AuthService authService,
+    ApplicationDbContext context,
     ILogger<BlogController> logger)
   {
     _blogService = blogService;
     _authService = authService;
+    _context = context;
     _logger = logger;
   }
 
@@ -197,8 +201,12 @@ public class BlogController : ControllerBase
   {
     try
     {
-      var userId = User.GetUserId();
-      var createBlogLikeDto = new CreateBlogLikeDto(userId, id);
+      var userId = await User.GetUserIdAsync(_context);
+      if (userId == null)
+      {
+        return Unauthorized(new ApiResponse<object>(false, "Could not identify the current user.", null));
+      }
+      var createBlogLikeDto = new CreateBlogLikeDto(userId.Value, id);
       var result = await _blogService.CreateBlogLikeAsync(createBlogLikeDto);
       return Ok(new ApiResponse<BlogLikeDto?>(true, result == null ? "Unliked" : "Liked", result));
     }

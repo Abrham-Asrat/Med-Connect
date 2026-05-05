@@ -22,6 +22,8 @@ namespace BackendAPI.Source.Models.Entities
         [Required]
         public required string Biography { get; set; }
 
+        public string Languages { get; set; } = string.Empty;
+
         public DoctorStatus DoctorStatus { get; set; } = DoctorStatus.Active;
 
         // Doctor will be verified by staff, by default it is false

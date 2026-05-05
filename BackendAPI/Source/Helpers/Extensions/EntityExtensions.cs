@@ -79,6 +79,7 @@ namespace BackendAPI.Source.Helpers.Extensions
                 Experiences = experiences.Select(e => e.ToExperienceDto()).ToList(),
                 Qualifications = doctor.Qualifications,
                 Biography = doctor.Biography,
+                Languages = (doctor.Languages ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                 DoctorStatus = doctor.DoctorStatus
 
             };
@@ -111,6 +112,7 @@ namespace BackendAPI.Source.Helpers.Extensions
                 Experiences = experiences.Select(e => e.ToExperienceDto()).ToList(),
                 Qualifications = doctor.Qualifications,
                 Biography = doctor.Biography,
+                Languages = (doctor.Languages ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                 DoctorStatus = doctor.DoctorStatus
 
             };
@@ -184,6 +186,7 @@ namespace BackendAPI.Source.Helpers.Extensions
                 SpecialtyModel = specialties.Select(s => s.ToSpecialtyDto()).ToList(),
                 Qualifications = doctor.Qualifications,
                 Biography = doctor.Biography,
+                Languages = (doctor.Languages ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                 DoctorStatus = doctor.DoctorStatus,
 
                 ProfilePicture = user.ProfilePicture ?? "",
@@ -363,7 +366,8 @@ namespace BackendAPI.Source.Helpers.Extensions
       SenderEmail = payment.SenderEmail,
       ReceiverName = payment.ReceiverName,
       ReceiverEmail = payment.ReceiverEmail,
-      PaymentType = payment.PaymentType
+      PaymentType = payment.PaymentType,
+      PaymentDate = payment.CreatedAt
       
     };
   }

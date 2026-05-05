@@ -147,6 +147,24 @@ namespace BackendAPI.Source.Controllers
                 return StatusCode(500, new ServiceResponse<bool>(false, 500, false, ex.Message));
             }
         }
+
+        [HttpGet("{doctorId}")]
+        public async Task<IActionResult> GetDoctorProfile([FromRoute] Guid doctorId)
+        {
+            try
+            {
+                var response = await doctorService.GetDoctorProfileByIdAsync(doctorId);
+                if (!response.Success)
+                    return StatusCode(response.StatusCode, response);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to fetch profile for doctor {doctorId}");
+                return StatusCode(500, "Internal Server Error");
+            }
+        }
     }
 }
 

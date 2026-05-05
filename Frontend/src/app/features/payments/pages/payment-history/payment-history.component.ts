@@ -20,6 +20,7 @@ export class PaymentHistoryComponent implements OnInit {
   errorMessage = signal<string | null>(null);
   isLoading = signal(false);
   appointments = signal<any[]>([]);
+  payments = signal<any[]>([]);
 
   // Payment stats
   totalSpent = signal(0);
@@ -32,36 +33,53 @@ export class PaymentHistoryComponent implements OnInit {
 
   loadData(): void {
     if (!this.patientId) return;
-
     this.isLoading.set(true);
 
-    this.appointmentService.getPatientAppointments(this.patientId).subscribe({
+    // Fetch both appointments (for context) and payments (the truth)
+    this.paymentService.getPaymentHistory(this.patientId).subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
-        const data = response?.data || [];
-        this.appointments.set(Array.isArray(data) ? data : []);
+        const data = response?.data || response || [];
+        this.payments.set(Array.isArray(data) ? data : []);
         this.calculateStats();
       },
       error: (error: any) => {
         this.isLoading.set(false);
-        console.error('Error:', error);
+        console.error('Error loading payments:', error);
+      }
+    });
+
+    this.appointmentService.getPatientAppointments(this.patientId).subscribe({
+      next: (response: any) => {
+        const data = response?.data || response || [];
+        this.appointments.set(Array.isArray(data) ? data : []);
       }
     });
   }
 
   calculateStats(): void {
-    const apps = this.appointments();
-    this.completedPayments.set(apps.filter(a => a.status === 'Completed').length);
-    this.pendingPayments.set(apps.filter(a => a.status === 'Scheduled' || a.status === 'Confirmed').length);
-    // Estimate 500 ETB per appointment
-    this.totalSpent.set(this.completedPayments() * 500);
+    const pays = this.payments();
+    const successful = pays.filter(p => p.paymentStatus === 'Success' || p.paymentStatus === 1);
+    const pending = pays.filter(p => p.paymentStatus === 'Pending' || p.paymentStatus === 0);
+
+    const total = successful.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+    this.totalSpent.set(total);
+    this.completedPayments.set(successful.length);
+    this.pendingPayments.set(pending.length);
   }
 
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'Completed': return 'bg-primary-light text-primary';
-      case 'Scheduled':
-      case 'Confirmed': return 'bg-warning-light text-warning-dark';
+  getStatusClass(status: any): string {
+    const s = status?.toString();
+    switch (s) {
+      case 'Success':
+      case '1':
+      case 'Completed': return 'bg-success-light text-success';
+      case 'Pending':
+      case '0':
+      case 'Scheduled': return 'bg-warning-light text-warning-dark';
+      case 'Failed':
+      case '2':
       case 'Cancelled': return 'bg-danger-light text-danger';
       default: return 'bg-light text-medium';
     }

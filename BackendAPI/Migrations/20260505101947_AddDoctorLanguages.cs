@@ -5,25 +5,25 @@
 namespace BackendAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class AddIsReadToNotification : Migration
+    public partial class AddDoctorLanguages : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "IsRead",
-                table: "Notifications",
-                type: "bit",
+            migrationBuilder.AddColumn<string>(
+                name: "Languages",
+                table: "Doctors",
+                type: "nvarchar(max)",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: "");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "IsRead",
-                table: "Notifications");
+                name: "Languages",
+                table: "Doctors");
         }
     }
 }

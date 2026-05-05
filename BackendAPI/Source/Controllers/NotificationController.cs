@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using BackendAPI.Source.Helpers.Extensions;
 
 namespace BackendAPI.Source.Controllers
 {
@@ -12,18 +14,34 @@ namespace BackendAPI.Source.Controllers
     [Authorize]
     public class NotificationController(ApplicationDbContext context, ILogger<NotificationController> logger) : ControllerBase
     {
+        private async Task<Guid> GetCurrentUserId()
+        {
+            // 1. Try Cookies
+            if (Guid.TryParse(HttpContext.Request.Cookies[BackendAPI.Source.Helpers.Default.CookieDefaults.Profile.UserId]?.ToString(), out var userId))
+            {
+                return userId;
+            }
+
+            // 2. Try Jwt Claim via centralized extension (checks NameIdentifier, sub, and DB lookup)
+            var id = await User.GetUserIdAsync(context);
+            if (id.HasValue)
+            {
+                return id.Value;
+            }
+
+            // Log available claims for debugging if identification fails
+            var claimsList = string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}"));
+            logger.LogWarning("Could not identify user. Available claims: {Claims}", claimsList);
+
+            throw new UnauthorizedAccessException("Could not identify the user.");
+        }
+
         [HttpGet("me")]
         public async Task<IActionResult> GetMyNotifications()
         {
             try
             {
-                bool validGuid = Guid.TryParse(HttpContext.Request.Cookies[BackendAPI.Source.Helpers.Default.CookieDefaults.Profile.UserId]?.ToString(), out var userId);
-                if (!validGuid)
-                {
-                    var idClaimExtract = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-                    if (!Guid.TryParse(idClaimExtract, out userId))
-                        throw new UnauthorizedAccessException("Could not identify the user.");
-                }
+                var userId = await GetCurrentUserId();
 
                 var notifications = await context.Notifications
                     .Where(n => n.UserId == userId)
@@ -32,6 +50,11 @@ namespace BackendAPI.Source.Controllers
                     .ToListAsync();
 
                 return Ok(new { success = true, data = notifications });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning(ex, "Unauthorized attempt to access notifications.");
+                return Unauthorized(new { success = false, message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -65,13 +88,7 @@ namespace BackendAPI.Source.Controllers
         {
             try
             {
-                bool validGuid = Guid.TryParse(HttpContext.Request.Cookies[BackendAPI.Source.Helpers.Default.CookieDefaults.Profile.UserId]?.ToString(), out var userId);
-                if (!validGuid)
-                {
-                    var idClaimExtract = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-                    if (!Guid.TryParse(idClaimExtract, out userId))
-                        throw new UnauthorizedAccessException("Could not identify the user.");
-                }
+                var userId = await GetCurrentUserId();
 
                 var unreadNotifications = await context.Notifications
                     .Where(n => n.UserId == userId && !n.IsRead)
@@ -85,6 +102,10 @@ namespace BackendAPI.Source.Controllers
                 await context.SaveChangesAsync();
 
                 return Ok(new { success = true, message = "All notifications marked as read." });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { success = false, message = ex.Message });
             }
             catch (Exception ex)
             {

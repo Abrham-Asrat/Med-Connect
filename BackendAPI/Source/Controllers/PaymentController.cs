@@ -21,7 +21,7 @@ namespace BackendAPI.Source.Controllers
 {
     [ApiController]
     [Route("api/payments")]
-    [Authorize] // All payment endpoints require authentication
+    // [Authorize] // All payment endpoints require authentication
     public partial class PaymentController(
         IPaymentService paymentService,
         ILogger<PaymentController> logger,
@@ -145,6 +145,21 @@ namespace BackendAPI.Source.Controllers
             {
                 logger.LogError(ex, "Error while processing Chapa webhook.");
                 return StatusCode(500);
+            }
+        }
+
+        [HttpGet("history/{userId}")]
+        public async Task<IActionResult> GetPaymentHistory(Guid userId)
+        {
+            try
+            {
+                var history = await paymentService.GetPaymentHistoryAsync(userId);
+                return Ok(new ApiResponse<List<PaymentDto>>(true, "Payment history retrieved successfully", history));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error retrieving payment history for {UserId}", userId);
+                return StatusCode(500, new ApiResponse<List<PaymentDto>>(false, "Error retrieving payment history", null));
             }
         }
     }

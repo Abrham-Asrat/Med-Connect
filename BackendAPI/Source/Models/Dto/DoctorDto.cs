@@ -31,6 +31,7 @@ namespace BackendAPI.Source.Models.Dto
         public required string Qualifications { get; set; }
         public required List<string> SpecialtyModel { get; set; }
         public required string Biography { get; set; }
+        public List<string> Languages { get; set; } = new();
         public DoctorStatus DoctorStatus { get; set; } = DoctorStatus.Active;
     }
 
@@ -52,6 +53,8 @@ namespace BackendAPI.Source.Models.Dto
         [Required]
         public required string Biography { get; init; }
 
+        public List<string> Languages { get; init; } = new();
+
         [Required]
         public required decimal OnlineAppointmentFee { get; init; }
 
@@ -72,7 +75,8 @@ namespace BackendAPI.Source.Models.Dto
         string? Biography,
         string? Qualifications,
         string? DoctorStatus,
-        List<string>? SpecialtyModel
+        List<string>? SpecialtyModel,
+        List<string>? Languages
 
     );
 
@@ -85,6 +89,7 @@ namespace BackendAPI.Source.Models.Dto
        string? Biography = null,
        List<DoctorAvailabilityDto>? Availabilities = null,
        string? DoctorStatus = null,
+       List<string>? Languages = null,
        List<UpdateEducationDto>? Educations = null,
        List<UpdateExperienceDto>? Experiences = null);
 

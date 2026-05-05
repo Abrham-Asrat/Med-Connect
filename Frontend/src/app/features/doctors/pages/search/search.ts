@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DoctorService } from '../../../../core/services/doctor.service';
+import { SpecialtyService } from '../../../../core/services/specialty.service';
 
 interface Doctor {
   doctorId: string;
@@ -28,6 +29,7 @@ interface Doctor {
 })
 export class DoctorSearchComponent implements OnInit {
   private doctorService = inject(DoctorService);
+  private specialtyService = inject(SpecialtyService);
 
   searchTerm = signal('');
   selectedSpecialty = signal<string | null>(null);
@@ -39,14 +41,20 @@ export class DoctorSearchComponent implements OnInit {
   allDoctors = signal<Doctor[]>([]);
   filteredDoctors = signal<Doctor[]>([]);
 
-  specialties = [
-    'Cardiology', 'Neurology', 'Pediatrics', 'Dermatology',
-    'Orthopedics', 'Gynecology', 'Psychiatry', 'Ophthalmology',
-    'Internal Medicine', 'General Practice', 'ENT', 'Dentistry'
-  ];
+  specialties: string[] = [];
 
   ngOnInit(): void {
     this.loadDoctors();
+    this.loadSpecialties();
+  }
+
+  loadSpecialties(): void {
+    this.specialtyService.getAllSpecialties().subscribe({
+      next: (response: any) => {
+        this.specialties = response?.data || response || [];
+      },
+      error: (err) => console.error('Error loading specialties:', err)
+    });
   }
 
   // Load doctors from backend
@@ -61,10 +69,14 @@ export class DoctorSearchComponent implements OnInit {
         const rawDoctors = response?.data || response || [];
 
         // Map backend DTO (which uses specialtyModel) to frontend format
-        const doctors = rawDoctors.map((d: any) => ({
-          ...d,
-          specialties: d.specialtyModel || d.specialties || []
-        }));
+        const doctors = rawDoctors.map((d: any) => {
+          const docId = d.doctorId || d.userId || d.id;
+          return {
+            ...d,
+            doctorId: docId,
+            specialties: d.specialtyModel || d.specialties || []
+          };
+        });
 
         this.allDoctors.set(doctors);
         this.applyFilters();

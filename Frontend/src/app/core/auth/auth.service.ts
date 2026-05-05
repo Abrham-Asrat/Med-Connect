@@ -30,7 +30,24 @@ export class AuthService {
 
   constructor() {
     const userStr = localStorage.getItem('user');
-    if (userStr) { try { this.currentUserSignal.set(JSON.parse(userStr)); } catch { this.logout(); } }
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        this.currentUserSignal.set(user);
+
+        // Repair missing ids for existing sessions
+        if (!localStorage.getItem('userId')) localStorage.setItem('userId', user.userId);
+        if (user.role === 'Patient' && !localStorage.getItem('patientId')) {
+          localStorage.setItem('patientId', user.userId);
+          this.patientIdSignal.set(user.userId);
+        } else if (user.role === 'Doctor' && !localStorage.getItem('doctorId')) {
+          localStorage.setItem('doctorId', user.userId);
+          this.doctorIdSignal.set(user.userId);
+        }
+      } catch {
+        this.logout();
+      }
+    }
   }
 
   login(credentials: LoginRequest): Observable<any> {
@@ -54,7 +71,13 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/User/change-password`, data);
   }
 
-  forgotPassword(email: string): Observable<any> { return this.resendOTP(email); }
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reset-password`, data);
+  }
 
   private setSession(response: any): void {
     const d = response.data;
@@ -63,6 +86,16 @@ export class AuthService {
     if (token) { localStorage.setItem('token', token); this.tokenSignal.set(token); }
     const user: any = { userId: p?.userId || '', email: p?.email || '', firstName: p?.firstName || '', lastName: p?.lastName || '', role: p?.role || '', phone: p?.phone || '', gender: p?.gender || '', dateOfBirth: p?.dateOfBirth || '' };
     localStorage.setItem('user', JSON.stringify(user));
+
+    if (user.role === 'Patient') {
+      localStorage.setItem('patientId', user.userId);
+      this.patientIdSignal.set(user.userId);
+    } else if (user.role === 'Doctor') {
+      localStorage.setItem('doctorId', user.userId);
+      this.doctorIdSignal.set(user.userId);
+    }
+    localStorage.setItem('userId', user.userId);
+
     this.currentUserSignal.set(user);
     this.navigateByRole();
   }
@@ -80,7 +113,7 @@ export class AuthService {
   }
 
   executeLocalLogout(): void {
-    ['token', 'user', 'patientId', 'doctorId'].forEach(k => localStorage.removeItem(k));
+    ['token', 'user', 'patientId', 'doctorId', 'userId'].forEach(k => localStorage.removeItem(k));
     this.tokenSignal.set(null); this.currentUserSignal.set(null);
     this.patientIdSignal.set(null); this.doctorIdSignal.set(null);
     this.router.navigate(['/auth/login']);

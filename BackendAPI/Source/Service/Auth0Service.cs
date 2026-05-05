@@ -175,13 +175,15 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
       var request = new RestRequest() { Method = Method.Post };
 
       request.AddHeader("content-type", "application/x-www-form-urlencoded");
-      request.AddParameter("grant_type", "client_credentials");
+      request.AddParameter("grant_type", "http://auth0.com/oauth/grant-type/password-realm");
       request.AddParameter("username", loginUserDto.Email);
       request.AddParameter("password", loginUserDto.Password);
       request.AddParameter("audience", appConfig.Auth0Audience);
       request.AddParameter("client_id", appConfig.Auth0ClientId);
       request.AddParameter("client_secret", appConfig.Auth0ClientSecret);
+      request.AddParameter("realm", "Med-Connect-Database");
       request.AddParameter("connection", "Med-Connect-Database");
+      // request.AddParameter("scope", "openid profile email");
 
       var response = await client.ExecuteAsync(request);
 
@@ -362,7 +364,7 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
       request.AddBody(
         new
         {
-          grant_type = "client_credentials",
+          grant_type = "password",
           username = email,
           password = password,
           audience = appConfig.Auth0Audience,

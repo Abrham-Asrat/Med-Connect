@@ -82,10 +82,17 @@
           <div class="card doctor-card h-100">
             <div class="card-body">
               <div class="d-flex gap-3">
-                <div
-                  class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center flex-shrink-0"
-                  style="width:56px;height:56px;font-size:20px;font-weight:700">
-                  {{ getInitials(doc.firstName, doc.lastName) }}
+                <div class="doctor-avatar flex-shrink-0">
+                  @if (doc.profilePicture) {
+                  <img [src]="doc.profilePicture" class="rounded-circle border"
+                    style="width:56px;height:56px;object-fit:cover" [alt]="doc.firstName">
+                  } @else {
+                  <div
+                    class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center border"
+                    style="width:56px;height:56px;font-size:20px;font-weight:700">
+                    {{ getInitials(doc.firstName, doc.lastName) }}
+                  </div>
+                  }
                 </div>
                 <div class="flex-grow-1 min-width-0">
                   <!-- Doctor Name & Rating -->

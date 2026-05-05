@@ -62,13 +62,7 @@
         class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center">
         <i class="bi bi-headset me-2"></i><span class="nav-text">Contact Support</span>
       </a>
-      <a routerLink="/patient/settings" routerLinkActive="bg-warning text-dark"
-        class="nav-link text-white rounded mt-auto px-3 d-flex align-items-center">
-        <i class="bi bi-gear me-2"></i><span class="nav-text">Settings</span>
-      </a>
-
     </nav>
-
     <div class="p-3 border-top border-white border-opacity-25">
       <button (click)="logout()"
         class="btn btn-outline-light btn-sm w-100 btn-logout d-flex justify-content-center align-items-center">
@@ -96,6 +90,10 @@
               3
             </span>
           </a>
+          <!-- Settings Icon -->
+          <a routerLink="/patient/settings" class="btn btn-link p-0 text-primary" title="Settings">
+            <i class="bi bi-gear fs-5"></i>
+          </a>
           <!-- Theme Toggle -->
           <app-theme-toggle></app-theme-toggle>
           <!-- Notification Bell -->
@@ -103,7 +101,6 @@
         </div>
       </div>
     </nav>
-
     <main class="flex-grow-1 bg-light">
       <router-outlet></router-outlet>
     </main>
@@ -151,13 +148,6 @@
       <a routerLink="/patient/contact" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
         <i class="bi bi-headset me-2"></i>Contact Support
       </a>
-      <a routerLink="/patient/settings" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
-        <i class="bi bi-gear me-2"></i>Settings
-      </a>
-
-      <!-- <a routerLink="/patient/ai-assistant" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
-          <i class="bi bi-stars me-2"></i>AI Assistant
-        </a> -->
     </nav>
     <div class="p-3 border-top border-white border-opacity-25">
       <button (click)="logout()" class="btn btn-outline-light btn-sm w-100">

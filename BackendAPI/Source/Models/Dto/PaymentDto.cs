@@ -84,6 +84,7 @@ public record PaymentDto
   public required PaymentStatus PaymentStatus { get; set; }
   public required PaymentProvider PaymentProvider { get; set; }
   public required PaymentType PaymentType { get; set; }
+  public required DateTime PaymentDate { get; set; }
 }
 
 public record CreatePaymentDto

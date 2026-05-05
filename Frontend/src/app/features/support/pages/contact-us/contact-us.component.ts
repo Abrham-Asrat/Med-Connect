@@ -8,13 +8,13 @@ import { SupportService } from '../../../../core/services/support.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="container py-5" style="max-width: 950px;">
-      <div class="row g-5">
+    <div class="container-fluid py-3" >
+      <div class="row g-3">
 
 
         <div class="col-lg-5">
-          <div class="support-sidebar p-4 rounded-4 bg-white shadow-sm border h-100">
-            <h3 class="fw-bold mb-4">Contact Support</h3>
+          <div class="support-sidebar p-2 rounded-4 bg-white shadow-sm border h-80">
+            <h3 class="fw-bold mb-4 text-center pt-2">Contact Support</h3>
             <p class="text-muted mb-5">Have a question or looking for assistance? Reach out to our dedicated team available 24/7.</p>
 
             <div class="contact-info-list d-grid gap-4">
@@ -48,15 +48,15 @@ import { SupportService } from '../../../../core/services/support.service';
           </div>
         </div>
 
-        <div class="col-lg-7">
+        <div class="col-lg-6">
           <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="bg-primary p-4 text-white">
               <h4 class="mb-1">Send a Message</h4>
               <p class="mb-0 opacity-75">We usually respond within 2 hours.</p>
             </div>
-            <div class="card-body p-5">
+            <div class="card-body p-2">
               @if (successMessage()) {
-                <div class="alert alert-success border-0 bg-success-light text-success p-3 rounded-3 mb-4 animate fade-in">
+                <div class="alert alert-success border-0 bg-success-light text-success p-3 rounded-3 mb-2 animate fade-in">
                   <i class="bi bi-check-circle-fill me-2"></i> {{ successMessage() }}
                 </div>
               }
@@ -86,9 +86,9 @@ import { SupportService } from '../../../../core/services/support.service';
                   </div>
                   <div class="col-12">
                     <label class="form-label small fw-bold">Message</label>
-                    <textarea class="form-control" rows="5" formControlName="message" placeholder="How can we help?"></textarea>
+                    <textarea class="form-control" rows="3" formControlName="message" placeholder="How can we help?"></textarea>
                   </div>
-                  <div class="col-12">
+                  <div class="col-6 mx-auto">
                     <button class="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow-sm" [disabled]="contactForm.invalid || isSubmitting()">
                       @if (isSubmitting()) { 
                         <span class="spinner-border spinner-border-sm me-2"></span> Sending... 

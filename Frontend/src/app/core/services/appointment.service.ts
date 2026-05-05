@@ -19,8 +19,8 @@ export class AppointmentService {
   }
 
   getAllAppointments(): Observable<any> {
-  return this.http.get(`${this.apiUrl}/appointments/all`);
-}
+    return this.http.get(`${this.apiUrl}/appointments/all`);
+  }
 
   // GET /api/appointments/doctor/{doctorId}
   getDoctorAppointments(doctorId: string): Observable<any> {
@@ -35,5 +35,10 @@ export class AppointmentService {
   // DELETE /api/appointments/{appointmentId}
   deleteAppointment(appointmentId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/appointments/${appointmentId}`);
+  }
+
+  // GET /api/appointments/doctor/{doctorId}/schedules
+  getDoctorSchedules(doctorId: string, timeFrame: string = 'Month'): Observable<any> {
+    return this.http.get(`${this.apiUrl}/appointments/doctor/${doctorId}/schedules?timeFrame=${timeFrame}`);
   }
 }

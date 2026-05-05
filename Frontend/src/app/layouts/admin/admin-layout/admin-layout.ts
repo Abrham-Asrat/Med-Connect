@@ -39,7 +39,6 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
           <a routerLink="/admin/patients" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-people-fill me-2"></i><span class="nav-text">Patients</span></a>
           <a routerLink="/admin/finance" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-graph-up me-2"></i><span class="nav-text">Finance</span></a>
           <a routerLink="/admin/moderation" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-shield me-2"></i><span class="nav-text">Moderation</span></a>
-          <a routerLink="/admin/settings" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mt-auto px-3 d-flex align-items-center"><i class="bi bi-gear-fill me-2"></i><span class="nav-text">Settings</span></a>
         </nav>
         <div class="p-3 border-top border-white border-opacity-25">
           <button (click)="logout()" class="btn btn-outline-light btn-sm w-100 btn-logout d-flex justify-content-center align-items-center"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></button>
@@ -51,7 +50,10 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
           <div class="d-flex align-items-center w-100">
             <button (click)="toggleSidebar()" class="btn btn-link text-primary d-lg-none p-0 me-2"><i class="bi fs-4" [class.bi-list]="!sidebarOpen()" [class.bi-x-lg]="sidebarOpen()"></i></button>
             <span class="h5 text-primary mb-0 d-lg-none">Admin Panel</span>
-            <div class="ms-auto d-flex align-items-center">
+            <div class="ms-auto d-flex align-items-center gap-3">
+              <a routerLink="/admin/settings" class="btn btn-link p-0 text-primary" title="Settings">
+                <i class="bi bi-gear fs-5"></i>
+              </a>
               <app-theme-toggle></app-theme-toggle>
               <app-notification-bell [count]="12"></app-notification-bell>
             </div>
@@ -75,7 +77,6 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
         <a routerLink="/admin/patients" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-people-fill me-2"></i>Patients</a>
         <a routerLink="/admin/finance" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-graph-up me-2"></i>Finance</a>
         <a routerLink="/admin/moderation" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-shield me-2"></i>Moderation</a>
-        <a routerLink="/admin/settings" (click)="toggleSidebar()" class="nav-link text-white rounded mt-auto"><i class="bi bi-gear-fill me-2"></i>Settings</a>
       </nav>
       <div class="p-3 border-top border-white border-opacity-25">
         <button (click)="logout()" class="btn btn-outline-light btn-sm w-100">Logout</button>

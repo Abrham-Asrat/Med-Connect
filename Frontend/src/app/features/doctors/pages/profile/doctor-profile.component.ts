@@ -45,20 +45,31 @@ export class DoctorProfileComponent implements OnInit {
 
   loadDoctor(doctorId: string): void {
     this.isLoading.set(true);
-    this.doctorService.getAllDoctors().subscribe({
+    this.doctorService.getDoctorById(doctorId).subscribe({
       next: (response: any) => {
-        const list = response?.data || response || [];
-        const found = list.find((d: any) =>
-          d.doctorId === doctorId || d.id === doctorId
-        );
-        this.doctor.set(found || this.getMockDoctor());
-        this.isLoading.set(false);
-        // Load related data
-        this.loadReviews(doctorId);
-        this.loadAvailabilities(doctorId);
+        console.log('Profile Response for ID ' + doctorId + ':', response);
+        const doctor = response?.data || (response?.doctorId ? response : null);
+
+        if (doctor && (doctor.doctorId || doctor.userId)) {
+          // Map education and experience models to display strings if they are objects
+          if (doctor.educations && Array.isArray(doctor.educations)) {
+            doctor.education = doctor.educations.map((e: any) => `${e.degree} - ${e.institution}, ${new Date(e.graduationDate).getFullYear()}`);
+          }
+          if (doctor.experiences && Array.isArray(doctor.experiences)) {
+            doctor.experienceList = doctor.experiences.map((ex: any) => `${ex.position} at ${ex.institution} (${new Date(ex.startDate).getFullYear()} - ${ex.endDate ? new Date(ex.endDate).getFullYear() : 'Present'})`);
+          }
+          this.doctor.set(doctor);
+          this.isLoading.set(false);
+          this.loadReviews(doctorId);
+        } else {
+          console.warn('Doctor data not found in response:', response);
+          this.errorMessage.set('Doctor profile not found / የሀኪሙ መገለጫ አልተገኘም።');
+          this.isLoading.set(false);
+        }
       },
-      error: () => {
-        this.doctor.set(this.getMockDoctor());
+      error: (err) => {
+        console.error('API Error loading doctor ' + doctorId + ':', err);
+        this.errorMessage.set('Failed to connect to server. Please try again. / ከሰርቨር ጋር መገናኘት አልተቻለም።');
         this.isLoading.set(false);
       }
     });
@@ -150,17 +161,18 @@ export class DoctorProfileComponent implements OnInit {
     if (!this.ratingStats()) return 0;
     const stats = this.ratingStats();
     switch (star) {
-      case 5: return stats.fiveStar || 0;
-      case 4: return stats.fourStar || 0;
-      case 3: return stats.threeStar || 0;
-      case 2: return stats.twoStar || 0;
-      case 1: return stats.oneStar || 0;
+      case 5: return stats.fiveStarReviews || 0;
+      case 4: return stats.fourStarReviews || 0;
+      case 3: return stats.threeStarReviews || 0;
+      case 2: return stats.twoStarReviews || 0;
+      case 1: return stats.oneStarReviews || 0;
       default: return 0;
     }
   }
 
   getRatingPercentage(star: number): number {
-    const total = this.reviews().length || 1;
+    if (!this.ratingStats()) return 0;
+    const total = this.ratingStats().totalReviews || 1;
     return (this.getRatingCount(star) / total) * 100;
   }
 }

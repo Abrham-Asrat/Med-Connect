@@ -85,7 +85,7 @@ namespace BackendAPI.Source.Service
     {
       var patient = await appContext
         .Patients.Include(p => p.User)
-        .SingleOrDefaultAsync(p => p.PatientId == patientId);
+        .SingleOrDefaultAsync(p => p.PatientId == patientId || p.UserId == patientId);
       if (patient == null)
       {
         return new ServiceResponse<PatientModel>
@@ -109,8 +109,8 @@ namespace BackendAPI.Source.Service
   {
     try
     {
-      var patient = await appContext.Patients.FindAsync(patientId);
-      return patient != null;
+      var patientExists = await appContext.Patients.AnyAsync(p => p.PatientId == patientId || p.UserId == patientId);
+      return patientExists;
     }
     catch (Exception ex)
     {

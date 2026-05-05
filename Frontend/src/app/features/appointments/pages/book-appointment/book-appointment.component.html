@@ -68,19 +68,19 @@
 
         <h6 class="mb-2">Morning / ጥዋት</h6>
         <div class="d-flex flex-wrap gap-2 mb-3">
-          @for (slot of morningSlots; track slot) {
+          @for (slot of morningSlots(); track slot) {
           <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
           }
         </div>
         <h6 class="mb-2">Afternoon / ከሰዓት</h6>
         <div class="d-flex flex-wrap gap-2 mb-3">
-          @for (slot of afternoonSlots; track slot) {
+          @for (slot of afternoonSlots(); track slot) {
           <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
           }
         </div>
         <h6 class="mb-2">Evening / ማታ</h6>
         <div class="d-flex flex-wrap gap-2">
-          @for (slot of eveningSlots; track slot) {
+          @for (slot of eveningSlots(); track slot) {
           <span class="time-slot" [class.selected]="selectedTime()===slot" (click)="selectTime(slot)">{{slot}}</span>
           }
         </div>

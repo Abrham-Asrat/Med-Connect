@@ -219,5 +219,22 @@ namespace BackendAPI.Source.Service.PaymentService
                 throw;
             }
         }
+        public async Task<List<PaymentDto>> GetPaymentHistoryAsync(Guid userId)
+        {
+            try
+            {
+                var payments = await appContext.Payments
+                    .Where(p => p.SenderId == userId || p.ReceiverId == userId)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .ToListAsync();
+
+                return payments.Select(p => p.ToPaymentDto()).ToList();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error fetching payment history for user: {UserId}", userId);
+                throw;
+            }
+        }
     }
 }

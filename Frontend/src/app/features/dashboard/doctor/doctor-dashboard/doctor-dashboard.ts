@@ -58,13 +58,13 @@ export class DoctorDashboardComponent implements OnInit {
         this.appointments.set(apps.slice(0, 10));
 
         // Calculate stats
-        this.todayAppointments.set(apps.filter((a: any) => 
+        this.todayAppointments.set(apps.filter((a: any) =>
           a.status === 'Scheduled' || a.status === 'Confirmed'
         ).length);
-        this.pendingConfirmations.set(apps.filter((a: any) => 
+        this.pendingConfirmations.set(apps.filter((a: any) =>
           a.status === 'Pending'
         ).length);
-        this.completedToday.set(apps.filter((a: any) => 
+        this.completedToday.set(apps.filter((a: any) =>
           a.status === 'Completed'
         ).length);
         this.totalPatients.set(new Set(apps.map((a: any) => a.patientId)).size);
@@ -98,10 +98,32 @@ export class DoctorDashboardComponent implements OnInit {
   }
 
   confirmAppointment(id: string): void {
-    console.log('Confirm:', id);
+    if (!id) return;
+    this.isLoading.set(true);
+    this.appointmentService.updateAppointment(id, { status: 'Confirmed' }).subscribe({
+      next: () => {
+        this.loadAppointments();
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        console.error('Error confirming:', err);
+      }
+    });
   }
 
   declineAppointment(id: string): void {
-    console.log('Decline:', id);
+    if (!id) return;
+    if (!confirm('Are you sure you want to decline this appointment?')) return;
+
+    this.isLoading.set(true);
+    this.appointmentService.updateAppointment(id, { status: 'Cancelled' }).subscribe({
+      next: () => {
+        this.loadAppointments();
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        console.error('Error declining:', err);
+      }
+    });
   }
 }

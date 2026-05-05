@@ -148,10 +148,45 @@ builder.Services.AddCors(options =>
             Log.Error($"Authentication failed: {context.Exception.Message}");
             return Task.CompletedTask;
         },
-        OnTokenValidated = context =>
+        OnTokenValidated = async context =>
         {
-            Log.Information($"Token validated for user: {context.Principal?.Identity?.Name}");
-            return Task.CompletedTask;
+            var principal = context.Principal;
+            if (principal != null)
+            {
+                var dbContext = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+                var auth0Id = principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                              ?? principal.FindFirst("sub")?.Value
+                              ?? principal.Claims.FirstOrDefault(c => c.Type.EndsWith("nameidentifier"))?.Value;
+                
+                Log.Information($"[Auth Debug] Attempting to map roles for Auth0Id: '{auth0Id}'");
+
+                if (!string.IsNullOrEmpty(auth0Id))
+                {
+                    var user = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(dbContext.Users, u => u.Auth0Id == auth0Id);
+                    if (user != null)
+                    {
+                        Log.Information($"[Auth Debug] Found DB User: {user.Email}, Role: {user.Role.ToString()}");
+                        var claims = new List<System.Security.Claims.Claim>
+                        {
+                            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, user.Role.ToString()),
+                            new System.Security.Claims.Claim("role", user.Role.ToString()), // lowercase role claim
+                            new System.Security.Claims.Claim("UserId", user.UserId.ToString())
+                        };
+                        var appIdentity = new System.Security.Claims.ClaimsIdentity(claims, "Token", System.Security.Claims.ClaimTypes.NameIdentifier, System.Security.Claims.ClaimTypes.Role);
+                        principal.AddIdentity(appIdentity);
+                        Log.Information($"[Auth Debug] Successfully injected Identity with Role: {user.Role.ToString()}");
+                    }
+                    else
+                    {
+                        Log.Warning($"[Auth Debug] No user found in DB matching Auth0Id: {auth0Id}");
+                    }
+                }
+                else
+                {
+                    Log.Warning("[Auth Debug] auth0Id was null. Claims present:");
+                    foreach (var c in principal.Claims) { Log.Warning($"Claim: {c.Type} = {c.Value}"); }
+                }
+            }
         }
     };
     });
@@ -161,19 +196,27 @@ builder.Services.AddCors(options =>
   {
     // Admin-only policy
     options.AddPolicy("AdminOnly", policy =>
-      policy.RequireRole("Admin"));
+      policy.RequireAssertion(context => 
+        context.User.IsInRole("Admin") || 
+        context.User.HasClaim(c => (c.Type == System.Security.Claims.ClaimTypes.Role || c.Type == "role") && c.Value == "Admin")));
 
     // Doctor-only policy
     options.AddPolicy("DoctorOnly", policy =>
-      policy.RequireRole("Doctor"));
+      policy.RequireAssertion(context => 
+        context.User.IsInRole("Doctor") || 
+        context.User.HasClaim(c => (c.Type == System.Security.Claims.ClaimTypes.Role || c.Type == "role") && c.Value == "Doctor")));
 
     // Patient-only policy
     options.AddPolicy("PatientOnly", policy =>
-      policy.RequireRole("Patient"));
+      policy.RequireAssertion(context => 
+        context.User.IsInRole("Patient") || 
+        context.User.HasClaim(c => (c.Type == System.Security.Claims.ClaimTypes.Role || c.Type == "role") && c.Value == "Patient")));
 
     // Admin or Doctor policy
     options.AddPolicy("AdminOrDoctor", policy =>
-      policy.RequireRole("Admin", "Doctor"));
+      policy.RequireAssertion(context => 
+        context.User.IsInRole("Admin") || context.User.IsInRole("Doctor") ||
+        context.User.HasClaim(c => (c.Type == System.Security.Claims.ClaimTypes.Role || c.Type == "role") && (c.Value == "Admin" || c.Value == "Doctor"))));
 
     // Any authenticated user policy
     options.AddPolicy("AuthenticatedUser", policy =>

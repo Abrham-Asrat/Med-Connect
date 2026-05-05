@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="container-fluid p-0">
+    <div class="container-fluid p-2">
       <!-- Hero Header -->
       <section class="about-hero bg-primary text-white py-5 position-relative overflow-hidden">
         <div class="container py-4 position-relative" style="z-index: 2; max-width: 1000px;">
@@ -94,7 +94,7 @@ import { CommonModule } from '@angular/common';
           <div class="col-md-4">
             <div class="text-center p-3">
               <div class="rounded-circle bg-light border mb-3 mx-auto" style="width: 120px; height: 120px; overflow: hidden;">
-                <img src="assets/ceo-avatar.png" alt="CEO" class="img-fluid opacity-50" style="filter: grayscale(1);">
+                <img src="https://ui-avatars.com/api/?name=Elias+Samuel&background=04521D&color=fff&size=120" alt="CEO" class="img-fluid opacity-50" style="filter: grayscale(1);">
               </div>
               <h6 class="fw-bold mb-0">Dr. Elias Samuel</h6>
               <small class="text-primary fw-bold">Chief Medical Officer</small>
@@ -103,7 +103,7 @@ import { CommonModule } from '@angular/common';
           <div class="col-md-4">
             <div class="text-center p-3">
               <div class="rounded-circle bg-light border mb-3 mx-auto" style="width: 120px; height: 120px; overflow: hidden;">
-                <img src="assets/cto-avatar.png" alt="CTO" class="img-fluid opacity-50" style="filter: grayscale(1);">
+                <img src="https://ui-avatars.com/api/?name=Solomon+Tekle&background=04521D&color=fff&size=120" alt="CTO" class="img-fluid opacity-50" style="filter: grayscale(1);">
               </div>
               <h6 class="fw-bold mb-0">Solomon Tekle</h6>
               <small class="text-primary fw-bold">CTO & Founder</small>

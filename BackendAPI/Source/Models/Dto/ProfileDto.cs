@@ -71,6 +71,7 @@ public record DoctorProfileDto : ProfileDto
   public required List<DoctorAvailabilityDto> Availabilities { get; init; }
   public required string Qualifications { get; init; }
   public required string Biography { get; init; }
+  public required List<string> Languages { get; init; }
   public required DoctorStatus DoctorStatus { get; init; }
   public required List<EducationDto> Educations { get; init; }
   public required List<ExperienceDto> Experiences { get; init; }

@@ -93,4 +93,52 @@ public class OtpController : ControllerBase
             return StatusCode(500, new ApiResponse<string>(false, "Internal error during verification", null));
         }
     }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] SendOtpDto request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<string>(false, "Invalid email address", null));
+            }
+
+            await _authService.SendForgotPasswordOtp(request.Email);
+            return Ok(new ApiResponse<string>(true, "OTP sent successfully to your email", null));
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new ApiResponse<string>(false, ex.Message, null));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send forgot password OTP");
+            return StatusCode(500, new ApiResponse<string>(false, "Failed to send OTP", null));
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ForgotPasswordResetDto request, [FromServices] Auth0Service auth0Service)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<string>(false, "Invalid request data", null));
+            }
+
+            await _authService.ResetPasswordAsync(request, auth0Service);
+            return Ok(new ApiResponse<string>(true, "Password has been reset successfully", null));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new ApiResponse<string>(false, ex.Message, null));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to reset password");
+            return StatusCode(500, new ApiResponse<string>(false, "Failed to reset password", null));
+        }
+    }
 }

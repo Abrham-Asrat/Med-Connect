@@ -13,9 +13,7 @@ export class DoctorService {
   }
 
   getDoctorById(doctorId: string): Observable<any> {
-    // Backend doesn't have a single-doctor endpoint, so we fetch all and filter on frontend.
-    // For a real app, you might add /api/doctors/{id} to your backend.
-    return this.getAllDoctors();
+    return this.http.get(`${this.apiUrl}/doctors/${doctorId}`);
   }
 
   getDoctorAvailabilities(doctorId: string): Observable<any> {

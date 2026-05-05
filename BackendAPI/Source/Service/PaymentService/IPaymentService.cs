@@ -20,5 +20,6 @@ public interface IPaymentService
   Task<PaymentDto> ChangePaymentStatusAsync(string transactionReference, PaymentStatus status);
 
   Task<IVerifyResponse> VerifyAsync(IVerifyRequest verifyRequest);
+  Task<List<PaymentDto>> GetPaymentHistoryAsync(Guid userId);
 }
 }

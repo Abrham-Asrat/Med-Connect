@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BackendAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260419150943_InitialCreate")]
+    [Migration("20260504202747_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace BackendAPI.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -79,11 +79,168 @@ namespace BackendAPI.Migrations
 
                     b.HasKey("AppointmentId");
 
-                    b.HasIndex("DoctorId");
+                    b.HasIndex("DoctorId")
+                        .HasDatabaseName("IX_Appointments_DoctorId");
 
-                    b.HasIndex("PatientId");
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("IX_Appointments_PatientId");
+
+                    b.HasIndex("DoctorId", "AppointmentDate", "AppointmentTime")
+                        .HasDatabaseName("IX_Appointments_Doctor_Date_Time");
 
                     b.ToTable("Appointments");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Blog", b =>
+                {
+                    b.Property<Guid>("BlogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ImageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("BlogId");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("ImageId");
+
+                    b.ToTable("Blogs");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.BlogComment", b =>
+                {
+                    b.Property<Guid>("BlogCommentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BlogId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CommentText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("BlogCommentId");
+
+                    b.HasIndex("BlogId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("BlogComments");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.BlogLike", b =>
+                {
+                    b.Property<Guid>("BlogLikeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BlogId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("BlogLikeId");
+
+                    b.HasIndex("BlogId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("BlogLikes");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.BlogTag", b =>
+                {
+                    b.Property<Guid>("BlogId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("BlogId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("BlogTags");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Conversation", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ConversationId");
+
+                    b.ToTable("Conversations");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.ConversationMembershipModel", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ConversationId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ConversationMemberships");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.DoctorAvailabilityModel", b =>
@@ -147,7 +304,9 @@ namespace BackendAPI.Migrations
                     b.HasIndex("DoctorPreferenceId")
                         .IsUnique();
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Doctors_UserId");
 
                     b.ToTable("Doctors");
                 });
@@ -182,6 +341,27 @@ namespace BackendAPI.Migrations
                     b.HasIndex("SpecialtyId");
 
                     b.ToTable("DoctorSpecialties");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.DocumentFileAssociation", b =>
+                {
+                    b.Property<Guid>("FileAssociationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("FileAssociationId");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("PatientId");
+
+                    b.ToTable("DocumentFileAssociations");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.EducationModel", b =>
@@ -264,6 +444,9 @@ namespace BackendAPI.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("MessageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("MimeType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -276,7 +459,98 @@ namespace BackendAPI.Migrations
 
                     b.HasKey("FileId");
 
+                    b.HasIndex("MessageId");
+
                     b.ToTable("Files");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Message", b =>
+                {
+                    b.Property<Guid>("MessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MessageText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("SenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("MessageId");
+
+                    b.HasIndex("ConversationId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.MessageFileAssociation", b =>
+                {
+                    b.Property<Guid>("FileAssociationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("FileAssociationId");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("MessageFileAssociations");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("NotificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NotificationType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("NotificationId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.PatientModel", b =>
@@ -299,7 +573,9 @@ namespace BackendAPI.Migrations
 
                     b.HasKey("PatientId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Patients_UserId");
 
                     b.ToTable("Patients");
                 });
@@ -352,7 +628,7 @@ namespace BackendAPI.Migrations
 
                     b.Property<string>("TransactionReference")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -362,6 +638,10 @@ namespace BackendAPI.Migrations
                     b.HasIndex("ReceiverId");
 
                     b.HasIndex("SenderId");
+
+                    b.HasIndex("TransactionReference")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Payments_TransactionReference");
 
                     b.ToTable("Payments");
                 });
@@ -442,7 +722,7 @@ namespace BackendAPI.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Auth0Id")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Auth0RefreshToken")
                         .HasColumnType("nvarchar(max)");
@@ -455,7 +735,7 @@ namespace BackendAPI.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -482,7 +762,7 @@ namespace BackendAPI.Migrations
 
                     b.Property<string>("Phone")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProfilePicture")
                         .HasColumnType("nvarchar(max)");
@@ -495,7 +775,44 @@ namespace BackendAPI.Migrations
 
                     b.HasKey("UserId");
 
+                    b.HasIndex("Auth0Id")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Users_Auth0Id")
+                        .HasFilter("[Auth0Id] IS NOT NULL");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Users_Email");
+
+                    b.HasIndex("Phone")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Users_Phone");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Tag", b =>
+                {
+                    b.Property<Guid>("TagId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TagName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("TagId");
+
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.Admin", b =>
@@ -526,6 +843,99 @@ namespace BackendAPI.Migrations
                     b.Navigation("Doctor");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Blog", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "Author")
+                        .WithMany("Blogs")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.FileModel", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId");
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Image");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.BlogComment", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.Blog", "Blog")
+                        .WithMany("BlogComments")
+                        .HasForeignKey("BlogId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "Sender")
+                        .WithMany("BlogComments")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Blog");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.BlogLike", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.Blog", "Blog")
+                        .WithMany("BlogLikes")
+                        .HasForeignKey("BlogId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "User")
+                        .WithMany("BlogLikes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Blog");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.BlogTag", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.Blog", "Blog")
+                        .WithMany("BlogTags")
+                        .HasForeignKey("BlogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Tag", "Tag")
+                        .WithMany("BlogTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Blog");
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.ConversationMembershipModel", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.Conversation", "Conversation")
+                        .WithMany("ConversationMemberships")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.DoctorAvailabilityModel", b =>
@@ -585,6 +995,25 @@ namespace BackendAPI.Migrations
                     b.Navigation("Specialty");
                 });
 
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.DocumentFileAssociation", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.FileModel", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.PatientModel", "Patient")
+                        .WithMany("Documents")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("File");
+
+                    b.Navigation("Patient");
+                });
+
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.EducationModel", b =>
                 {
                     b.HasOne("BackendAPI.Source.Models.Entities.DoctorModel", "Doctor")
@@ -605,6 +1034,62 @@ namespace BackendAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Doctor");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.FileModel", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.Message", null)
+                        .WithMany("Files")
+                        .HasForeignKey("MessageId");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Message", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.MessageFileAssociation", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.FileModel", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackendAPI.Source.Models.Entities.Message", "Message")
+                        .WithMany()
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("File");
+
+                    b.Navigation("Message");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Notification", b =>
+                {
+                    b.HasOne("BackendAPI.Source.Models.Entities.UserModel", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.PatientModel", b =>
@@ -652,6 +1137,22 @@ namespace BackendAPI.Migrations
                     b.Navigation("Patient");
                 });
 
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Blog", b =>
+                {
+                    b.Navigation("BlogComments");
+
+                    b.Navigation("BlogLikes");
+
+                    b.Navigation("BlogTags");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Conversation", b =>
+                {
+                    b.Navigation("ConversationMemberships");
+
+                    b.Navigation("Messages");
+                });
+
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.DoctorModel", b =>
                 {
                     b.Navigation("DoctorAvailabilities");
@@ -670,14 +1171,35 @@ namespace BackendAPI.Migrations
                     b.Navigation("Doctor");
                 });
 
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.Message", b =>
+                {
+                    b.Navigation("Files");
+                });
+
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.PatientModel", b =>
                 {
+                    b.Navigation("Documents");
+
                     b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("BackendAPI.Source.Models.Entities.SpecialtyModel", b =>
                 {
                     b.Navigation("DoctorSpecialties");
+                });
+
+            modelBuilder.Entity("BackendAPI.Source.Models.Entities.UserModel", b =>
+                {
+                    b.Navigation("BlogComments");
+
+                    b.Navigation("BlogLikes");
+
+                    b.Navigation("Blogs");
+                });
+
+            modelBuilder.Entity("Tag", b =>
+                {
+                    b.Navigation("BlogTags");
                 });
 #pragma warning restore 612, 618
         }

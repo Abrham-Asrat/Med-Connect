@@ -82,5 +82,85 @@ namespace BackendAPI.Source.Service
                 throw new Exception("Internal server error during OTP generation.", ex);
             }
         }
+
+        public async Task SendForgotPasswordOtp(string email)
+        {
+            try
+            {
+                var user = await _appContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    _logger.LogWarning($"Forgot password requested for non-existent email: {email}");
+                    throw new ArgumentException("User not found.");
+                }
+
+                var otp = RandomNumberGenerator.GetInt32(100000, 999999);
+                user.Otp = otp;
+                _appContext.Entry(user).Property(u => u.Otp).IsModified = true;
+
+                var viewPath = "Source/Views/ForgotPasswordEmail.cshtml";
+                var model = new WelcomeEmailModel()
+                {
+                    Email = user.Email,
+                    Name = $"{user.FirstName} {user.LastName}",
+                    Otp = otp,
+                    SupportEmail = "medconnect271@gmail.com"
+                };
+
+                var emailBody = await _renderingService.RenderRazorPage(viewPath, model);
+
+                await _emailService.SendEmail(
+                    user.Email,
+                    $"{user.FirstName} {user.LastName}",
+                    "Reset Your MedConnect Password",
+                    emailBody
+                );
+
+                await _appContext.SaveChangesAsync();
+                _logger.LogInformation($"Forgot password OTP successfully sent and saved for user: {user.Email}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AuthService Error: Failed to process forgot password OTP request.");
+                throw;
+            }
+        }
+
+        public async Task ResetPasswordAsync(ForgotPasswordResetDto request, Auth0Service auth0Service)
+        {
+            try
+            {
+                var user = await _appContext.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+                if (user == null)
+                {
+                    throw new ArgumentException("User not found.");
+                }
+
+                if (user.Otp == null || user.Otp != request.Otp)
+                {
+                    throw new ArgumentException("Invalid OTP.");
+                }
+
+                // Call Auth0 to change the password
+                var success = await auth0Service.ChangePasswordAsync(request.Email, request.NewPassword);
+                if (!success)
+                {
+                    throw new Exception("Failed to update password in Auth0.");
+                }
+
+                // Clear OTP and ensure email is verified since they just used it
+                user.Otp = null;
+                user.IsEmailVerified = true;
+                _appContext.Entry(user).State = EntityState.Modified;
+                await _appContext.SaveChangesAsync();
+
+                _logger.LogInformation($"Password successfully reset for user: {user.Email}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AuthService Error: Failed to reset password.");
+                throw;
+            }
+        }
     }
 }

@@ -38,13 +38,17 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
         <nav class="nav flex-column p-3 flex-grow-1">
           <a routerLink="/doctor/dashboard" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-house-door me-2"></i><span class="nav-text">Dashboard</span></a>
           <a routerLink="/doctor/schedule" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-calendar-week me-2"></i><span class="nav-text">Schedule</span></a>
-          <a routerLink="/doctor/blog" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i><span class="nav-text">My & Managed Blogs</span></a>
-          <a routerLink="/doctor/health-blogs" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-journal-text me-2"></i><span class="nav-text">Health Knowledge</span></a>
+          <a routerLink="/doctor/chat" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-chat-dots me-2"></i><span class="nav-text">Messages</span></a>
+          <a routerLink="/doctor/earnings" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-wallet2 me-2"></i><span class="nav-text">Earnings</span></a>
+          <div class="nav-divider my-2 border-bottom border-white border-opacity-10"></div>
+          
+          <a routerLink="/doctor/blog" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i><span class="nav-text">My Blogs</span></a>
+          <a routerLink="/doctor/health-blogs" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-journal-text me-2"></i><span class="nav-text">Public Blogs</span></a>
 
-          <a routerLink="/doctor/about" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-info-circle me-2"></i><span class="nav-text">About Us</span></a>
-          <a routerLink="/doctor/contact" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-headset me-2"></i><span class="nav-text">Contact Support</span></a>
-          <a routerLink="/doctor/settings" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mt-auto px-3 d-flex align-items-center"><i class="bi bi-gear me-2"></i><span class="nav-text">Settings</span></a>
-
+          <div class="nav-divider my-2 border-bottom border-white border-opacity-10"></div>
+          <a routerLink="/doctor/settings" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-gear me-2"></i><span class="nav-text">Settings</span></a>
+          <a routerLink="/doctor/about" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-info-circle me-2"></i><span class="nav-text">About Med-Connect</span></a>
+          <a routerLink="/doctor/contact" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-headset me-2"></i><span class="nav-text">Help & Support</span></a>
         </nav>
         <div class="p-3 border-top border-white border-opacity-25">
           <button (click)="logout()" class="btn btn-outline-light btn-sm w-100 btn-logout d-flex justify-content-center align-items-center"><i class="bi bi-box-arrow-right me-2"></i><span>Logout</span></button>
@@ -60,6 +64,9 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
               <a routerLink="/doctor/chat" class="btn btn-link position-relative p-0 text-decoration-none">
                 <i class="bi bi-chat-dots fs-5 text-primary"></i>
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.55rem; padding: 0.25rem 0.4rem;">5</span>
+              </a>
+              <a routerLink="/doctor/settings" class="btn btn-link p-0 text-primary" title="Settings">
+                <i class="bi bi-gear fs-5"></i>
               </a>
               <app-theme-toggle></app-theme-toggle>
               <app-notification-bell [count]="3"></app-notification-bell>
@@ -78,15 +85,19 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
         <button class="btn btn-link text-white p-0" (click)="toggleSidebar()"><i class="bi bi-x-lg fs-5"></i></button>
       </div>
       <nav class="nav flex-column p-3 flex-grow-1">
-        <a routerLink="/doctor/dashboard" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-house-door me-2"></i>Dashboard</a>
-        <a routerLink="/doctor/schedule" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-calendar-week me-2"></i>Schedule</a>
-        <a routerLink="/doctor/blog" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-pencil-square me-2"></i>My Blogs</a>
-        <a routerLink="/doctor/health-blogs" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-journal-text me-2"></i>Health Knowledge</a>
+        <a routerLink="/doctor/dashboard" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-house-door me-2"></i>Dashboard</a>
+        <a routerLink="/doctor/schedule" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-calendar-week me-2"></i>Schedule</a>
+        <a routerLink="/doctor/chat" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-chat-dots me-2"></i>Messages</a>
+        <a routerLink="/doctor/earnings" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-wallet2 me-2"></i>Earnings</a>
+        
+        <div class="nav-divider my-2 border-bottom border-white border-opacity-10"></div>
+        <a routerLink="/doctor/blog" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i>My Blogs</a>
+        <a routerLink="/doctor/health-blogs" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-journal-text me-2"></i>Public Blogs</a>
 
-        <a routerLink="/doctor/about" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-info-circle me-2"></i>About Us</a>
-        <a routerLink="/doctor/contact" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1"><i class="bi bi-headset me-2"></i>Contact Support</a>
-        <a routerLink="/doctor/settings" (click)="toggleSidebar()" class="nav-link text-white rounded mt-auto"><i class="bi bi-gear me-2"></i>Settings</a>
-
+        <div class="nav-divider my-2 border-bottom border-white border-opacity-10"></div>
+        <a routerLink="/doctor/settings" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-gear me-2"></i>Settings</a>
+        <a routerLink="/doctor/about" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-info-circle me-2"></i>About Us</a>
+        <a routerLink="/doctor/contact" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-headset me-2"></i>Contact Support</a>
       </nav>
       <div class="p-3 border-top border-white border-opacity-25">
         <button (click)="logout()" class="btn btn-outline-light btn-sm w-100">Logout</button>

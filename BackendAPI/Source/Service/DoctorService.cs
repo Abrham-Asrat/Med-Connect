@@ -288,6 +288,7 @@ namespace BackendAPI.Source.Service
                 doctor.DoctorStatus = updateProfileDto.DoctorStatus != null ? updateProfileDto.DoctorStatus.ConvertToEnum<DoctorStatus>() : doctor.DoctorStatus;
 
                 doctor.Biography = updateProfileDto.Biography ?? doctor.Biography;
+                doctor.Languages = updateProfileDto.Languages != null ? string.Join(",", updateProfileDto.Languages) : doctor.Languages;
 
                 doctor.DoctorAvailabilities = availabilities != null ? availabilities ?? doctor.DoctorAvailabilities : doctor.DoctorAvailabilities;
 
@@ -525,9 +526,8 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                var doctor = await appContext.Doctors.FindAsync(doctorId);
-
-                return doctor != null;
+                var doctorExists = await appContext.Doctors.AnyAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
+                return doctorExists;
             }
             catch (System.Exception)
             {
@@ -549,7 +549,10 @@ namespace BackendAPI.Source.Service
         .Doctors.Include(d => d.User)
         .Include(d => d.DoctorSpecialties)
         .ThenInclude(ds => ds.Specialty)
-        .SingleOrDefaultAsync(d => d.DoctorId == doctorId);
+        .Include(d => d.Educations)
+        .Include(d => d.Experiences)
+        .Include(d => d.Reviews)
+        .SingleOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
 
       if (doctor == null)
       {
@@ -562,6 +565,39 @@ namespace BackendAPI.Source.Service
     {
       logger.LogError($"Failed to get doctor by id {ex}");
       throw;
+    }
+  }
+
+  public async Task<IServiceResponse> GetDoctorProfileByIdAsync(Guid doctorId)
+  {
+    try
+    {
+      var doctor = await appContext.Doctors
+        .Include(d => d.User)
+        .Include(d => d.DoctorSpecialties)
+        .ThenInclude(ds => ds.Specialty)
+        .Include(d => d.Educations)
+        .Include(d => d.Experiences)
+        .Include(d => d.DoctorAvailabilities)
+        .SingleOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
+
+      if (doctor == null)
+        return new ServiceResponse<DoctorProfileDto>(false, 404, null, "Doctor not found");
+
+      var profile = doctor.ToDoctorProfileDto(
+        doctor.User,
+        doctor.DoctorAvailabilities,
+        doctor.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds => ds.Specialty!).ToList(),
+        doctor.Educations,
+        doctor.Experiences
+      );
+
+      return new ServiceResponse<DoctorProfileDto>(true, 200, profile, "Doctor profile retrieved");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, $"Error fetching doctor profile for {doctorId}");
+      return new ServiceResponse<DoctorProfileDto>(false, 500, null, "An error occurred");
     }
   }
 
@@ -607,8 +643,8 @@ namespace BackendAPI.Source.Service
   {
     try
     {
-      var doctor = await appContext.Doctors.FindAsync(doctorId);
-      return doctor != null;
+      var doctorExists = await appContext.Doctors.AnyAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
+      return doctorExists;
     }
     catch (Exception ex)
     {
@@ -845,6 +881,7 @@ namespace BackendAPI.Source.Service
        {
            doctor.DoctorAvailabilities.Add(new DoctorAvailabilityModel
            {
+               Doctor = doctor,
                DoctorId = doctorId,
                AvailableDay = slot.AvailableDay.ConvertToEnum<DayOfWeek>(),
                StartTime = TimeOnly.Parse(slot.startTime),

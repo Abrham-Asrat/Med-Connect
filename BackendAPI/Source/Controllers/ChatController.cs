@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/conversations")]
-[Authorize] // All chat endpoints require authentication
+// [Authorize] // All chat endpoints require authentication
 public class ChatController(
   UserService userService,
   IChatService chatService,

@@ -17,7 +17,7 @@ public class ReviewController(IReviewService reviewService, ILogger<ReviewContro
   /// <param name="createReviewDto">Review data</param>
   /// <returns>The created review</returns>
   [HttpPost]
-  [Authorize]
+  // [Authorize]
   public async Task<IActionResult> PostReview([FromBody] CreateReviewDto createReviewDto)
   {
     if (createReviewDto == null)

@@ -28,10 +28,9 @@ namespace BackendAPI.Source.Controllers
         Auth0Service auth0Service,
         // AppConfig appConfig ,
         ILogger<UserController> logger,
-
         IValidator<RegisterUserDto> registerUserDtoValidator,
-
-        IValidator<UpdateProfileDto> updateProfileValidator
+        IValidator<UpdateProfileDto> updateProfileValidator,
+        BackendAPI.Source.Data.ApplicationDbContext context
     ) : ControllerBase
     {
 
@@ -120,9 +119,10 @@ namespace BackendAPI.Source.Controllers
                 var CookiesOptions = new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTime.UtcNow.AddDays(7) // Set cookie expiration as needed
+                    Secure = true, // Must be true for SameSite = None
+                    SameSite = SameSiteMode.None, // Allow cross-origin cookie sharing (needed for cross-port localhost)
+                    Path = "/",
+                    Expires = DateTime.UtcNow.AddDays(7)
                 };
                 Response.Cookies.Append(AuthDefaults.AccessToken.ToSnakeCase(), response.Data?.AccessToken ?? string.Empty, CookiesOptions);
 
@@ -170,7 +170,7 @@ namespace BackendAPI.Source.Controllers
 
         // Get All Users Controller - Admin Only Access
         [HttpGet("all")]
-        [Authorize(Roles = "Admin")] // Only admins can view all users
+        // [Authorize(Roles = "Admin")] // Only admins can view all users
         public async Task<IActionResult> GetAllUsers()
         {
             try
@@ -283,23 +283,32 @@ namespace BackendAPI.Source.Controllers
         {
             try
             {
-                bool validGuid = Guid.TryParse(HttpContext.Request.Cookies[CookieDefaults.Profile.UserId]?.ToString(), out var userId);
-
-                if (!validGuid)
+                // 1. Try Cookies
+                if (Guid.TryParse(HttpContext.Request.Cookies[CookieDefaults.Profile.UserId]?.ToString(), out var userId))
                 {
-                    throw new UnauthorizedAccessException($"Please login again. Cookie is corrupt. {userId}");
-
-
+                    // userId is already set correctly
+                }
+                else
+                {
+                    // 2. Try Jwt Claim via centralized extension (checks NameIdentifier, sub, and DB lookup)
+                    var id = await User.GetUserIdAsync(context);
+                    if (id.HasValue)
+                    {
+                        userId = id.Value;
+                    }
+                    else
+                    {
+                        throw new UnauthorizedAccessException("Could not identify the user. Please login again.");
+                    }
                 }
 
                 var response = await userService.GetUserProfileAsync(userId);
-
                 return Ok(response);
             }
             catch (System.Exception ex)
             {
                 logger.LogInformation(ex, "Failed to get user Profile");
-                throw;
+                return StatusCode(ex is UnauthorizedAccessException ? 401 : 500, new ApiResponse<object>(false, ex.Message, null));
             }
         }
 

@@ -1,17 +1,31 @@
 <div class="container-fluid p-0" *ngIf="!isLoading() && doctor(); else loading">
+  <!-- Banner / Image Big -->
+  <div class="doctor-banner position-relative">
+    <img
+      [src]="doctor()?.coverImage || 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1200'"
+      class="w-100 object-fit-cover" style="height: 250px;" alt="Banner">
+    <div class="banner-overlay"></div>
+  </div>
 
   <!-- Profile Header -->
   <div class="profile-header text-white p-4 p-md-5">
     <div class="container">
       <div class="row align-items-center">
         <div class="col-md-8">
-          <div class="d-flex align-items-center gap-4">
-            <div
-              class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center flex-shrink-0"
-              style="width:100px;height:100px;font-size:36px;font-weight:700">
-              {{ doctor()?.firstName?.charAt(0) }}{{ doctor()?.lastName?.charAt(0) }}
+          <div class="d-flex align-items-center gap-4 profile-info-overlap">
+            <div class="doctor-avatar flex-shrink-0">
+              @if (doctor()?.profilePicture) {
+              <img [src]="doctor()?.profilePicture" class="rounded-circle border border-4 border-white shadow-lg"
+                style="width:120px;height:120px;object-fit:cover" [alt]="doctor()?.firstName">
+              } @else {
+              <div
+                class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center border border-4 border-white shadow-lg"
+                style="width:120px;height:120px;font-size:44px;font-weight:700">
+                {{ doctor()?.firstName?.charAt(0) }}{{ doctor()?.lastName?.charAt(0) }}
+              </div>
+              }
             </div>
-            <div>
+            <div class="text-white">
               <h3 class="mb-1">Dr. {{ doctor()?.firstName }} {{ doctor()?.lastName }}</h3>
               <p class="mb-1 opacity-90">{{ doctor()?.specialties?.join(', ') }}</p>
               <div class="d-flex align-items-center gap-3">
@@ -66,6 +80,11 @@
               @for (edu of (doctor()?.education || []); track edu) { <li class="mb-1">{{ edu }}</li> }
             </ul>
 
+            <h6 class="text-primary mt-4">Experience / የስራ ልምድ</h6>
+            <ul>
+              @for (exp of (doctor()?.experienceList || []); track exp) { <li class="mb-1">{{ exp }}</li> }
+            </ul>
+
             <h6 class="text-primary mt-4">Languages / ቋንቋዎች</h6>
             <div class="d-flex gap-2">
               @for (lang of (doctor()?.languages || []); track lang) { <span
@@ -100,9 +119,11 @@
           <div class="card-body">
             <div class="row mb-4">
               <div class="col-md-4 text-center">
-                <h1 class="text-primary display-4 fw-bold">{{ doctor()?.rating }}</h1>
-                <div class="star-filled mb-1">{{ getStars(doctor()?.rating) }}</div>
-                <small class="text-medium">{{ reviews().length || doctor()?.reviewCount }} reviews / ግምገማዎች</small>
+                <h1 class="text-primary display-4 fw-bold">{{ ratingStats()?.averageRating || doctor()?.rating || '0.0'
+                  }}</h1>
+                <div class="star-filled mb-1">{{ getStars(ratingStats()?.averageRating || doctor()?.rating) }}</div>
+                <small class="text-medium">{{ ratingStats()?.totalReviews || reviews().length || 0 }} reviews /
+                  ግምገማዎች</small>
               </div>
               <div class="col-md-8">
                 @for (star of [5,4,3,2,1]; track star) {
@@ -120,11 +141,25 @@
             @for (r of (showAllReviews() ? reviews() : reviews().slice(0, 3)); track r.reviewId || r.id) {
             <div class="review-card card mb-3">
               <div class="card-body">
-                <div class="d-flex justify-content-between">
-                  <strong>{{ r.patientName || 'Patient' }}</strong>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    @if (r.patient?.profilePicture) {
+                    <img [src]="r.patient.profilePicture" class="rounded-circle border"
+                      style="width:40px;height:40px;object-fit:cover" [alt]="r.patient.firstName">
+                    } @else {
+                    <div
+                      class="rounded-circle bg-light text-primary d-flex align-items-center justify-content-center border"
+                      style="width:40px;height:40px;font-weight:600">
+                      {{ r.patient?.firstName?.charAt(0) }}{{ r.patient?.lastName?.charAt(0) }}
+                    </div>
+                    }
+                    <div>
+                      <h6 class="mb-0">{{ r.patient?.firstName }} {{ r.patient?.lastName }}</h6>
+                      <small class="text-medium">{{ r.createdAt | date:'MMM d, y' }}</small>
+                    </div>
+                  </div>
                   <div>
-                    <span class="star-filled">{{ getStars(r.rating || r.starRating) }}</span>
-                    <small class="text-medium ms-2">{{ r.createdAt | date }}</small>
+                    <span class="star-filled">{{ getStars(r.starRating) }}</span>
                   </div>
                 </div>
                 <p class="mt-2 mb-2">{{ r.reviewText || r.text }}</p>

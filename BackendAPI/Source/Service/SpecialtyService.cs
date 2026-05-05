@@ -80,5 +80,20 @@ namespace BackendAPI.Source.Service
             }
         }
 
+        public async Task<List<string>> GetAllSpecialtiesAsync()
+        {
+            try
+            {
+                return await appContext.Specializations
+                    .Select(s => s.SpecialtyName)
+                    .Distinct()
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while fetching all specialties.");
+                throw;
+            }
+        }
     }
 }

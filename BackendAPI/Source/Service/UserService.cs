@@ -341,17 +341,18 @@ namespace BackendAPI.Source.Service
 
                 if (user.Role == Role.Doctor)
                 {
-                    updatedProfile = await doctorService.UpdateDoctorProfileAsync
-                    (
-                        new UpdateDoctorProfileDto
-                        (
-                            userId,
-                            updateProfileDto.Specialties, updateProfileDto.Qualifications, updateProfileDto.Biography,
-                            updateProfileDto.Availabilities,
-                            updateProfileDto.DoctorStatus,
-                            updateProfileDto.Educations, updateProfileDto.Experiences
+                    updatedProfile = await doctorService.UpdateDoctorProfileAsync(
+                        new UpdateDoctorProfileDto(
+                            UserId: userId,
+                            Specialties: updateProfileDto.Specialties,
+                            Qualifications: updateProfileDto.Qualifications,
+                            Biography: updateProfileDto.Biography,
+                            Availabilities: updateProfileDto.Availabilities,
+                            DoctorStatus: updateProfileDto.DoctorStatus,
+                            Educations: updateProfileDto.Educations,
+                            Experiences: updateProfileDto.Experiences
                         )
-                  );
+                    );
                 }
                 await appContext.SaveChangesAsync();
 

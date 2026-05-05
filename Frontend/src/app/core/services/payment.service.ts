@@ -38,4 +38,8 @@ export class PaymentService {
     verifyTransaction(txRef: string): Observable<any> {
         return this.http.get(`${this.apiUrl}/payments/verify/${txRef}`);
     }
+
+    getPaymentHistory(userId: string): Observable<any> {
+        return this.http.get(`${this.apiUrl}/payments/history/${userId}`);
+    }
 }

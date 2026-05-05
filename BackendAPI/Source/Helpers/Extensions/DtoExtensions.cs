@@ -38,6 +38,7 @@ namespace BackendAPI.Source.Helpers.Extensions
                  UserId = dto.User.UserId,
                  Qualifications = dto.Qualifications,
                  Biography = dto.Biography,
+                 Languages = string.Join(",", dto.Languages),
                  DoctorStatus = dto.DoctorStatus,
                  CvId = dto.Cv.FileId,
                  Cv = dto.Cv,

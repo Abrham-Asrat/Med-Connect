@@ -67,6 +67,11 @@ export class PatientDashboardComponent implements OnInit {
       : 'bg-warning-light text-warning-dark';
   }
 
+  getInitials(first: string, last: string): string {
+    if (!first && !last) return '?';
+    return `${first?.charAt(0) || ''}${last?.charAt(0) || ''}`;
+  }
+
 
   showEmergency = signal(false);
   emergencyContacts = signal([

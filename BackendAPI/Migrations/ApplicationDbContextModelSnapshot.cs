@@ -287,6 +287,10 @@ namespace BackendAPI.Migrations
                     b.Property<bool>("IsVerified")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Languages")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Qualifications")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

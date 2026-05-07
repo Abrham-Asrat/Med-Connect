@@ -2,9 +2,11 @@
   <div class="d-flex chat-container shadow-lg bg-white rounded-4 overflow-hidden">
 
     <!-- Conversation List Sidebar -->
-    <div class="conversation-list border-end bg-white d-flex flex-column">
+    <div class="conversation-list border-end bg-white d-flex flex-column" [class.collapsed]="!showLeftSidebar()">
       <div class="p-3 border-bottom d-flex align-items-center justify-content-between">
-        <h5 class="text-primary mb-0"><i class="bi bi-chat-dots-fill me-2"></i>Messages</h5>
+        <h5 class="text-primary mb-0 user-select-none transition-all hover-opacity" style="cursor: pointer;"
+          (click)="toggleLeftSidebar()"><i class="bi bi-chat-dots-fill me-2"></i><span
+            class="sidebar-title">Messages</span></h5>
         @if (isLoading()) {
         <div class="spinner-border spinner-border-sm text-primary"></div>
         }
@@ -72,7 +74,8 @@
       @if (activeConv()) {
 
       <!-- Chat Header -->
-      <div class="bg-white border-bottom p-3 d-flex align-items-center gap-3">
+      <div class="bg-white border-bottom p-3 d-flex align-items-center gap-3" style="cursor: pointer;"
+        (click)="toggleProfile()">
         <div class="position-relative flex-shrink-0">
           @if (activeConv()?.avatarUrl) {
           <img [src]="activeConv()?.avatarUrl" [alt]="activeConv()?.name" class="rounded-circle object-fit-cover"
@@ -85,7 +88,7 @@
           }
           @if (activeConv()?.online) { <span class="online-dot"></span> }
         </div>
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 header-info">
           <h6 class="mb-0 fw-bold">{{ activeConv()?.name }}</h6>
           <small class="text-muted">
             @if (activeConv()?.role) { {{ activeConv()?.role }} · }
@@ -93,7 +96,7 @@
             <span>Offline</span> }
           </small>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 ms-auto" (click)="$event.stopPropagation()">
           <button class="btn btn-sm btn-light rounded-circle" title="Call" style="width:38px;height:38px">
             <i class="bi bi-telephone"></i>
           </button>
@@ -233,6 +236,86 @@
         </div>
       </div>
       }
+    </div>
+
+    <!-- Profile Sidebar -->
+    <div class="profile-sidebar bg-white d-flex flex-column shadow-sm overflow-hidden"
+      [class.open]="showProfile() && activeConv()">
+      <div class="profile-sidebar-content">
+        <!-- Premium Default Data Profile View -->
+        <div class="p-4 border-bottom text-center position-relative">
+          <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-3 rounded-circle"
+            style="width:30px;height:30px;padding:0" (click)="toggleProfile()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+
+          <div class="mb-3 mt-4">
+            @if (activeConv()?.avatarUrl) {
+            <img [src]="activeConv()?.avatarUrl" class="rounded-circle object-fit-cover shadow-sm"
+              style="width:90px;height:90px;border:3px solid #F4FBF6;">
+            } @else {
+            <div
+              class="rounded-circle mx-auto d-flex align-items-center justify-content-center fw-bold text-primary shadow-sm"
+              style="width:90px;height:90px;font-size:28px;background:rgba(7,137,48,0.1); border:3px solid #F4FBF6;">
+              {{ activeConv()?.avatar }}
+            </div>
+            }
+          </div>
+          <h5 class="fw-bold mb-1 text-truncate">{{ activeConv()?.name }}</h5>
+          <p class="text-muted small mb-0">{{ activeConv()?.role || 'Patient' }}</p>
+
+          <div class="d-flex justify-content-center gap-3 mt-3">
+            <button class="btn btn-primary rounded-circle shadow-sm" style="width:40px;height:40px"
+              title="Audio Call"><i class="bi bi-telephone-fill"></i></button>
+            <button class="btn btn-primary-subtle rounded-circle shadow-sm text-primary"
+              style="width:40px;height:40px;background:rgba(7,137,48,0.1)" title="Video Call"><i
+                class="bi bi-camera-video-fill"></i></button>
+          </div>
+        </div>
+
+        <div class="p-4 flex-grow-1 overflow-auto">
+          <h6 class="fw-bold mb-3 text-muted" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px">
+            About</h6>
+          <div class="card border-0 bg-light rounded-4 p-3 mb-4">
+            <p class="small text-dark mb-0" style="line-height:1.5">Detailed medical history and ongoing treatment plans
+              are maintained confidentially. Active on Med-Connect for 2 years.</p>
+          </div>
+
+          <h6 class="fw-bold mb-3 text-muted" style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px">
+            Information</h6>
+          <div class="d-flex flex-column gap-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="bg-white rounded-circle d-flex align-items-center justify-content-center border text-primary"
+                style="width:36px;height:36px;"><i class="bi bi-envelope"></i></div>
+              <div class="min-width-0">
+                <small class="text-muted d-block" style="font-size:0.7rem">Email</small>
+                <span class="small fw-semibold text-truncate d-block">contact&#64;med-connect.com</span>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              <div class="bg-white rounded-circle d-flex align-items-center justify-content-center border text-primary"
+                style="width:36px;height:36px;"><i class="bi bi-geo-alt"></i></div>
+              <div>
+                <small class="text-muted d-block" style="font-size:0.7rem">Location</small>
+                <span class="small fw-semibold">Addis Ababa, Ethiopia</span>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              <div class="bg-white rounded-circle d-flex align-items-center justify-content-center border text-primary"
+                style="width:36px;height:36px;"><i class="bi bi-clock-history"></i></div>
+              <div>
+                <small class="text-muted d-block" style="font-size:0.7rem">Last active</small>
+                <span class="small fw-semibold">{{ activeConv()?.time }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-top">
+            <button class="btn btn-outline-danger w-100 rounded-pill py-2 small fw-semibold"><i
+                class="bi bi-slash-circle me-2"></i>Block User</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -45,6 +45,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   activeConversation = signal<string | null>(null);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  showProfile = signal(false);
+  showLeftSidebar = signal(true);
 
   conversations = signal<Conversation[]>([]);
   messages = signal<Message[]>([]);
@@ -142,7 +144,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   selectConversation(id: string): void {
     this.activeConversation.set(id);
+    this.showProfile.set(false);
     this.loadMessages(id);
+  }
+
+  toggleProfile(): void {
+    this.showProfile.update(v => !v);
+  }
+
+  toggleLeftSidebar(): void {
+    this.showLeftSidebar.update(v => !v);
   }
 
   loadMessages(conversationId: string): void {

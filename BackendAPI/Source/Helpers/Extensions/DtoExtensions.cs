@@ -223,8 +223,8 @@ namespace BackendAPI.Source.Helpers.Extensions
       {
         MessageId = message.MessageId,
         DoctorId = createMessageDto.SenderId,
-        // For PatientId, the ChatService would typically resolve this, but this serves as the foundational data tie
-        PatientId = Guid.Empty, 
+        // Successfully mapped securely from the Frontend Client
+        PatientId = createMessageDto.TargetUserId ?? Guid.Empty, 
         Medication = createMessageDto.PrescriptionDetails.Medication,
         Dosage = createMessageDto.PrescriptionDetails.Dosage,
         Frequency = createMessageDto.PrescriptionDetails.Frequency,

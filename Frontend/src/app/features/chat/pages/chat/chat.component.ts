@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../../../core/services/chat.service';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ReviewService } from '../../../../core/services/review.service';
 import { Subscription } from 'rxjs';
 
 interface Message {
@@ -35,6 +36,7 @@ interface Conversation {
   unread: number;
   online: boolean;
   status?: 'scheduled' | 'active' | 'follow_up' | 'closed';
+  otherUserId?: string;
 }
 
 @Component({
@@ -47,6 +49,7 @@ interface Conversation {
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private chatService = inject(ChatService);
   private authService = inject(AuthService);
+  private reviewService = inject(ReviewService);
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
@@ -72,7 +75,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!rx.medication || !rx.dosage) return;
 
     const activeConvId = this.activeConversation();
-    if (!activeConvId) return;
+    const activeConvEntity = this.activeConv();
+    if (!activeConvId || !activeConvEntity) return;
 
     // Send the structured payload via WebSocket
     this.chatService.sendMessageToHub(
@@ -87,7 +91,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         dosage: rx.dosage,
         frequency: rx.frequency,
         duration: rx.duration
-      }
+      },
+      activeConvEntity.otherUserId
     ).then(() => {
       // Logic managed by inbound socket stream
     }).catch(err => {
@@ -102,6 +107,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   updatePrescription(field: keyof ReturnType<typeof this.prescriptionModel>, value: string): void {
     this.prescriptionModel.update(m => ({ ...m, [field]: value }));
+  }
+
+  blockUser(): void {
+    const activeConvId = this.activeConversation();
+    if (!activeConvId) return;
+
+    if (confirm('Are you sure you want to permanently block this user? This will lock the consultation interface.')) {
+      this.chatService.blockConversation(activeConvId, this.userId).subscribe({
+        next: () => {
+          this.activeConversation.set(null);
+          this.showProfile.set(false);
+          this.loadConversations(); // Re-fetch to clear locked states
+          this.errorMessage.set('User blocked successfully.');
+        },
+        error: (err: any) => {
+          console.error(err);
+          this.errorMessage.set('Failed to block user.');
+        }
+      });
+    }
   }
 
   // Filter conversations
@@ -147,8 +172,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnInit(): void {
     if (!this.userId) {
-      this.errorMessage.set('User authentication missing. Running in disconnected preview mode.');
-      this.loadDummyData();
+      this.errorMessage.set('User authentication missing. Running in structurally offline mode.');
+      this.conversations.set([]);
+      this.messages.set([]);
       return;
     }
 
@@ -180,9 +206,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.loadConversations();
       });
     }).catch(err => {
-      console.warn('Backend SignalR disconnected. Falling back to local demonstration mocks.');
+      console.error('Backend SignalR fully disconnected. Real-time features offline.', err);
       this.errorMessage.set('Warning: Operating offline. Medical Hub not responding.');
-      this.loadDummyData();
     });
   }
 
@@ -204,54 +229,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     } catch (e) { /* ignore */ }
   }
 
-  loadDummyData(): void {
-    if (this.userRole === 'Doctor') {
-      this.conversations.set([
-        { id: 'pat_1', name: 'Abebe Tesfaye', role: 'Hypertension', avatar: 'AT', lastMessage: 'Thank you doctor', time: '10:30 AM', unread: 2, online: true, status: 'active' },
-        { id: 'pat_2', name: 'Meron Haile', role: 'Migraine', avatar: 'MH', lastMessage: 'Should I continue?', time: 'Yesterday', unread: 0, online: false, status: 'closed' },
-      ]);
-      if (this.conversations().length > 0) this.selectConversation(this.conversations()[0].id);
-    } else {
-      const dummyConvs: Conversation[] = [
-        {
-          id: '1',
-          name: 'Dr. Abrham Asrat',
-          role: 'Cardiologist',
-          avatar: 'A',
-          avatarUrl: 'assets/images/doctor1.jpg',
-          lastMessage: 'Your test results look great!',
-          time: '10:32 AM',
-          unread: 0,
-          online: false,
-          status: 'follow_up'
-        },
-        {
-          id: '2',
-          name: 'Dr. Sara Mohammed',
-          role: 'Dermatologist',
-          avatar: 'S',
-          lastMessage: 'Please click here to rate your experience.',
-          time: 'Yesterday',
-          unread: 0,
-          online: false,
-          status: 'closed'
-        },
-        {
-          id: '3',
-          name: 'Dr. Yonas Tadesse',
-          role: 'General Physician',
-          avatar: 'Y',
-          lastMessage: '',
-          time: '',
-          unread: 1,
-          online: true,
-          status: 'active'
-        }
-      ];
-      this.conversations.set(dummyConvs);
-      this.selectConversation('1');
-    }
-  }
+  // Dummy data fully purged as per user request to use real backend only.
 
   loadConversations(): void {
     if (!this.userId) return;
@@ -261,8 +239,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (res) => {
         const payload = res.data || res;
         if (!payload || payload.length === 0) {
-          // If the user's sql db is totally empty, fall back to our hardcoded dummy data to prevent an empty screen!
-          this.loadDummyData();
+          // DB returned empty array - explicitly set an empty state, do not load mock data
+          this.conversations.set([]);
+          this.isLoading.set(false);
           return;
         }
 
@@ -279,7 +258,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             time: c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'New',
             unread: 0, // Expand logic based on message isRead flag matching membership
             online: false,
-            status: c.status || 'active'
+            status: c.status || 'active',
+            otherUserId: otherMember?.userId
           };
         });
 
@@ -287,9 +267,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load conversations', err);
-        // Fallback gracefully instead of crashing
-        this.loadDummyData();
+        console.error('Failed to load conversations exclusively from API', err);
+        this.isLoading.set(false);
+        this.errorMessage.set('Could not load chat data. Please check connection.');
       }
     });
   }
@@ -316,16 +296,53 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!msg.rating) return;
 
     const activeConvId = this.activeConversation();
-    if (!activeConvId) return;
+    const activeConvEntity = this.activeConv();
+    if (!activeConvId || !activeConvEntity) return;
 
-    // Technically this writes to ReviewService in a real setup, but we'll drop a system receipt here 
-    this.chatService.sendMessageToHub(
-      activeConvId,
-      `Thank you! You rated your experience ${msg.rating} Stars: "${msg.reviewText || 'No comment'}"`,
-      [],
-      'system'
-    ).catch(err => console.error('Failed to issue review receipt:', err));
+    // Immediately replace the interactive review prompt with a "submitting..." badge so the user can't spam it
+    this.messages.update(msgs => msgs.map(m =>
+      m.id === msg.id ? { ...m, type: 'system', text: `Submitting your ${msg.rating}-Star review...` } : m
+    ));
 
+    // Determine IDs based on role
+    const doctorId = this.userRole === 'Doctor' ? this.userId : activeConvEntity.otherUserId;
+    const patientId = this.userRole === 'Patient' ? this.userId : activeConvEntity.otherUserId;
+
+    if (!doctorId || !patientId) return;
+
+    const reviewData = {
+      doctorId: doctorId,
+      patientId: patientId,
+      starRating: msg.rating,
+      reviewText: msg.reviewText || ''
+    };
+
+    this.reviewService.postReview(reviewData).subscribe({
+      next: () => {
+        // Drop network receipt to active chat stream via Socket
+        this.chatService.sendMessageToHub(
+          activeConvId,
+          `Thank you! You rated your experience ${msg.rating} Stars: "${msg.reviewText || 'No comment'}"`,
+          [],
+          'system'
+        ).then(() => {
+          // Remove the "submitting..." placeholder from our local array, hub broadcast will append actual receipt
+          this.messages.update(msgs => msgs.filter(m => m.id !== msg.id));
+        }).catch(() => {
+          // Fallback UI mutation if socket fails but backend SQL push succeeded
+          this.messages.update(msgs => msgs.map(m =>
+            m.id === msg.id ? { ...m, type: 'system', text: `Success: Review submitted securely.` } : m
+          ));
+        });
+      },
+      error: (err) => {
+        console.error('Review service failed', err);
+        // Inform user of failure
+        this.messages.update(msgs => msgs.map(m =>
+          m.id === msg.id ? { ...m, type: 'system', text: `Error submitting review. Please try again later.` } : m
+        ));
+      }
+    });
   }
 
   acceptAndClose(): void {

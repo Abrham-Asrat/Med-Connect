@@ -25,6 +25,8 @@ public interface IChatService
 
   Task CreateConversationMembershipsRangeAsync(List<Guid> participants, Guid conversationId);
 
+  Task BlockConversationAsync(Guid conversationId, Guid requestUserId);
+
   Task<ICollection<UserModel>> GetConversationParticipantsAsync(Guid conversationId);
 }
 }

@@ -386,6 +386,8 @@ namespace BackendAPI.Source.Helpers.Extensions
       CreatedAt = review.CreatedAt,
       UpdatedAt = review.UpdatedAt,
       IsEdited = review.HasBeenUpdated(),
+      HelpfulCount = review.HelpfulCount,
+      IsPublic = review.IsPublic,
       Doctor = review.Doctor != null ? new ReviewProfileDto
       {
         Id = review.Doctor.User?.UserId ?? Guid.Empty,
@@ -417,6 +419,8 @@ namespace BackendAPI.Source.Helpers.Extensions
       CreatedAt = review.CreatedAt,
       UpdatedAt = review.UpdatedAt,
       IsEdited = review.HasBeenUpdated(),
+      HelpfulCount = review.HelpfulCount,
+      IsPublic = review.IsPublic,
       PatientName = review.GetPatientFullName(),
       PatientProfilePicture = review.Patient?.User?.ProfilePicture ?? ""
     };

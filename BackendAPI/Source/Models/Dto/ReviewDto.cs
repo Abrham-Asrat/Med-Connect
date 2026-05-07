@@ -32,6 +32,8 @@ public record ReviewDto
   public required IProfileDto Doctor { get; set; }
   public required IProfileDto Patient { get; set; }
   public required bool IsEdited { get; set; }
+  public required int HelpfulCount { get; set; }
+  public required bool IsPublic { get; set; }
 };
 
 /// <summary>
@@ -47,6 +49,8 @@ public record ReviewSummaryDto
   public required string PatientName { get; set; }
   public required string PatientProfilePicture { get; set; }
   public required bool IsEdited { get; set; }
+  public required int HelpfulCount { get; set; }
+  public required bool IsPublic { get; set; }
 };
 
 /// <summary>

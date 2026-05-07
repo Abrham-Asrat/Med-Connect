@@ -22,7 +22,8 @@ public record CreateMessageDto(
   BackendAPI.Source.Models.Enums.MessageType Type = BackendAPI.Source.Models.Enums.MessageType.text,
   string? AudioUrl = null,
   string? AudioDuration = null,
-  CreatePrescriptionDto? PrescriptionDetails = null
+  CreatePrescriptionDto? PrescriptionDetails = null,
+  Guid? TargetUserId = null
 );
 
 public record CreatePrescriptionDto(

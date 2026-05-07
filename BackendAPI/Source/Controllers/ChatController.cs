@@ -147,4 +147,34 @@ public class ChatController(
       throw;
     }
   }
+
+  /// <summary>
+  /// Blocks an active conversation, permanently locking out interaction.
+  /// </summary>
+  /// <param name="conversationId"></param>
+  /// <param name="requestBody"></param>
+  /// <returns></returns>
+  [HttpPost("{conversationId}/block")]
+  public async Task<IActionResult> BlockConversation(
+    [FromRoute] [Required] [Guid] Guid conversationId,
+    [FromBody] [Required] BlockConversationRequestDto requestBody
+  )
+  {
+    try
+    {
+      await chatService.BlockConversationAsync(conversationId, requestBody.UserId);
+      return NoContent();
+    }
+    catch (UnauthorizedAccessException ex)
+    {
+      return Unauthorized(ex.Message);
+    }
+    catch (System.Exception ex)
+    {
+      logger.LogError(ex, "An error occurred while blocking the conversation.");
+      throw;
+    }
+  }
 }
+
+public record BlockConversationRequestDto([Required] Guid UserId);

@@ -364,5 +364,31 @@ public class ChatService(
       throw;
     }
   }
+
+  public async Task BlockConversationAsync(Guid conversationId, Guid requestUserId)
+  {
+    try
+    {
+      var membership = await appContext.ConversationMemberships
+        .FirstOrDefaultAsync(cm => cm.ConversationId == conversationId && cm.UserId == requestUserId);
+            
+      if (membership == null)
+        throw new UnauthorizedAccessException("You are not part of this conversation and cannot block it.");
+            
+      var conversation = await appContext.Conversations.FindAsync(conversationId);
+      if (conversation == null)
+        throw new KeyNotFoundException("Conversation not found.");
+
+      // We use the 'closed' lock state to permanently freeze interaction routing
+      conversation.Status = Models.Enums.AppointmentStatus.closed;
+      appContext.Conversations.Update(conversation);
+      await appContext.SaveChangesAsync();
+    }
+    catch (System.Exception ex)
+    {
+      logger.LogError(ex, "Error attempting to block conversation {id}", conversationId);
+      throw;
+    }
+  }
 }
 }

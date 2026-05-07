@@ -42,6 +42,10 @@ export class ChatService {
     return this.http.delete(`${this.apiUrl}/conversations/message/${messageId}`);
   }
 
+  blockConversation(conversationId: string, userId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/conversations/${conversationId}/block`, { userId });
+  }
+
   // ====== SIGNALR IMPLEMENTATION ====== //
 
   startConnection(): Promise<void> {
@@ -79,12 +83,13 @@ export class ChatService {
     type: string = 'text',
     audioUrl: string | null = null,
     audioDuration: string | null = null,
-    prescriptionDetails: any = null
+    prescriptionDetails: any = null,
+    targetUserId: string | null = null
   ): Promise<any> {
     if (!this.hubConnection || this.hubConnection.state !== signalR.HubConnectionState.Connected) {
       return Promise.reject('Hub connection is not active.');
     }
-    // Matches the C# method signature: SendMessage(Guid conversationId, string? messageText, List<CreateFileDto>? files, MessageType type, string? audioUrl, string? audioDuration, CreatePrescriptionDto? prescriptionDetails)
+    // Matches the C# method signature: SendMessage(Guid conversationId, string? messageText, List<CreateFileDto>? files, MessageType type, string? audioUrl, string? audioDuration, CreatePrescriptionDto? prescriptionDetails, Guid? targetUserId)
     return this.hubConnection.invoke(
       'SendMessage',
       conversationId,
@@ -93,7 +98,8 @@ export class ChatService {
       type,
       audioUrl,
       audioDuration,
-      prescriptionDetails
+      prescriptionDetails,
+      targetUserId
     );
   }
 }

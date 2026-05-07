@@ -367,12 +367,26 @@
       }
 
       } @else {
-      <div class="flex-grow-1 d-flex align-items-center justify-content-center">
-        <div class="text-center">
-          <i class="bi bi-chat-square-text text-primary" style="font-size:64px;opacity:0.2"></i>
-          <h5 class="text-muted mt-3 fw-normal">Select a conversation</h5>
-          <p class="text-muted small">Choose from your existing conversations or start a new one</p>
+      <!-- EMPTY STATE UI FOR WHEN NO CONVERSATION IS ACTIVE / SQL DB IS EMPTY -->
+      <div
+        class="flex-grow-1 h-100 d-flex flex-column align-items-center justify-content-center text-center p-5 bg-light fade-in">
+        <div
+          class="empty-state-icon bg-white shadow-sm rounded-circle d-flex align-items-center justify-content-center mb-4"
+          style="width: 100px; height: 100px;">
+          <i class="bi bi-shield-check text-primary" style="font-size: 3rem;"></i>
         </div>
+        <h4 class="fw-bold text-dark mb-2">No Active Consultations</h4>
+        <p class="text-muted" style="max-width: 400px; line-height: 1.6;">
+          {{ userRole === 'Doctor'
+          ? 'Patients will appear here once they execute an appointment payment lock.'
+          : 'Select a doctor and schedule an appointment to begin a secure consultation.' }}
+        </p>
+        @if (userRole === 'Patient') {
+        <a href="/patient/book-appointment"
+          class="btn btn-primary rounded-pill px-4 py-2 mt-3 fw-semibold shadow-sm transition-all hover-scale">
+          <i class="bi bi-calendar-plus me-2"></i> Book Appointment
+        </a>
+        }
       </div>
       }
     </div>
@@ -451,7 +465,7 @@
           </div>
 
           <div class="mt-4 pt-4 border-top">
-            <button class="btn btn-outline-danger w-100 rounded-pill py-2 small fw-semibold"><i
+            <button class="btn btn-outline-danger w-100 rounded-pill py-2 small fw-semibold" (click)="blockUser()"><i
                 class="bi bi-slash-circle me-2"></i>Block User</button>
           </div>
         </div>

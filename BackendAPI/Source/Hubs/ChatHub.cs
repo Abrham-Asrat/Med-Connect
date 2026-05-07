@@ -92,7 +92,8 @@ namespace BackendAPI.Source.Hubs
       BackendAPI.Source.Models.Enums.MessageType type = BackendAPI.Source.Models.Enums.MessageType.text,
       string? audioUrl = null,
       string? audioDuration = null,
-      CreatePrescriptionDto? prescriptionDetails = null
+      CreatePrescriptionDto? prescriptionDetails = null,
+      Guid? targetUserId = null
     )
     {
       try
@@ -122,7 +123,8 @@ namespace BackendAPI.Source.Hubs
           type, 
           audioUrl, 
           audioDuration, 
-          prescriptionDetails
+          prescriptionDetails,
+          targetUserId
         );
         var createdMessage = await _chatService.CreateMessageAsync(messagePayload);
 

@@ -104,7 +104,7 @@
       </div>
 
       <!-- Messages -->
-      <div class="flex-grow-1 overflow-auto p-4 messages-area">
+      <div class="flex-grow-1 overflow-auto p-4 messages-area" #messagesContainer>
         @for (msg of messages(); track msg.id) {
 
         @if (msg.type === 'system') {
@@ -113,10 +113,12 @@
             }}</span>
         </div>
         } @else {
-        <div class="d-flex mb-3 align-items-end gap-2" [class.justify-content-end]="msg.sender === 'me'"
-          [class.flex-row-reverse]="msg.sender === 'me'">
 
-          <!-- Avatar bubble for received messages -->
+        <!-- me = right, them = left -->
+        <div class="d-flex mb-3 align-items-end gap-2" [class.justify-content-end]="msg.sender === 'me'"
+          [class.justify-content-start]="msg.sender === 'them'">
+
+          <!-- Avatar on LEFT for received messages -->
           @if (msg.sender === 'them') {
           <div
             class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-primary flex-shrink-0"
@@ -125,10 +127,33 @@
           </div>
           }
 
-          <div class="d-flex flex-column" [class.align-items-end]="msg.sender === 'me'">
+          <!-- Bubble + timestamp column -->
+          <div class="d-flex flex-column" [class.align-items-end]="msg.sender === 'me'"
+            [class.align-items-start]="msg.sender === 'them'">
+
+            <!-- Voice Message -->
+            @if (msg.type === 'voice') {
+            <div [class.msg-sent]="msg.sender==='me'" [class.msg-received]="msg.sender==='them'"
+              class="voice-bubble d-flex align-items-center gap-2">
+              <button class="voice-play-btn"
+                (click)="$any($event.target).closest('.voice-bubble').querySelector('audio').paused ? $any($event.target).closest('.voice-bubble').querySelector('audio').play() : $any($event.target).closest('.voice-bubble').querySelector('audio').pause()">
+                <i class="bi bi-play-fill"></i>
+              </button>
+              <div class="voice-waveform">
+                @for (b of [1,2,3,4,5,6,7,8,9,10,11,12]; track b) {
+                <span [style.height]="(Math.random() * 16 + 6) + 'px'"></span>
+                }
+              </div>
+              <small class="voice-duration">{{ msg.audioDuration }}</small>
+              <audio [src]="msg.audioUrl" style="display:none"></audio>
+            </div>
+            } @else {
+            <!-- Text Message -->
             <div [class.msg-sent]="msg.sender==='me'" [class.msg-received]="msg.sender==='them'">
               {{ msg.text }}
             </div>
+            }
+
             <small class="text-muted mt-1" style="font-size:0.7rem;padding: 0 4px">
               {{ msg.time }}
               @if (msg.sender === 'me') {
@@ -155,16 +180,47 @@
         @if (errorMessage()) {
         <div class="alert alert-danger py-1 px-3 small mb-2 rounded-pill border-0">{{ errorMessage() }}</div>
         }
+        <!-- Recording Indicator Bar -->
+        @if (isRecording()) {
+        <div class="recording-bar d-flex align-items-center gap-3 mb-2 px-3 py-2 rounded-3">
+          <span class="rec-dot"></span>
+          <span class="text-danger fw-semibold small">Recording...</span>
+          <span class="fw-bold small text-dark">{{ formatTime(recordingSeconds()) }}</span>
+          <div class="voice-waveform recording-live ms-1">
+            @for (b of [1,2,3,4,5,6,7,8]; track b) { <span></span> }
+          </div>
+          <button class="btn btn-sm btn-outline-danger rounded-pill ms-auto px-3" (click)="cancelRecording()">
+            <i class="bi bi-x me-1"></i> Cancel
+          </button>
+        </div>
+        }
+
         <div class="d-flex gap-2 align-items-center">
           <button class="btn btn-light rounded-circle flex-shrink-0" style="width:40px;height:40px" title="Attach file">
             <i class="bi bi-paperclip"></i>
           </button>
           <input type="text" class="form-control" placeholder="Type a message... / መልዕክት ይጻፉ..."
-            [ngModel]="newMessage()" (ngModelChange)="newMessage.set($event)" (keydown)="onKeyPress($event)">
+            [ngModel]="newMessage()" (ngModelChange)="newMessage.set($event)" (keydown)="onKeyPress($event)"
+            [disabled]="isRecording()">
+
+          <!-- Send or Mic button -->
+          @if (newMessage().trim()) {
           <button class="btn btn-primary flex-shrink-0" style="width:42px;height:42px;border-radius:50%;padding:0"
-            (click)="sendMessage()" [disabled]="!newMessage().trim()">
+            (click)="sendMessage()">
             <i class="bi bi-send-fill"></i>
           </button>
+          } @else if (isRecording()) {
+          <button class="btn btn-danger flex-shrink-0 pulse-btn"
+            style="width:42px;height:42px;border-radius:50%;padding:0" (click)="stopRecording()"
+            title="Send voice message">
+            <i class="bi bi-stop-fill"></i>
+          </button>
+          } @else {
+          <button class="btn btn-light flex-shrink-0" style="width:42px;height:42px;border-radius:50%;padding:0"
+            (click)="startRecording()" title="Record voice message">
+            <i class="bi bi-mic-fill text-primary"></i>
+          </button>
+          }
         </div>
       </div>
 

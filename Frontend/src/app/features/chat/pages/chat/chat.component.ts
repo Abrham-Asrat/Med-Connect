@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../../../core/services/chat.service';
@@ -10,8 +10,10 @@ interface Message {
   sender: 'me' | 'them' | 'system';
   text: string;
   time: string;
-  type: 'text' | 'file' | 'system';
+  type: 'text' | 'file' | 'system' | 'voice';
   read: boolean;
+  audioUrl?: string;
+  audioDuration?: string;
 }
 
 interface Conversation {
@@ -33,9 +35,11 @@ interface Conversation {
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss']
 })
-export class ChatComponent implements OnInit, OnDestroy {
+export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private chatService = inject(ChatService);
   private authService = inject(AuthService);
+
+  @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
   newMessage = signal('');
   activeConversation = signal<string | null>(null);
@@ -48,85 +52,93 @@ export class ChatComponent implements OnInit, OnDestroy {
   userId = this.authService.currentUser()?.userId || localStorage.getItem('userId') || '';
 
   private messageSub: Subscription | undefined;
+  private shouldScroll = false;
+
+  // Expose Math to template
+  readonly Math = Math;
+
+  // Voice recording state
+  isRecording = signal(false);
+  recordingSeconds = signal(0);
+  private mediaRecorder: MediaRecorder | null = null;
+  private audioChunks: Blob[] = [];
+  private recordingTimer: any = null;
 
   ngOnInit(): void {
-    // 1. Initial Load
-    this.loadConversations();
-
-    // 2. Establish Real-time SignalR Connection
-    this.chatService.startConnection().then(() => {
-      console.log("Chat Hooked Up");
-    });
-
-    // 3. Listen for Incoming Live Messages
-    this.messageSub = this.chatService.messageReceived$.subscribe((incomingMsg: any) => {
-      // If the incoming message belongs to the current open thread, push it to UI
-      if (incomingMsg.conversationId === this.activeConversation()) {
-        this.messages.update(msgs => [...msgs, {
-          id: incomingMsg.messageId || incomingMsg.id,
-          sender: incomingMsg.senderId === this.userId ? 'me' : 'them',
-          text: incomingMsg.content || incomingMsg.text,
-          time: new Date(incomingMsg.sentAt || Date.now()).toLocaleTimeString(),
-          type: incomingMsg.messageType === 'file' ? 'file' : 'text',
-          read: incomingMsg.isRead || false
-        }]);
-      }
-
-      // Update the conversations sidebar preview text dynamically
-      this.conversations.update(convs => convs.map(c => {
-        if (c.id === incomingMsg.conversationId) {
-          return { ...c, lastMessage: incomingMsg.content, time: new Date().toLocaleTimeString() };
-        }
-        return c;
-      }));
-    });
+    // 🔌 PREVIEW MODE — disconnected from backend
+    this.loadDummyData();
   }
 
   ngOnDestroy(): void {
     if (this.messageSub) this.messageSub.unsubscribe();
-    this.chatService.stopConnection();
   }
 
-  loadConversations(): void {
-    if (!this.userId) return;
+  ngAfterViewChecked(): void {
+    if (this.shouldScroll) {
+      this.scrollToBottom();
+      this.shouldScroll = false;
+    }
+  }
 
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
+  private scrollToBottom(): void {
+    try {
+      const el = this.messagesContainer?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    } catch (e) { /* ignore */ }
+  }
 
-    this.chatService.getUserConversations(this.userId).subscribe({
-      next: (response: any) => {
-        this.isLoading.set(false);
-        const data = response?.data || response || [];
-        const convs = Array.isArray(data) ? data : [];
-
-        this.conversations.set(convs.map((c: any) => {
-          // participants is an array; pick the one that is NOT the current user
-          const participants: any[] = c.participants || [];
-          const other = participants.find((p: any) => p.userId !== this.userId) || participants[0] || {};
-          const fullName = `${other.firstName || ''} ${other.lastName || ''}`.trim() || 'User';
-          return {
-            id: c.conversationId || c.id,
-            name: fullName,
-            role: other.role || other.specialization || '',
-            avatar: this.getInitials(fullName),
-            avatarUrl: other.profilePictureUrl || other.profilePicture || null,
-            lastMessage: c.lastMessage || 'Start a conversation',
-            time: c.lastMessageTime ? new Date(c.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
-            unread: c.unreadCount || 0,
-            online: false
-          };
-        }));
-
-        if (convs.length > 0) {
-          this.selectConversation(this.conversations()[0].id);
-        }
+  loadDummyData(): void {
+    const dummyConvs: Conversation[] = [
+      {
+        id: '1',
+        name: 'Dr. Abrham Asrat',
+        role: 'Cardiologist',
+        avatar: 'DA',
+        avatarUrl: undefined,
+        lastMessage: 'Your test results look great! Keep it up.',
+        time: '10:32 AM',
+        unread: 0,
+        online: true
       },
-      error: (error: any) => {
-        this.isLoading.set(false);
-        console.error('Error loading conversations:', error);
+      {
+        id: '2',
+        name: 'Dr. Sara Mohammed',
+        role: 'General Physician',
+        avatar: 'SM',
+        avatarUrl: undefined,
+        lastMessage: 'Let me know if you feel any nausea.',
+        time: 'Yesterday',
+        unread: 2,
+        online: false
+      },
+      {
+        id: '3',
+        name: 'Dr. Yonas Tadesse',
+        role: 'Neurologist',
+        avatar: 'YT',
+        avatarUrl: undefined,
+        lastMessage: 'Please take your medication on time.',
+        time: 'Mon',
+        unread: 0,
+        online: true
+      },
+      {
+        id: '4',
+        name: 'Med-Connect Support',
+        role: 'Help Center',
+        avatar: 'MC',
+        avatarUrl: undefined,
+        lastMessage: 'How can we help you today?',
+        time: '2 days ago',
+        unread: 1,
+        online: true
       }
-    });
+    ];
+    this.conversations.set(dummyConvs);
+    this.selectConversation('1');
   }
+
+  loadConversations(): void { /* disabled in preview mode */ }
 
   selectConversation(id: string): void {
     this.activeConversation.set(id);
@@ -134,42 +146,62 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   loadMessages(conversationId: string): void {
-    this.chatService.getMessages(conversationId).subscribe({
-      next: (response: any) => {
-        const data = response?.data || response || [];
-        const msgs = Array.isArray(data) ? data : [];
-        this.messages.set(msgs.map((m: any) => ({
-          id: m.messageId || m.id,
-          sender: m.senderId === this.userId ? 'me' : 'them',
-          text: m.content || m.text,
-          time: m.sentAt ? new Date(m.sentAt).toLocaleTimeString() : '',
-          type: m.messageType === 'file' ? 'file' : 'text',
-          read: m.isRead || false
-        })));
-      },
-      error: (error: any) => {
-        console.error('Error loading messages:', error);
-        this.errorMessage.set('Failed to load thread history.');
-      }
-    });
+    const allMessages: Record<string, Message[]> = {
+      '1': [
+        { id: 'm0', sender: 'system', text: 'Today, May 7 2026', time: '', type: 'system', read: true },
+        { id: 'm1', sender: 'them', text: 'Good morning! How have you been feeling since our last visit?', time: '10:00 AM', type: 'text', read: true },
+        { id: 'm2', sender: 'me', text: 'Much better, thank you doctor! The chest pains have reduced significantly.', time: '10:05 AM', type: 'text', read: true },
+        { id: 'm3', sender: 'them', text: 'That\'s great to hear! Your ECG results from yesterday\'s scan were also very encouraging.', time: '10:10 AM', type: 'text', read: true },
+        { id: 'm4', sender: 'me', text: 'That really put my mind at ease. Should I continue with the same medication?', time: '10:20 AM', type: 'text', read: true },
+        { id: 'm5', sender: 'them', text: 'Yes, please continue Amlodipine 5mg once a day. Avoid salty foods and try to walk 30 minutes daily.', time: '10:25 AM', type: 'text', read: true },
+        { id: 'm6', sender: 'me', text: 'Understood! I will follow that strictly.', time: '10:28 AM', type: 'text', read: true },
+        { id: 'm7', sender: 'them', text: 'Your test results look great! Keep it up. See you in two weeks. 😊', time: '10:32 AM', type: 'text', read: true },
+      ],
+      '2': [
+        { id: 'm8', sender: 'system', text: 'Yesterday', time: '', type: 'system', read: true },
+        { id: 'm9', sender: 'them', text: 'I have reviewed your prescription. The antibiotic course is for 7 days.', time: '09:00 AM', type: 'text', read: true },
+        { id: 'm10', sender: 'me', text: 'Should I take it with food?', time: '09:10 AM', type: 'text', read: true },
+        { id: 'm11', sender: 'them', text: 'Yes, always take it with food to avoid stomach upset.', time: '09:15 AM', type: 'text', read: true },
+        { id: 'm12', sender: 'them', text: 'Let me know if you feel any nausea or allergic reactions.', time: '09:20 AM', type: 'text', read: false },
+      ],
+      '3': [
+        { id: 'm13', sender: 'system', text: 'Monday, May 5', time: '', type: 'system', read: true },
+        { id: 'm14', sender: 'them', text: 'Hello! I have reviewed your MRI scan. There are no major abnormalities noted.', time: '02:00 PM', type: 'text', read: true },
+        { id: 'm15', sender: 'me', text: 'Such a relief to hear! What about the occasional headaches?', time: '02:10 PM', type: 'text', read: true },
+        { id: 'm16', sender: 'them', text: 'They could be tension-related. Try to stay hydrated and reduce screen time.', time: '02:15 PM', type: 'text', read: true },
+        { id: 'm17', sender: 'them', text: 'Please take your medication on time. Book a follow-up in 4 weeks.', time: '02:30 PM', type: 'text', read: true },
+      ],
+      '4': [
+        { id: 'm18', sender: 'system', text: 'Welcome to Med-Connect!', time: '', type: 'system', read: true },
+        { id: 'm19', sender: 'them', text: 'Hi there! 👋 Welcome to Med-Connect Support.', time: '2 days ago', type: 'text', read: true },
+        { id: 'm20', sender: 'them', text: 'How can we help you today?', time: '2 days ago', type: 'text', read: false },
+      ]
+    };
+    this.messages.set(allMessages[conversationId] || []);
+    this.shouldScroll = true;
   }
 
   sendMessage(): void {
     const text = this.newMessage().trim();
-    const convId = this.activeConversation();
-    if (!text || !convId) return;
+    if (!text) return;
 
-    // Send through SignalR WebSockets (Instant, No standard HTTP Request blocking)
-    this.chatService.sendMessageToHub(convId, text, [])
-      .then(() => {
-        // We don't manually push it here anymore! 
-        // The backend Hub acknowledges creation and bounces the 'ReceiveMessage' event back to us and the other person simultaneously.
-        // Our `.subscribe()` from `ngOnInit` will naturally catch it and render it.
-        this.newMessage.set('');
-      })
-      .catch((err) => {
-        console.error("Failed to send message via SignalR:", err);
-      });
+    // Local echo — no backend
+    const newMsg: Message = {
+      id: Date.now().toString(),
+      sender: 'me',
+      text,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type: 'text',
+      read: false
+    };
+    this.messages.update(msgs => [...msgs, newMsg]);
+    this.newMessage.set('');
+    this.shouldScroll = true;
+
+    // Update sidebar preview
+    this.conversations.update(convs => convs.map(c =>
+      c.id === this.activeConversation() ? { ...c, lastMessage: text, time: 'Just now', unread: 0 } : c
+    ));
   }
 
   activeConv(): Conversation | undefined {
@@ -185,5 +217,84 @@ export class ChatComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.sendMessage();
     }
+  }
+
+  // ── Voice Recording ──────────────────────────────────────────────────────────
+
+  async startRecording(): Promise<void> {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.audioChunks = [];
+      this.mediaRecorder = new MediaRecorder(stream);
+
+      this.mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) this.audioChunks.push(e.data);
+      };
+
+      this.mediaRecorder.onstop = () => {
+        const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(blob);
+        const duration = this.formatTime(this.recordingSeconds());
+
+        const voiceMsg: Message = {
+          id: Date.now().toString(),
+          sender: 'me',
+          text: '',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          type: 'voice',
+          read: false,
+          audioUrl,
+          audioDuration: duration
+        };
+
+        this.messages.update(msgs => [...msgs, voiceMsg]);
+        this.conversations.update(convs => convs.map(c =>
+          c.id === this.activeConversation() ? { ...c, lastMessage: '🎤 Voice message', time: 'Just now' } : c
+        ));
+        this.shouldScroll = true;
+
+        // Stop all tracks to release the microphone
+        stream.getTracks().forEach(t => t.stop());
+      };
+
+      this.mediaRecorder.start();
+      this.isRecording.set(true);
+      this.recordingSeconds.set(0);
+
+      this.recordingTimer = setInterval(() => {
+        this.recordingSeconds.update(s => s + 1);
+      }, 1000);
+
+    } catch (err) {
+      console.error('Microphone access denied:', err);
+      alert('Microphone access is required to send voice messages.');
+    }
+  }
+
+  stopRecording(): void {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    }
+    clearInterval(this.recordingTimer);
+    this.isRecording.set(false);
+    this.recordingSeconds.set(0);
+  }
+
+  cancelRecording(): void {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.ondataavailable = null; // discard data
+      this.mediaRecorder.onstop = null;
+      this.mediaRecorder.stop();
+    }
+    clearInterval(this.recordingTimer);
+    this.isRecording.set(false);
+    this.recordingSeconds.set(0);
+    this.audioChunks = [];
+  }
+
+  formatTime(seconds: number): string {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   }
 }

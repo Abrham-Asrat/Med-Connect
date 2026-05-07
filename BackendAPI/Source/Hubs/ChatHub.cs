@@ -87,8 +87,12 @@ namespace BackendAPI.Source.Hubs
     /// <exception cref="FormatException"></exception>
     public async Task SendMessage(
       [Guid] Guid conversationId,
-      [MinLength(1, ErrorMessage = "Message text cannot be empty")] string? messageText = null,
-      [ValidCreateFileList] List<CreateFileDto>? files = null
+      string? messageText = null,
+      [ValidCreateFileList] List<CreateFileDto>? files = null,
+      BackendAPI.Source.Models.Enums.MessageType type = BackendAPI.Source.Models.Enums.MessageType.text,
+      string? audioUrl = null,
+      string? audioDuration = null,
+      CreatePrescriptionDto? prescriptionDetails = null
     )
     {
       try
@@ -110,7 +114,16 @@ namespace BackendAPI.Source.Hubs
           throw new HubException("Invalid user ID format — ensure you are logged in with a valid account");
         }
 
-        var messagePayload = new CreateMessageDto(conversationId, senderGuid, messageText, files);
+        var messagePayload = new CreateMessageDto(
+          conversationId, 
+          senderGuid, 
+          messageText, 
+          files, 
+          type, 
+          audioUrl, 
+          audioDuration, 
+          prescriptionDetails
+        );
         var createdMessage = await _chatService.CreateMessageAsync(messagePayload);
 
         // Get all participants in the conversation and broadcast to each

@@ -699,7 +699,7 @@ public class AppointmentService(
         .FirstOrDefaultAsync(a => 
           a.PatientId == patientId && 
           a.DoctorId == doctorId && 
-          a.Status == AppointmentStatus.completed);
+          (a.Status == AppointmentStatus.completed || a.Status == AppointmentStatus.closed));
       
       return appointment != null;
     }

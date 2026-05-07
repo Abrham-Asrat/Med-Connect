@@ -14,7 +14,7 @@ export const DOCTOR_ROUTES: Routes = [
 
       {
         path: 'chat',
-        loadComponent: () => import('../../chat/pages/chat/doctor-chat/doctor-chat.component').then(m => m.DoctorChatComponent)
+        loadComponent: () => import('../../chat/pages/chat/chat.component').then(m => m.ChatComponent)
       },
       {
         path: 'earnings',

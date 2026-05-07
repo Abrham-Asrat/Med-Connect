@@ -13,12 +13,24 @@ public class EditAppointmentDtoValidator : AbstractValidator<EditAppointmentDto>
         ea.DoctorId == null
         && ea.AppointmentDate == null
         && ea.AppointmentTime == null
-        && ea.AppointmentType == null,
+        && ea.AppointmentType == null
+        && ea.Status == null,
       () =>
       {
         RuleFor(ea => ea)
           .NotEmpty()
           .WithMessage("At least one field is required to update an appointment.");
+      }
+    );
+
+    When(
+      ea => ea.Status != null,
+      () =>
+      {
+        RuleFor(ea => ea.Status)
+          .NotEmpty()
+          .Must(s => Enum.TryParse<AppointmentStatus>(s, true, out _))
+          .WithMessage($"Status must be one of: {string.Join(", ", Enum.GetNames(typeof(AppointmentStatus)))}");
       }
     );
 

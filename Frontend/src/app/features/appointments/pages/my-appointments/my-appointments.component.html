@@ -70,12 +70,18 @@
           </span>
         </div>
         <div class="col-md-3 text-md-end mt-2 mt-md-0">
-          @if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
-          <button class="btn btn-outline-primary btn-sm me-1">Reschedule / አስተካክል</button>
-          <button class="btn btn-outline-danger btn-sm">Cancel / ሰርዝ</button>
+          @if (apt.status === 'scheduled') {
+          <button class="btn btn-outline-primary btn-sm me-1">Reschedule</button>
+          <button class="btn btn-outline-danger btn-sm me-1">Cancel</button>
+          <a routerLink="/patient/chat" class="btn btn-primary btn-sm">Chat <i class="bi bi-chat"></i></a>
           }
-          @if (apt.status === 'Completed') {
-          <button class="btn btn-outline-primary btn-sm">Review / ይገምግሙ</button>
+          @if (apt.status === 'active' || apt.status === 'follow_up') {
+          <a routerLink="/patient/chat" class="btn btn-primary btn-sm px-3">
+            <i class="bi bi-chat-dots-fill me-1"></i> Open Chat
+          </a>
+          }
+          @if (apt.status === 'closed') {
+          <a routerLink="/patient/chat" class="btn btn-outline-primary btn-sm">Review <i class="bi bi-star"></i></a>
           }
         </div>
       </div>

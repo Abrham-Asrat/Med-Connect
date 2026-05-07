@@ -595,7 +595,19 @@ namespace BackendAPI.Source.Helpers.Extensions
       message.MessageId,
       message.SenderId,
       message.MessageText,
-      files != null ? files.Select(f => f.ToFileDto()).ToList() : []
+      files != null ? files.Select(f => f.ToFileDto()).ToList() : [],
+      message.Type,
+      message.IsRead,
+      message.AudioUrl,
+      message.AudioDuration,
+      message.PrescriptionDetails != null ? new PrescriptionDto(
+        message.PrescriptionDetails.PrescriptionId,
+        message.PrescriptionDetails.Medication,
+        message.PrescriptionDetails.Dosage,
+        message.PrescriptionDetails.Frequency,
+        message.PrescriptionDetails.Duration
+      ) : null,
+      message.CreatedAt
     );
   }
 

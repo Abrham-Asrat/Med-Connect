@@ -8,6 +8,14 @@ public class Message : BaseEntity
 {
   public Guid MessageId { get; set; } = Guid.NewGuid(); // <<PK>>
   public string? MessageText { get; set; }
+  
+  public MessageType Type { get; set; } = MessageType.text;
+  public bool IsRead { get; set; } = false;
+
+  // Voice Note Payload Support
+  public string? AudioUrl { get; set; }
+  public string? AudioDuration { get; set; }
+
   public virtual ICollection<FileModel>? Files { get; set; } = new HashSet<FileModel>();
 
   public Guid SenderId { get; set; }
@@ -15,4 +23,7 @@ public class Message : BaseEntity
 
   public Guid ConversationId { get; set; }
   public virtual Conversation? Conversation { get; set; }
+
+  // Virtual relation to Official Pharmacological Prescriptions issued within this message bubble
+  public virtual PrescriptionModel? PrescriptionDetails { get; set; }
 }

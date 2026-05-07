@@ -140,8 +140,15 @@
                 appointmentType() }}</span></div>
           </div>
 
-          <button class="btn btn-primary w-100 rounded-pill py-3 fw-bold" (click)="goToDashboard()">Back to
-            Dashboard</button>
+          <div class="d-flex flex-column gap-2">
+            <button class="btn btn-primary w-100 rounded-pill py-3 fw-bold" (click)="goToDashboard()">Back to
+              Dashboard</button>
+            @if (appointmentType() === 'Virtual') {
+            <a routerLink="/patient/chat" class="btn btn-outline-primary w-100 rounded-pill py-3 fw-bold">
+              <i class="bi bi-chat-dots-fill me-2"></i> Go to Chat Room
+            </a>
+            }
+          </div>
 
         </div>
         }

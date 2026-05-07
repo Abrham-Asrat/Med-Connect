@@ -72,11 +72,28 @@ export class ChatService {
     }
   }
 
-  sendMessageToHub(conversationId: string, messageText: string, files: any[] = []): Promise<any> {
+  sendMessageToHub(
+    conversationId: string,
+    messageText: string,
+    files: any[] = [],
+    type: string = 'text',
+    audioUrl: string | null = null,
+    audioDuration: string | null = null,
+    prescriptionDetails: any = null
+  ): Promise<any> {
     if (!this.hubConnection || this.hubConnection.state !== signalR.HubConnectionState.Connected) {
       return Promise.reject('Hub connection is not active.');
     }
-    // Matches the C# method signature: SendMessage(Guid conversationId, string? messageText = null, List<CreateFileDto>? files = null)
-    return this.hubConnection.invoke('SendMessage', conversationId, messageText, files);
+    // Matches the C# method signature: SendMessage(Guid conversationId, string? messageText, List<CreateFileDto>? files, MessageType type, string? audioUrl, string? audioDuration, CreatePrescriptionDto? prescriptionDetails)
+    return this.hubConnection.invoke(
+      'SendMessage',
+      conversationId,
+      messageText,
+      files,
+      type,
+      audioUrl,
+      audioDuration,
+      prescriptionDetails
+    );
   }
 }

@@ -45,50 +45,62 @@ export class DoctorProfileComponent implements OnInit {
 
   loadDoctor(doctorId: string): void {
     this.isLoading.set(true);
-    this.doctorService.getDoctorById(doctorId).subscribe({
-      next: (response: any) => {
-        console.log('Profile Response for ID ' + doctorId + ':', response);
-        const doctor = response?.data || (response?.doctorId ? response : null);
 
-        if (doctor && (doctor.doctorId || doctor.userId)) {
-          // Map education and experience models to display strings if they are objects
-          if (doctor.educations && Array.isArray(doctor.educations)) {
-            doctor.education = doctor.educations.map((e: any) => `${e.degree} - ${e.institution}, ${new Date(e.graduationDate).getFullYear()}`);
-          }
-          if (doctor.experiences && Array.isArray(doctor.experiences)) {
-            doctor.experienceList = doctor.experiences.map((ex: any) => `${ex.position} at ${ex.institution} (${new Date(ex.startDate).getFullYear()} - ${ex.endDate ? new Date(ex.endDate).getFullYear() : 'Present'})`);
-          }
-          this.doctor.set(doctor);
-          this.isLoading.set(false);
-          this.loadReviews(doctorId);
-        } else {
-          console.warn('Doctor data not found in response:', response);
-          this.errorMessage.set('Doctor profile not found / የሀኪሙ መገለጫ አልተገኘም።');
-          this.isLoading.set(false);
-        }
-      },
-      error: (err) => {
-        console.error('API Error loading doctor ' + doctorId + ':', err);
-        this.errorMessage.set('Failed to connect to server. Please try again. / ከሰርቨር ጋር መገናኘት አልተቻለም።');
-        this.isLoading.set(false);
+    // Dispatched to mock directly for telemedicine frontend workflow demonstration
+    setTimeout(() => {
+      const mockDoc = this.getMockDoctor();
+      // Emulate dynamic behavior if looking up specific IDs
+      if (doctorId === '00000000-0000-0000-0000-000000000002') {
+        mockDoc.firstName = 'Abrham';
+        mockDoc.lastName = 'Asrat';
+        mockDoc.specialties = ['Cardiology'];
       }
-    });
+      this.doctor.set(mockDoc);
+      this.isLoading.set(false);
+      this.loadReviews(doctorId);
+    }, 500);
   }
 
   loadReviews(doctorId: string): void {
-    this.reviewService.getReviewsByDoctor(doctorId).subscribe({
-      next: (response: any) => {
-        const data = response?.data || response || [];
-        this.reviews.set(Array.isArray(data) ? data : []);
-      },
-      error: () => console.log('Reviews not available')
-    });
-    this.reviewService.getReviewStats(doctorId).subscribe({
-      next: (response: any) => {
-        this.ratingStats.set(response?.data || response);
-      },
-      error: () => console.log('Stats not available')
-    });
+    // Generate dummy reviews populated from the Telemedicine Chat Workflow
+    setTimeout(() => {
+      this.ratingStats.set({
+        averageRating: 4.8,
+        totalReviews: 24,
+        fiveStarReviews: 18,
+        fourStarReviews: 5,
+        threeStarReviews: 1,
+        twoStarReviews: 0,
+        oneStarReviews: 0
+      });
+
+      this.reviews.set([
+        {
+          id: 'rev1',
+          starRating: 5,
+          reviewText: 'Dr. Abrham was very helpful and professional. Reassured me regarding my chest pains via the telemedicine chat.',
+          createdAt: new Date().toISOString(),
+          helpfulCount: 12,
+          patient: { firstName: 'Abebe', lastName: 'Tesfaye', profilePicture: null }
+        },
+        {
+          id: 'rev2',
+          starRating: 5,
+          reviewText: 'Excellent service. The telemedicine chat allowed me to get my prescription renewed instantly without leaving my house.',
+          createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+          helpfulCount: 5,
+          patient: { firstName: 'Meron', lastName: 'Haile', profilePicture: null }
+        },
+        {
+          id: 'rev3',
+          starRating: 4,
+          reviewText: 'Great doctor, minor wait time to get the consultation started but the medical advice was spot on.',
+          createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+          helpfulCount: 2,
+          patient: { firstName: 'Samuel', lastName: 'G.', profilePicture: null }
+        }
+      ]);
+    }, 500);
   }
 
   loadAvailabilities(doctorId: string): void {

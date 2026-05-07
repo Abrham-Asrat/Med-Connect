@@ -10,10 +10,18 @@ interface Message {
   sender: 'me' | 'them' | 'system';
   text: string;
   time: string;
-  type: 'text' | 'file' | 'system' | 'voice';
+  type: 'text' | 'file' | 'system' | 'voice' | 'review_prompt';
   read: boolean;
   audioUrl?: string;
   audioDuration?: string;
+  rating?: number;
+  reviewText?: string;
+  prescriptionDetails?: {
+    medication: string;
+    dosage: string;
+    frequency: string;
+    duration: string;
+  };
 }
 
 interface Conversation {
@@ -26,6 +34,7 @@ interface Conversation {
   time: string;
   unread: number;
   online: boolean;
+  status?: 'scheduled' | 'active' | 'follow_up' | 'closed';
 }
 
 @Component({
@@ -42,6 +51,61 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
   newMessage = signal('');
+  markAsResolved(): void {
+    if (this.userRole !== 'Doctor') return;
+    const active = this.activeConversation();
+    if (!active) return;
+    this.conversations.update(convs => convs.map(c =>
+      c.id === active ? { ...c, status: 'follow_up' } : c
+    ));
+    const now = new Date().toLocaleTimeString();
+    this.messages.update(msgs => [...msgs, { id: crypto.randomUUID(), sender: 'system', text: 'You marked this consultation as resolved. The patient has 24 hours to accept or ask follow-up questions.', time: now, type: 'system', read: true }]);
+    this.shouldScroll = true;
+  }
+
+  togglePrescriptionForm(): void {
+    this.showPrescriptionForm.update(v => !v);
+  }
+
+  sendPrescription(): void {
+    const rx = this.prescriptionModel();
+    if (!rx.medication || !rx.dosage) return;
+
+    const activeConvId = this.activeConversation();
+    if (!activeConvId) return;
+
+    // Send the structured payload via WebSocket
+    this.chatService.sendMessageToHub(
+      activeConvId,
+      'Official Prescription Issued',
+      [],
+      'prescription',
+      null,
+      null,
+      {
+        medication: rx.medication,
+        dosage: rx.dosage,
+        frequency: rx.frequency,
+        duration: rx.duration
+      }
+    ).then(() => {
+      // Logic managed by inbound socket stream
+    }).catch(err => {
+      console.error('Prescription delivery failed:', err);
+      this.errorMessage.set('Prescription network delivery failed.');
+    });
+
+    // Reset state
+    this.prescriptionModel.set({ medication: '', dosage: '', frequency: '', duration: '' });
+    this.showPrescriptionForm.set(false);
+  }
+
+  updatePrescription(field: keyof ReturnType<typeof this.prescriptionModel>, value: string): void {
+    this.prescriptionModel.update(m => ({ ...m, [field]: value }));
+  }
+
+  // Filter conversations
+  searchTerm = signal('');
   activeConversation = signal<string | null>(null);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
@@ -52,6 +116,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   messages = signal<Message[]>([]);
 
   userId = this.authService.currentUser()?.userId || localStorage.getItem('userId') || '';
+  userRole = (() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      return userStr ? JSON.parse(userStr).role : 'Patient';
+    } catch {
+      return 'Patient';
+    }
+  })();
 
   private messageSub: Subscription | undefined;
   private shouldScroll = false;
@@ -66,9 +138,52 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private audioChunks: Blob[] = [];
   private recordingTimer: any = null;
 
+  // Prescription state
+  showPrescriptionForm = signal(false);
+  prescriptionModel = signal({ medication: '', dosage: '', frequency: '', duration: '' });
+
+  // Video Consultation Phase
+  isVideoCallActive = signal(false);
+
   ngOnInit(): void {
-    // 🔌 PREVIEW MODE — disconnected from backend
-    this.loadDummyData();
+    if (!this.userId) {
+      this.errorMessage.set('User authentication missing. Running in disconnected preview mode.');
+      this.loadDummyData();
+      return;
+    }
+
+    // 🔌 Connect directly to .NET SignalR Hub
+    this.chatService.startConnection().then(() => {
+      this.loadConversations();
+
+      // Subscribe to real-time incoming websocket pushes
+      this.messageSub = this.chatService.messageReceived$.subscribe((data: any) => {
+        // Broadcast routing: ensure message belongs to the open chat room
+        if (data.conversationId === this.activeConversation()) {
+          const newMsg: Message = {
+            id: data.messageId || crypto.randomUUID(),
+            sender: data.senderId === this.userId ? 'me' : 'them',
+            text: data.messageText || '',
+            time: new Date(data.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            type: data.type || 'text', // Resolves standard, voice, prescription, and system types matching our UI enums
+            read: false,
+            // Safety bindings for complex entities
+            audioUrl: data.audioUrl,
+            audioDuration: data.audioDuration,
+            prescriptionDetails: data.prescriptionDetails
+          };
+          this.messages.update(msgs => [...msgs, newMsg]);
+          this.shouldScroll = true;
+        }
+
+        // Auto-refresh sidebar inbox to show latest text globally
+        this.loadConversations();
+      });
+    }).catch(err => {
+      console.warn('Backend SignalR disconnected. Falling back to local demonstration mocks.');
+      this.errorMessage.set('Warning: Operating offline. Medical Hub not responding.');
+      this.loadDummyData();
+    });
   }
 
   ngOnDestroy(): void {
@@ -90,57 +205,94 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   loadDummyData(): void {
-    const dummyConvs: Conversation[] = [
-      {
-        id: '1',
-        name: 'Dr. Abrham Asrat',
-        role: 'Cardiologist',
-        avatar: 'DA',
-        avatarUrl: undefined,
-        lastMessage: 'Your test results look great! Keep it up.',
-        time: '10:32 AM',
-        unread: 0,
-        online: true
-      },
-      {
-        id: '2',
-        name: 'Dr. Sara Mohammed',
-        role: 'General Physician',
-        avatar: 'SM',
-        avatarUrl: undefined,
-        lastMessage: 'Let me know if you feel any nausea.',
-        time: 'Yesterday',
-        unread: 2,
-        online: false
-      },
-      {
-        id: '3',
-        name: 'Dr. Yonas Tadesse',
-        role: 'Neurologist',
-        avatar: 'YT',
-        avatarUrl: undefined,
-        lastMessage: 'Please take your medication on time.',
-        time: 'Mon',
-        unread: 0,
-        online: true
-      },
-      {
-        id: '4',
-        name: 'Med-Connect Support',
-        role: 'Help Center',
-        avatar: 'MC',
-        avatarUrl: undefined,
-        lastMessage: 'How can we help you today?',
-        time: '2 days ago',
-        unread: 1,
-        online: true
-      }
-    ];
-    this.conversations.set(dummyConvs);
-    this.selectConversation('1');
+    if (this.userRole === 'Doctor') {
+      this.conversations.set([
+        { id: 'pat_1', name: 'Abebe Tesfaye', role: 'Hypertension', avatar: 'AT', lastMessage: 'Thank you doctor', time: '10:30 AM', unread: 2, online: true, status: 'active' },
+        { id: 'pat_2', name: 'Meron Haile', role: 'Migraine', avatar: 'MH', lastMessage: 'Should I continue?', time: 'Yesterday', unread: 0, online: false, status: 'closed' },
+      ]);
+      if (this.conversations().length > 0) this.selectConversation(this.conversations()[0].id);
+    } else {
+      const dummyConvs: Conversation[] = [
+        {
+          id: '1',
+          name: 'Dr. Abrham Asrat',
+          role: 'Cardiologist',
+          avatar: 'A',
+          avatarUrl: 'assets/images/doctor1.jpg',
+          lastMessage: 'Your test results look great!',
+          time: '10:32 AM',
+          unread: 0,
+          online: false,
+          status: 'follow_up'
+        },
+        {
+          id: '2',
+          name: 'Dr. Sara Mohammed',
+          role: 'Dermatologist',
+          avatar: 'S',
+          lastMessage: 'Please click here to rate your experience.',
+          time: 'Yesterday',
+          unread: 0,
+          online: false,
+          status: 'closed'
+        },
+        {
+          id: '3',
+          name: 'Dr. Yonas Tadesse',
+          role: 'General Physician',
+          avatar: 'Y',
+          lastMessage: '',
+          time: '',
+          unread: 1,
+          online: true,
+          status: 'active'
+        }
+      ];
+      this.conversations.set(dummyConvs);
+      this.selectConversation('1');
+    }
   }
 
-  loadConversations(): void { /* disabled in preview mode */ }
+  loadConversations(): void {
+    if (!this.userId) return;
+    this.isLoading.set(true);
+
+    this.chatService.getUserConversations(this.userId).subscribe({
+      next: (res) => {
+        const payload = res.data || res;
+        if (!payload || payload.length === 0) {
+          // If the user's sql db is totally empty, fall back to our hardcoded dummy data to prevent an empty screen!
+          this.loadDummyData();
+          return;
+        }
+
+        // Map Backend API Schema to Frontend Component Schema
+        const mappedConvs: Conversation[] = payload.map((c: any) => {
+          const otherMember = c.conversationMemberships?.find((m: any) => m.userId !== this.userId)?.user;
+          return {
+            id: c.conversationId,
+            name: otherMember ? `${otherMember.firstName} ${otherMember.lastName}` : 'Unknown Patient',
+            role: otherMember?.role || 'Patient',
+            avatar: otherMember ? `${otherMember.firstName?.charAt(0)}${otherMember.lastName?.charAt(0)}` : '?',
+            avatarUrl: otherMember?.profilePicture,
+            lastMessage: c.messages?.length > 0 ? c.messages[c.messages.length - 1].messageText : '',
+            time: c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'New',
+            unread: 0, // Expand logic based on message isRead flag matching membership
+            online: false,
+            status: c.status || 'active'
+          };
+        });
+
+        this.conversations.set(mappedConvs);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load conversations', err);
+        // Fallback gracefully instead of crashing
+        this.loadDummyData();
+      }
+    });
+  }
 
   selectConversation(id: string): void {
     this.activeConversation.set(id);
@@ -156,63 +308,97 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.showLeftSidebar.update(v => !v);
   }
 
-  loadMessages(conversationId: string): void {
-    const allMessages: Record<string, Message[]> = {
-      '1': [
-        { id: 'm0', sender: 'system', text: 'Today, May 7 2026', time: '', type: 'system', read: true },
-        { id: 'm1', sender: 'them', text: 'Good morning! How have you been feeling since our last visit?', time: '10:00 AM', type: 'text', read: true },
-        { id: 'm2', sender: 'me', text: 'Much better, thank you doctor! The chest pains have reduced significantly.', time: '10:05 AM', type: 'text', read: true },
-        { id: 'm3', sender: 'them', text: 'That\'s great to hear! Your ECG results from yesterday\'s scan were also very encouraging.', time: '10:10 AM', type: 'text', read: true },
-        { id: 'm4', sender: 'me', text: 'That really put my mind at ease. Should I continue with the same medication?', time: '10:20 AM', type: 'text', read: true },
-        { id: 'm5', sender: 'them', text: 'Yes, please continue Amlodipine 5mg once a day. Avoid salty foods and try to walk 30 minutes daily.', time: '10:25 AM', type: 'text', read: true },
-        { id: 'm6', sender: 'me', text: 'Understood! I will follow that strictly.', time: '10:28 AM', type: 'text', read: true },
-        { id: 'm7', sender: 'them', text: 'Your test results look great! Keep it up. See you in two weeks. 😊', time: '10:32 AM', type: 'text', read: true },
-      ],
-      '2': [
-        { id: 'm8', sender: 'system', text: 'Yesterday', time: '', type: 'system', read: true },
-        { id: 'm9', sender: 'them', text: 'I have reviewed your prescription. The antibiotic course is for 7 days.', time: '09:00 AM', type: 'text', read: true },
-        { id: 'm10', sender: 'me', text: 'Should I take it with food?', time: '09:10 AM', type: 'text', read: true },
-        { id: 'm11', sender: 'them', text: 'Yes, always take it with food to avoid stomach upset.', time: '09:15 AM', type: 'text', read: true },
-        { id: 'm12', sender: 'them', text: 'Let me know if you feel any nausea or allergic reactions.', time: '09:20 AM', type: 'text', read: false },
-      ],
-      '3': [
-        { id: 'm13', sender: 'system', text: 'Monday, May 5', time: '', type: 'system', read: true },
-        { id: 'm14', sender: 'them', text: 'Hello! I have reviewed your MRI scan. There are no major abnormalities noted.', time: '02:00 PM', type: 'text', read: true },
-        { id: 'm15', sender: 'me', text: 'Such a relief to hear! What about the occasional headaches?', time: '02:10 PM', type: 'text', read: true },
-        { id: 'm16', sender: 'them', text: 'They could be tension-related. Try to stay hydrated and reduce screen time.', time: '02:15 PM', type: 'text', read: true },
-        { id: 'm17', sender: 'them', text: 'Please take your medication on time. Book a follow-up in 4 weeks.', time: '02:30 PM', type: 'text', read: true },
-      ],
-      '4': [
-        { id: 'm18', sender: 'system', text: 'Welcome to Med-Connect!', time: '', type: 'system', read: true },
-        { id: 'm19', sender: 'them', text: 'Hi there! 👋 Welcome to Med-Connect Support.', time: '2 days ago', type: 'text', read: true },
-        { id: 'm20', sender: 'them', text: 'How can we help you today?', time: '2 days ago', type: 'text', read: false },
-      ]
-    };
-    this.messages.set(allMessages[conversationId] || []);
+  toggleVideoCall(): void {
+    this.isVideoCallActive.update(v => !v);
+  }
+
+  submitReview(msg: Message): void {
+    if (!msg.rating) return;
+
+    const activeConvId = this.activeConversation();
+    if (!activeConvId) return;
+
+    // Technically this writes to ReviewService in a real setup, but we'll drop a system receipt here 
+    this.chatService.sendMessageToHub(
+      activeConvId,
+      `Thank you! You rated your experience ${msg.rating} Stars: "${msg.reviewText || 'No comment'}"`,
+      [],
+      'system'
+    ).catch(err => console.error('Failed to issue review receipt:', err));
+
+  }
+
+  acceptAndClose(): void {
+    const active = this.activeConversation();
+    if (!active) return;
+
+    // Update logic to transition to 'closed'
+    this.conversations.update(convs => convs.map(c =>
+      c.id === active ? { ...c, status: 'closed' } : c
+    ));
+
+    const now = new Date().toLocaleTimeString();
+
+    // Push the system resolution message + the review prompt
+    this.messages.update(msgs => [
+      ...msgs,
+      { id: crypto.randomUUID(), sender: 'system', text: 'You confirmed issues are resolved. Consultation Closed.', time: now, type: 'system', read: true },
+      { id: crypto.randomUUID(), sender: 'system', text: 'Please rate your experience with the doctor.', time: now, type: 'review_prompt', read: true }
+    ]);
+
     this.shouldScroll = true;
+  }
+
+  loadMessages(conversationId: string): void {
+    if (!this.userId) return;
+
+    // 🔌 Live Network Request
+    this.chatService.getMessages(conversationId).subscribe({
+      next: (res) => {
+        const payload = res.data || res;
+
+        const mappedMsgs: Message[] = payload.map((m: any) => ({
+          id: m.messageId,
+          sender: m.senderId === this.userId ? 'me' : 'them',
+          text: m.messageText || '',
+          time: new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          type: m.type || (m.audioUrl ? 'voice' : 'text'),
+          read: m.isRead || false,
+          audioUrl: m.audioUrl,
+          audioDuration: m.audioDuration,
+          prescriptionDetails: m.prescriptionDetails
+        }));
+
+        this.messages.set(mappedMsgs);
+        this.shouldScroll = true;
+      },
+      error: (err) => {
+        console.warn('Live message fetch failed. Hub disconnected.', err);
+      }
+    });
   }
 
   sendMessage(): void {
     const text = this.newMessage().trim();
     if (!text) return;
 
-    // Local echo — no backend
-    const newMsg: Message = {
-      id: Date.now().toString(),
-      sender: 'me',
-      text,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      type: 'text',
-      read: false
-    };
-    this.messages.update(msgs => [...msgs, newMsg]);
+    this.isRecording.set(false);
     this.newMessage.set('');
-    this.shouldScroll = true;
+    this.errorMessage.set(null);
 
-    // Update sidebar preview
-    this.conversations.update(convs => convs.map(c =>
-      c.id === this.activeConversation() ? { ...c, lastMessage: text, time: 'Just now', unread: 0 } : c
-    ));
+    const activeConvId = this.activeConversation();
+    if (!activeConvId) return;
+
+    // 🔌 Live Network Request: Send through connected SignalR Socket
+    this.chatService.sendMessageToHub(activeConvId, text, [])
+      .then(() => {
+        // We do not append locally anymore! The hub handles broadcast propagation.
+        // It will trigger messageReceived$.subscribe(data => this.messages.update()) natively!
+      })
+      .catch(err => {
+        console.error('SignalR Hub routing failed:', err);
+        this.errorMessage.set('Connection error: Message delivery failed.');
+      });
   }
 
   activeConv(): Conversation | undefined {

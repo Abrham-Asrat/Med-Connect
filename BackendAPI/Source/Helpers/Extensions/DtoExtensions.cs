@@ -207,12 +207,32 @@ namespace BackendAPI.Source.Helpers.Extensions
   
   public static Message ToMessage(this CreateMessageDto createMessageDto , Guid conversationId)
   {
-    return new Message
+    var message = new Message
     {
       MessageText = createMessageDto.MessageText,
       SenderId = createMessageDto.SenderId,
-      ConversationId = createMessageDto.ConversationId
+      ConversationId = createMessageDto.ConversationId,
+      Type = createMessageDto.Type,
+      AudioUrl = createMessageDto.AudioUrl,
+      AudioDuration = createMessageDto.AudioDuration
     };
+
+    if (createMessageDto.PrescriptionDetails != null)
+    {
+      message.PrescriptionDetails = new PrescriptionModel
+      {
+        MessageId = message.MessageId,
+        DoctorId = createMessageDto.SenderId,
+        // For PatientId, the ChatService would typically resolve this, but this serves as the foundational data tie
+        PatientId = Guid.Empty, 
+        Medication = createMessageDto.PrescriptionDetails.Medication,
+        Dosage = createMessageDto.PrescriptionDetails.Dosage,
+        Frequency = createMessageDto.PrescriptionDetails.Frequency,
+        Duration = createMessageDto.PrescriptionDetails.Duration
+      };
+    }
+
+    return message;
   }
 
 

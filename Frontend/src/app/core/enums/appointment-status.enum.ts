@@ -1,9 +1,8 @@
 export enum AppointmentStatus {
-  Scheduled = 'Scheduled',
-  Pending = 'Pending',
-  Confirmed = 'Confirmed',
-  InProgress = 'InProgress',
-  Completed = 'Completed',
-  Cancelled = 'Cancelled',
-  Rescheduled = 'Rescheduled'
+  Scheduled = 'scheduled',
+  Completed = 'completed', // maps to closed usually or legacy
+  Cancelled = 'cancelled',
+  Active = 'active',
+  FollowUp = 'follow_up',
+  Closed = 'closed'
 }

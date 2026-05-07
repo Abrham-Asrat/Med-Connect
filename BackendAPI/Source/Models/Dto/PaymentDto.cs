@@ -102,3 +102,25 @@ public record CreatePaymentDto
   public required PaymentProvider PaymentProvider { get; set; }
   public required PaymentType PaymentType { get; set; }
 }
+
+/// <summary>
+/// Aggregated projection summarizing a patient's historical medical expenditure.
+/// Used directly by the Patient Payments Dashboard frontend view.
+/// </summary>
+public record PatientPaymentDashboardDto
+{
+  public decimal TotalSpent { get; set; }
+  public decimal PendingReview { get; set; }
+  public required IEnumerable<PaymentDto> Payments { get; set; }
+}
+
+/// <summary>
+/// Aggregated projection summarizing a doctor's consultation revenue.
+/// Used directly by the Doctor Earnings Dashboard frontend view.
+/// </summary>
+public record DoctorEarningsDashboardDto
+{
+  public decimal TotalEarnings { get; set; }
+  public decimal PendingPayout { get; set; }
+  public required IEnumerable<PaymentDto> Payments { get; set; }
+}

@@ -44,6 +44,16 @@ public class ReviewModel : BaseEntity
   public required string ReviewText { get; set; }
 
   /// <summary>
+  /// Tracks how many other users found this review helpful. Used for sorting public profiles.
+  /// </summary>
+  public int HelpfulCount { get; set; } = 0;
+
+  /// <summary>
+  /// Determines if the review is broadcasted to the public doctor profile, or retained purely for internal clinic moderation and privately visible only to the admin/doctor. (e.g. 1-3 star reviews).
+  /// </summary>
+  public bool IsPublic { get; set; } = true;
+
+  /// <summary>
   /// When the review was created
   /// </summary>
   public new DateTime CreatedAt { get; set; } = DateTime.UtcNow;

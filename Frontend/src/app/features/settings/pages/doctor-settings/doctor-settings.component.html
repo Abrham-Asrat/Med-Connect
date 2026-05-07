@@ -15,14 +15,100 @@
 
     <!-- Tabs -->
     <ul class="nav nav-pills mb-4 gap-2">
-        <li class="nav-item"><a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='profile'"
-                (click)="activeTab.set('profile')" style="cursor:pointer">Professional Details</a></li>
-        <li class="nav-item"><a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='schedule'"
-                (click)="activeTab.set('schedule')" style="cursor:pointer">Availability & Schedule</a></li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='personal'"
+                (click)="activeTab.set('personal')" style="cursor:pointer">Personal Info</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='profile'"
+                (click)="activeTab.set('profile')" style="cursor:pointer">Professional Details</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='schedule'"
+                (click)="activeTab.set('schedule')" style="cursor:pointer">Availability & Schedule</a>
+        </li>
     </ul>
 
     <div class="row g-4">
         <div class="col-lg-8">
+
+            <!-- Personal Info Section -->
+            @if (activeTab() === 'personal') {
+            <div class="card section-card">
+                <div class="card-header bg-white">
+                    <h5 class="text-primary mb-0">Personal Information / የግል መረጃ</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Profile Picture -->
+                    <div class="d-flex align-items-center gap-4 mb-4 pb-4 border-bottom">
+                        <div class="position-relative">
+                            <img [src]="previewUrl() || 'assets/images/default-avatar.png'" alt="Profile"
+                                class="rounded-circle object-fit-cover"
+                                style="width: 100px; height: 100px; border: 3px solid var(--bs-primary)">
+                            <button class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle"
+                                (click)="fileInput.click()">
+                                <i class="bi bi-camera"></i>
+                            </button>
+                            <input type="file" #fileInput hidden (change)="onFileSelected($event)" accept="image/*">
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Profile Photo / ፕሮፋይል ፎቶ</h6>
+                            <p class="text-muted small mb-2">JPG or PNG. Max size 5MB. / JPG ወይም PNG. ቢበዛ 5 ሜጋ ባይት</p>
+                            @if (selectedFile) {
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" (click)="uploadPicture()"
+                                [disabled]="isLoading()">
+                                <i class="bi bi-cloud-upload me-1"></i> Upload / ጫን
+                            </button>
+                            }
+                        </div>
+                    </div>
+
+                    <form [formGroup]="personalForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name / ስም *</label>
+                                <input type="text" class="form-control" formControlName="firstName">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name / የአባት ስም *</label>
+                                <input type="text" class="form-control" formControlName="lastName">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email / ኢሜይል</label>
+                            <input type="email" class="form-control" formControlName="email" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone / ስልክ *</label>
+                            <input type="tel" class="form-control" formControlName="phone">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Gender / ፆታ *</label>
+                                <select class="form-select" formControlName="gender">
+                                    <option value="">Select / ይምረጡ</option>
+                                    <option value="Male">Male / ወንድ</option>
+                                    <option value="Female">Female / ሴት</option>
+                                    <option value="Other">Other / ሌላ</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date of Birth / የትውልድ ቀን *</label>
+                                <input type="date" class="form-control" formControlName="dateOfBirth">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address / አድራሻ *</label>
+                            <input type="text" class="form-control" formControlName="address">
+                        </div>
+                        <button type="button" class="btn btn-primary rounded-pill px-4 mt-2" (click)="saveProfile()"
+                            [disabled]="isLoading()">
+                            @if (isLoading()) { Saving... } @else { Save Personal Info }
+                        </button>
+                    </form>
+                </div>
+            </div>
+            }
 
             <!-- Profile Section -->
             @if (activeTab() === 'profile') {
@@ -64,9 +150,9 @@
                             </div>
                         </div>
 
-                        <button type="button" class="btn btn-primary rounded-pill px-4 mt-2"
-                            (click)="saveProfessionalProfile()" [disabled]="isLoading() || professionalForm.invalid">
-                            @if (isLoading()) { Saving... } @else { Save Details }
+                        <button type="button" class="btn btn-primary rounded-pill px-4 mt-2" (click)="saveProfile()"
+                            [disabled]="isLoading() || professionalForm.invalid">
+                            @if (isLoading()) { Saving... } @else { Save Professional Details }
                         </button>
                     </form>
                 </div>
@@ -118,8 +204,8 @@
                         </div>
                     </form>
 
-                    <button type="button" class="btn btn-primary rounded-pill px-4 mt-3"
-                        (click)="saveProfessionalProfile()" [disabled]="isLoading() || availabilitiesForm.invalid">
+                    <button type="button" class="btn btn-primary rounded-pill px-4 mt-3" (click)="saveProfile()"
+                        [disabled]="isLoading() || availabilitiesForm.invalid">
                         @if (isLoading()) { Saving... } @else { Save Schedule }
                     </button>
                 </div>
@@ -127,3 +213,4 @@
             }
         </div>
     </div>
+</div>

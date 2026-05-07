@@ -114,6 +114,16 @@ export class SignalRService {
     this.notificationHubConnection.on('NewDoctorRegistration', (data: any) => {
       this.notificationReceived$.next({ type: 'system', title: 'New Doctor Registration', message: `${data.doctorName} needs approval.`, data, timestamp: new Date() });
     });
+
+    this.notificationHubConnection.on('ReceiveNotification', (data: any) => {
+      this.notificationReceived$.next({
+        type: data.type || 'system',
+        title: data.title || 'New Notification',
+        message: data.message || '',
+        data: data.data,
+        timestamp: data.timestamp ? new Date(data.timestamp) : new Date()
+      });
+    });
   }
 
   async joinConversation(conversationId: string): Promise<void> {

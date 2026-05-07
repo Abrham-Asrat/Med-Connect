@@ -26,6 +26,8 @@ public interface IBlogService
   Task<BlogCommentDto> CreateBlogCommentAsync(CreateBlogCommentDto createBlogCommentDto);
 
   Task<ICollection<BlogCommentDto>> GetBlogCommentsAsync(Guid blogId);
+  Task<BlogCommentDto> UpdateBlogCommentAsync(Guid commentId, EditBlogCommentDto editBlogCommentDto);
+  Task<bool> DeleteBlogCommentAsync(Guid commentId);
 
   Task<BlogLikeDto?> CreateBlogLikeAsync(CreateBlogLikeDto createBlogLikeDto);
 }

@@ -80,7 +80,8 @@ namespace BackendAPI.Source.Helpers.Extensions
                 Qualifications = doctor.Qualifications,
                 Biography = doctor.Biography,
                 Languages = (doctor.Languages ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
-                DoctorStatus = doctor.DoctorStatus
+                DoctorStatus = doctor.DoctorStatus,
+                IsVerified = doctor.IsVerified
 
             };
         }
@@ -113,7 +114,8 @@ namespace BackendAPI.Source.Helpers.Extensions
                 Qualifications = doctor.Qualifications,
                 Biography = doctor.Biography,
                 Languages = (doctor.Languages ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
-                DoctorStatus = doctor.DoctorStatus
+                DoctorStatus = doctor.DoctorStatus,
+                IsVerified = doctor.IsVerified
 
             };
         }
@@ -515,7 +517,8 @@ namespace BackendAPI.Source.Helpers.Extensions
     this Blog blog,
     UserModel author,
     ICollection<BlogLike> blogLikes,
-    ICollection<Tag> tags
+    ICollection<Tag> tags,
+    ICollection<BlogComment> comments
   )
   {
     return new BlogDto
@@ -528,6 +531,11 @@ namespace BackendAPI.Source.Helpers.Extensions
           bl.ToBlogLikeDto(
             bl.User ?? throw new Exception("You forgot to include user when querying blogLikes.")
           )
+        )
+        .ToList(),
+      Comments = comments
+        .Select(bc => 
+           bc.ToBlogCommentDto(bc.Sender ?? throw new Exception("You forgot to include sender when querying comments."))
         )
         .ToList(),
       Content = blog.Content,
@@ -559,7 +567,12 @@ namespace BackendAPI.Source.Helpers.Extensions
       BlogId = blogComment.BlogId,
       CommentText = blogComment.CommentText,
       SenderId = blogComment.SenderId,
-      Sender = sender.ToBlogProfileDto()
+      Sender = sender.ToBlogProfileDto(),
+      ParentCommentId = blogComment.ParentCommentId,
+      CreatedAt = blogComment.CreatedAt,
+      Replies = blogComment.Replies != null 
+        ? blogComment.Replies.Select(r => r.ToBlogCommentDto(r.Sender ?? throw new Exception("Include sender for replies"))).ToList()
+        : new List<BlogCommentDto>()
     };
   }
 

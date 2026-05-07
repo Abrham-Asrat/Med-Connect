@@ -310,6 +310,7 @@ builder.Services.AddCors(options =>
 
   // Register the SignalR for realtime comms
   builder.Services.AddSignalR();
+  builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, BackendAPI.Source.Helpers.Extensions.UserIdProvider>();
 
   // Register Services
   builder.Services.AddScoped<UserService>();
@@ -435,9 +436,8 @@ var app = builder.Build();
   app.UseAuthorization();
   app.UseSerilogRequestLogging(); // Enable Serilog Request Logging
   
-  // Map SignalR Hubs for real-time communication
-  app.MapHub<ChatHub>("/chatHub");
-  app.MapHub<NotificationHub>("/notificationHub");
+  app.MapHub<ChatHub>("/chathub");
+  app.MapHub<NotificationHub>("/notificationhub");
   
   app.MapControllers();
 

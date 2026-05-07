@@ -38,7 +38,14 @@ export class LoginComponent {
     this.isLoading.set(true); this.errorMessage.set(null);
     this.authService.login(this.loginForm.value).subscribe({
       next: (r: any) => { this.isLoading.set(false); if (!r?.success) this.errorMessage.set(r?.message || 'Login failed.'); },
-      error: (e: any) => { this.isLoading.set(false); this.errorMessage.set(e?.status === 401 ? 'Invalid credentials' : e?.error?.message || 'Login failed. Try again.'); }
+      error: (e: any) => {
+        this.isLoading.set(false);
+        if (e?.status === 403) {
+          this.errorMessage.set(e?.error?.message || 'Email verification required. Please check your inbox.');
+        } else {
+          this.errorMessage.set(e?.status === 401 ? 'Invalid credentials' : e?.error?.message || 'Login failed. Try again.');
+        }
+      }
     });
   }
 }

@@ -48,7 +48,7 @@ export class ChatService {
     const token = this.authService.getToken() || localStorage.getItem('token') || '';
 
     // We map our base api url to the hub url. Example: http://localhost:5000/api -> http://localhost:5000/hub/chat
-    const hubUrl = this.apiUrl.replace('/api', '') + '/hub/chat';
+    const hubUrl = this.apiUrl.replace('/api', '') + '/chathub';
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {

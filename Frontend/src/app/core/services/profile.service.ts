@@ -23,7 +23,14 @@ export class ProfileService {
     return this.http.post(`${this.apiUrl}/User/change-password`, data);
   }
 
+  // POST /api/User/profile-picture
+  uploadProfilePicture(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/User/profile-picture`, formData);
+  }
+
   deleteAccount(userId: string): Observable<any> {
-  return this.http.delete(`${this.apiUrl}/User/${userId}`);
-}
+    return this.http.delete(`${this.apiUrl}/User/${userId}`);
+  }
 }

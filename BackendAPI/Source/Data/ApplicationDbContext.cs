@@ -140,6 +140,12 @@ namespace BackendAPI.Source.Data
                 .HasForeignKey(bc => bc.SenderId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<BlogComment>()
+                .HasOne(bc => bc.ParentComment)
+                .WithMany(bc => bc.Replies)
+                .HasForeignKey(bc => bc.ParentCommentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             // Configure BlogLike relationships to avoid multiple cascade paths
             modelBuilder.Entity<BlogLike>()
                 .HasOne(bl => bl.Blog)

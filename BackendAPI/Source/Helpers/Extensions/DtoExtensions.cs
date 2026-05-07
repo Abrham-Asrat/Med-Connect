@@ -194,7 +194,8 @@ namespace BackendAPI.Source.Helpers.Extensions
     {
       BlogId = createBlogCommentDto.BlogId,
       CommentText = createBlogCommentDto.CommentText,
-      SenderId = createBlogCommentDto.SenderId
+      SenderId = createBlogCommentDto.SenderId,
+      ParentCommentId = createBlogCommentDto.ParentCommentId
     };
   }
 

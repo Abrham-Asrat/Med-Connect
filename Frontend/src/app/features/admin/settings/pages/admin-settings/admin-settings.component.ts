@@ -2,6 +2,7 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../../../../core/auth/auth.service';
+import { ProfileService } from '../../../../../core/services/profile.service';
 
 
 @Component({
@@ -60,7 +61,9 @@ import { AuthService } from '../../../../../core/auth/auth.service';
 export class AdminSettingsComponent implements OnInit {
     private fb = inject(FormBuilder);
     private authService = inject(AuthService);
+    private profileService = inject(ProfileService);
 
+    user = this.authService.currentUser;
     activeTab = signal<'profile' | 'security' | 'system'>('profile');
     isLoading = signal(false);
     successMessage = signal<string | null>(null);
@@ -71,9 +74,14 @@ export class AdminSettingsComponent implements OnInit {
         firstName: ['', Validators.required],
         lastName: ['', Validators.required],
         email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
-        phone: [''],
-        address: ['']
+        phone: ['', Validators.required],
+        gender: ['', Validators.required],
+        dateOfBirth: ['', Validators.required],
+        address: ['', Validators.required]
     });
+
+    selectedFile: File | null = null;
+    previewUrl = signal<string | null>(null);
 
     // Security / Password Logic
     passwordForm = this.fb.group({
@@ -97,46 +105,137 @@ export class AdminSettingsComponent implements OnInit {
 
     loadAdminProfile(): void {
         this.isLoading.set(true);
-        // Fallback for Admin Profile
-        setTimeout(() => {
-            this.profileForm.patchValue({
-                firstName: 'System',
-                lastName: 'Administrator',
-                email: 'admin@medconnect.com',
-                phone: '+251 900 000000',
-                address: 'Addis Ababa, Ethiopia'
-            });
-            this.isLoading.set(false);
-        }, 500);
+        this.profileService.getProfile().subscribe({
+            next: (response: any) => {
+                this.isLoading.set(false);
+                const profile = response?.data || response;
+                if (profile) {
+                    this.profileForm.patchValue({
+                        firstName: profile.firstName || '',
+                        lastName: profile.lastName || '',
+                        email: profile.email || '',
+                        phone: profile.phone || '',
+                        gender: profile.gender || '',
+                        dateOfBirth: profile.dateOfBirth || '',
+                        address: profile.address || ''
+                    });
+
+                    if (profile.profilePicture && profile.profilePicture.trim() !== '') {
+                        const pic = profile.profilePicture;
+                        this.previewUrl.set(pic.startsWith('data:') || pic.startsWith('http') ? pic : `data:image/png;base64,${pic}`);
+                    } else {
+                        this.previewUrl.set(null);
+                    }
+                }
+            },
+            error: (err) => {
+                this.isLoading.set(false);
+                console.error('Failed to load admin profile', err);
+            }
+        });
+    }
+
+    onFileSelected(event: any): void {
+        const file = event.target.files[0];
+        if (file) {
+            this.selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = () => {
+                this.previewUrl.set(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    uploadPicture(): void {
+        if (!this.selectedFile) return;
+
+        this.isLoading.set(true);
+        this.profileService.uploadProfilePicture(this.selectedFile).subscribe({
+            next: (res: any) => {
+                this.isLoading.set(false);
+                this.successMessage.set('Profile picture updated!');
+
+                // Update session
+                if (res?.data?.profilePicture) {
+                    this.authService.updateUser({ profilePicture: res.data.profilePicture });
+                }
+
+                this.selectedFile = null;
+                this.clearMessageAfter(3000);
+            },
+            error: (err) => {
+                this.isLoading.set(false);
+                this.errorMessage.set('Failed to upload picture.');
+                this.clearMessageAfter(3000);
+            }
+        });
     }
 
     saveProfile(): void {
         if (this.profileForm.invalid) return;
         this.isLoading.set(true);
-        // Simulate API call
-        setTimeout(() => {
-            this.successMessage.set('Profile updated successfully.');
-            this.isLoading.set(false);
-            this.clearMessageAfter(3000);
-        }, 1000);
+        this.successMessage.set(null);
+        this.errorMessage.set(null);
+
+        const profileData = this.profileForm.getRawValue();
+        const data = {
+            ...profileData,
+            userId: this.user()?.userId || JSON.parse(localStorage.getItem('user') || '{}').userId
+        };
+
+        this.profileService.updateProfile(data).subscribe({
+            next: (response: any) => {
+                this.isLoading.set(false);
+                if (response?.success) {
+                    this.successMessage.set('Profile updated successfully.');
+
+                    // Sync with session using returned profile
+                    const updatedProfile = response?.data || response;
+                    if (updatedProfile) {
+                        this.authService.updateUser(updatedProfile);
+                    }
+
+                    this.clearMessageAfter(3000);
+                }
+            },
+            error: (error: any) => {
+                this.isLoading.set(false);
+                this.errorMessage.set(error?.error?.message || 'Failed to update profile.');
+                this.clearMessageAfter(3000);
+            }
+        });
     }
 
     changePassword(): void {
         if (this.passwordForm.invalid) return;
-        const newPassword = this.passwordForm.get('newPassword')?.value;
-        const confirmPassword = this.passwordForm.get('confirmPassword')?.value;
-        if (newPassword !== confirmPassword) {
+        const pw = this.passwordForm.value;
+        if (pw.newPassword !== pw.confirmPassword) {
             this.errorMessage.set('New passwords do not match!');
             this.clearMessageAfter(3000);
             return;
         }
+
         this.isLoading.set(true);
-        setTimeout(() => {
-            this.successMessage.set('Password successfully changed.');
-            this.passwordForm.reset();
-            this.isLoading.set(false);
-            this.clearMessageAfter(3000);
-        }, 1000);
+        this.profileService.changePassword({
+            currentPassword: pw.currentPassword!,
+            newPassword: pw.newPassword!,
+            confirmPassword: pw.confirmPassword!
+        }).subscribe({
+            next: (response: any) => {
+                this.isLoading.set(false);
+                if (response?.success) {
+                    this.successMessage.set('Password successfully changed.');
+                    this.passwordForm.reset();
+                    this.clearMessageAfter(3000);
+                }
+            },
+            error: (error: any) => {
+                this.isLoading.set(false);
+                this.errorMessage.set(error?.error?.message || 'Failed to change password.');
+                this.clearMessageAfter(3000);
+            }
+        });
     }
 
     saveSystemSettings(): void {

@@ -60,4 +60,9 @@ export class PatientLayoutComponent implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout(true);
   }
+
+  getProfilePicUrl(pic: string | undefined): string {
+    if (!pic) return 'assets/images/default-avatar.png';
+    return pic.startsWith('data:') || pic.startsWith('http') ? pic : `data:image/png;base64,${pic}`;
+  }
 }

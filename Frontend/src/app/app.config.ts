@@ -5,6 +5,8 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 // import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
+import { TitleStrategy } from '@angular/router';
+import { PageTitleStrategy } from './core/strategies/page-title.strategy';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,5 +17,6 @@ export const appConfig: ApplicationConfig = {
       // errorInterceptor,
       loadingInterceptor
     ])),
+    { provide: TitleStrategy, useClass: PageTitleStrategy }
   ]
 };

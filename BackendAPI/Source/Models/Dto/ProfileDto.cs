@@ -73,6 +73,7 @@ public record DoctorProfileDto : ProfileDto
   public required string Biography { get; init; }
   public required List<string> Languages { get; init; }
   public required DoctorStatus DoctorStatus { get; init; }
+  public required bool IsVerified { get; init; }
   public required List<EducationDto> Educations { get; init; }
   public required List<ExperienceDto> Experiences { get; init; }
 };

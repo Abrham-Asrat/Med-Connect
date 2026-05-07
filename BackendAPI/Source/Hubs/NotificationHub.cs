@@ -10,10 +10,8 @@ public class NotificationHub(ApplicationDbContext appContext, UserConnection use
 
   public override async Task OnConnectedAsync()
   {
-    // Get user ID from JWT token claims
-    _senderId = Context.UserIdentifier ?? 
-                Context.User?.FindFirst("sub")?.Value ??
-                Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    // UserIdentifier is now populated by our custom UserIdProvider
+    _senderId = Context.UserIdentifier;
 
     if (string.IsNullOrWhiteSpace(_senderId))
     {
@@ -61,13 +59,15 @@ public class NotificationHub(ApplicationDbContext appContext, UserConnection use
 
       await appContext.SaveChangesAsync();
 
-      var connectionId = userConnection.GetConnectionId(_senderId);
-
-      if (connectionId != null)
+      if (!string.IsNullOrEmpty(_senderId))
       {
         await Clients
-          .User(connectionId)
-          .SendAsync(NotificationEvents.ReceiveNotification.ToString());
+          .User(_senderId)
+          .SendAsync(NotificationEvents.ReceiveNotification.ToString(), new { 
+            message, 
+            type = notificationType.ToString().ToLower(),
+            timestamp = DateTime.UtcNow 
+          });
       }
       else
       {

@@ -364,12 +364,14 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
       request.AddBody(
         new
         {
-          grant_type = "password",
+          grant_type = "http://auth0.com/oauth/grant-type/password-realm",
           username = email,
           password = password,
           audience = appConfig.Auth0Audience,
           client_id = appConfig.Auth0ClientId,
-          client_secret = appConfig.Auth0ClientSecret
+          client_secret = appConfig.Auth0ClientSecret,
+          realm = "Med-Connect-Database",
+          connection = "Med-Connect-Database"
         }
       );
 

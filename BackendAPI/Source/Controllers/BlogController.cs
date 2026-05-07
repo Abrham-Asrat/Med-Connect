@@ -196,6 +196,37 @@ public class BlogController : ControllerBase
     }
   }
 
+  [HttpPut("comment/{id}")]
+  public async Task<IActionResult> EditComment(Guid id, [FromBody] EditBlogCommentDto editBlogCommentDto)
+  {
+    try
+    {
+       var result = await _blogService.UpdateBlogCommentAsync(id, editBlogCommentDto);
+       return Ok(new ApiResponse<BlogCommentDto>(true, "Comment updated", result));
+    }
+    catch (Exception ex)
+    {
+       _logger.LogError(ex, "Error editing comment");
+       return StatusCode(500, "Error editing comment");
+    }
+  }
+
+  [HttpDelete("comment/{id}")]
+  public async Task<IActionResult> DeleteComment(Guid id)
+  {
+    try
+    {
+       var result = await _blogService.DeleteBlogCommentAsync(id);
+       if (!result) return NotFound();
+       return Ok(new ApiResponse<object>(true, "Comment deleted", null));
+    }
+    catch (Exception ex)
+    {
+       _logger.LogError(ex, "Error deleting comment");
+       return StatusCode(500, "Error deleting comment");
+    }
+  }
+
   [HttpPost("{id}/like")]
   public async Task<IActionResult> LikeBlog(Guid id)
   {

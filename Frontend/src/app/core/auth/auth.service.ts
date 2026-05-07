@@ -84,7 +84,7 @@ export class AuthService {
     const token = d.accessToken;
     const p = d.profile;
     if (token) { localStorage.setItem('token', token); this.tokenSignal.set(token); }
-    const user: any = { userId: p?.userId || '', email: p?.email || '', firstName: p?.firstName || '', lastName: p?.lastName || '', role: p?.role || '', phone: p?.phone || '', gender: p?.gender || '', dateOfBirth: p?.dateOfBirth || '' };
+    const user: any = { userId: p?.userId || '', email: p?.email || '', firstName: p?.firstName || '', lastName: p?.lastName || '', role: p?.role || '', phone: p?.phone || '', gender: p?.gender || '', dateOfBirth: p?.dateOfBirth || '', isVerified: !!p?.isVerified };
     localStorage.setItem('user', JSON.stringify(user));
 
     if (user.role === 'Patient') {
@@ -110,6 +110,15 @@ export class AuthService {
       next: () => this.executeLocalLogout(),
       error: () => this.executeLocalLogout() // Perform local logout even if HTTP fails/endpoint missing
     });
+  }
+
+  updateUser(userData: Partial<User>): void {
+    const current = this.currentUserSignal();
+    if (current) {
+      const updated = { ...current, ...userData };
+      localStorage.setItem('user', JSON.stringify(updated));
+      this.currentUserSignal.set(updated);
+    }
   }
 
   executeLocalLogout(): void {

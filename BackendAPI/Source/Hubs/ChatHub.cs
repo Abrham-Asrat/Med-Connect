@@ -30,67 +30,8 @@ namespace BackendAPI.Source.Hubs
     {
       try
       {
-        var httpContext = Context.GetHttpContext();
-        if (httpContext == null)
-        {
-          _logger.LogError("HttpContext is null in OnConnectedAsync");
-          Context.Abort();
-          return;
-        }
-
-        // Log all cookies and headers for debugging
-        _logger.LogInformation("Cookies: {Cookies}", string.Join(", ", httpContext.Request.Cookies.Select(c => $"{c.Key}={c.Value}")));
-        _logger.LogInformation("Headers: {Headers}", string.Join(", ", httpContext.Request.Headers.Select(h => $"{h.Key}={h.Value}")));
-        _logger.LogInformation("Connection ID: {ConnectionId}", Context.ConnectionId);
-        _logger.LogInformation("User: {User}", httpContext.User?.Identity?.Name);
-        _logger.LogInformation("User Claims: {Claims}", string.Join(", ", httpContext.User?.Claims?.Select(c => $"{c.Type}={c.Value}") ?? Array.Empty<string>()));
-
-        // Try to get user ID from Authorization header first
-        var authHeader = httpContext.Request.Headers["Authorization"].ToString();
-        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
-        {
-          var token = authHeader.Substring("Bearer ".Length);
-          _logger.LogInformation("Found Bearer token: {Token}", token);
-          
-          // Try to get user ID from token claims
-          var userIdClaim = httpContext.User?.FindFirst("sub")?.Value;
-          if (!string.IsNullOrEmpty(userIdClaim))
-          {
-            // Check if this is a client credentials token
-            var grantType = httpContext.User?.FindFirst("gt")?.Value;
-            if (grantType == "client-credentials")
-            {
-              _logger.LogWarning("Client credentials token detected. This token type is not supported for chat connections.");
-              Context.Abort();
-              return;
-            }
-
-            _senderId = userIdClaim;
-            _logger.LogInformation("Found user ID from token claim: {UserId}", _senderId);
-          }
-          else
-          {
-            _logger.LogWarning("No user ID found in token claims");
-          }
-        }
-        else
-        {
-          _logger.LogWarning("No Bearer token found in Authorization header");
-        }
-
-        // If no user ID from token, try cookie
-        if (string.IsNullOrEmpty(_senderId))
-        {
-          _senderId = httpContext.Request.Cookies[CookieDefaults.Profile.UserId];
-          if (!string.IsNullOrEmpty(_senderId))
-          {
-            _logger.LogInformation("Found user ID from cookie: {UserId}", _senderId);
-          }
-          else
-          {
-            _logger.LogWarning("No user ID found in cookie");
-          }
-        }
+        // Context.UserIdentifier is now the DB GUID (set by our custom UserIdProvider)
+        _senderId = Context.UserIdentifier;
 
         if (string.IsNullOrEmpty(_senderId))
         {
@@ -166,23 +107,18 @@ namespace BackendAPI.Source.Hubs
         if (!Guid.TryParse(_senderId, out Guid senderGuid))
         {
           _logger.LogWarning("Invalid user ID format: {UserId}", _senderId);
-          throw new HubException("Invalid user ID format");
+          throw new HubException("Invalid user ID format — ensure you are logged in with a valid account");
         }
 
         var messagePayload = new CreateMessageDto(conversationId, senderGuid, messageText, files);
         var createdMessage = await _chatService.CreateMessageAsync(messagePayload);
 
-        var connId = _userConnection.GetConnectionId(_senderId);
-        if (connId != null)
+        // Get all participants in the conversation and broadcast to each
+        var participants = await _chatService.GetConversationParticipantsAsync(conversationId);
+        foreach (var participant in participants)
         {
-          await Clients
-            .Client(connId)
+          await Clients.User(participant.UserId.ToString())
             .SendAsync(ChatEvents.ReceiveMessage.ToString(), createdMessage);
-        }
-        else
-        {
-          _logger.LogWarning("No connection ID found for user {UserId}", _senderId);
-          throw new HubException("User connection not found");
         }
       }
       catch (Exception ex)

@@ -7,6 +7,7 @@ export const routes: Routes = [
   // Public landing page
   {
     path: '',
+    title: 'Home',
     loadComponent: () => import('./features/landing/pages/landing-page/landing-page.component/landing-page.component')
       .then(m => m.LandingPageComponent)
   },
@@ -14,6 +15,7 @@ export const routes: Routes = [
   // Public blog routes
   {
     path: 'blogs',
+    title: 'Health Articles',
     loadComponent: () => import('./features/blog/pages/blog-list/blog-list.component')
       .then(m => m.BlogListComponent)
   },
@@ -33,6 +35,7 @@ export const routes: Routes = [
   // Patient routes (lazy loaded)
   {
     path: 'patient',
+    title: 'Patient Portal',
     canActivate: [authGuard, roleGuard([UserRole.Patient])],
     loadChildren: () => import('./features/dashboard/patient/patient.routes')
       .then(m => m.PATIENT_ROUTES)
@@ -41,6 +44,7 @@ export const routes: Routes = [
   // Doctor routes (lazy loaded)
   {
     path: 'doctor',
+    title: 'Doctor Portal',
     canActivate: [authGuard, roleGuard([UserRole.Doctor])],
     loadChildren: () => import('./features/dashboard/doctor/doctor.routes')
       .then(m => m.DOCTOR_ROUTES)
@@ -49,6 +53,7 @@ export const routes: Routes = [
   // Admin routes (lazy loaded)
   {
     path: 'admin',
+    title: 'Admin Panel',
     canActivate: [authGuard, roleGuard([UserRole.Admin])],
     loadChildren: () => import('./features/dashboard/admin/admin.routes')
       .then(m => m.ADMIN_ROUTES)

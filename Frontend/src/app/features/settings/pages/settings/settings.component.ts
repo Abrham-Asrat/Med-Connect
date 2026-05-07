@@ -29,19 +29,30 @@ export class SettingsComponent implements OnInit {
     lastName: ['', Validators.required],
     email: [{ value: '', disabled: true }],
     phone: ['', Validators.required],
-    gender: [''],
-    dateOfBirth: [''],
-    address: [''],
+    gender: ['', Validators.required],
+    dateOfBirth: ['', Validators.required],
+    address: ['', Validators.required],
     emergencyContactName: [''],
     emergencyContactPhone: [''],
   });
 
+  selectedFile: File | null = null;
+  previewUrl = signal<string | null>(null);
+
   // Password form
   passwordForm: FormGroup = this.fb.group({
     currentPassword: ['', Validators.required],
-    newPassword: ['', [Validators.required, Validators.minLength(8)]],
+    newPassword: ['', [
+      Validators.required,
+      Validators.minLength(8),
+      Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
+    ]],
     confirmPassword: ['', Validators.required],
   });
+
+  showCurrentPassword = signal(false);
+  showNewPassword = signal(false);
+  showConfirmPassword = signal(false);
 
   // Notification prefs
   notifications = signal([
@@ -51,6 +62,36 @@ export class SettingsComponent implements OnInit {
     { label: 'Review requests / የግምገማ ጥያቄዎች', enabled: true },
     { label: 'Marketing emails / የማስተዋወቂያ ኢሜይሎች', enabled: false },
   ]);
+
+  // Help Center FAQs
+  faqs = signal([
+    {
+      question: 'How do I schedule a new appointment? / ቀጠሮ እንዴት መያዝ እችላለሁ?',
+      answer: 'Go to the "Doctors" section, find your preferred doctor, select an available time slot, and confirm your booking.',
+      open: false
+    },
+    {
+      question: 'Can I cancel or reschedule an appointment? / ቀጠሮ መቀየር ወይም መሰረዝ እችላለሁ?',
+      answer: 'Yes, you can manage your appointments from the dashboard. Cancellations must be made at least 24 hours in advance.',
+      open: false
+    },
+    {
+      question: 'How do I pay for my consultation? / ለምክክር አገልግሎት እንዴት እከፍላለሁ?',
+      answer: 'We support various payment methods including TeleBirr, Chapa, and Bank Transfers. You can pay directly after booking.',
+      open: false
+    },
+    {
+      question: 'Is my medical history private? / የጤና ታሪኬ ሚስጥራዊነቱ የተጠበቀ ነው?',
+      answer: 'Absolutely. We use industry-standard encryption to ensure your data is only accessible by you and authorized medical professionals.',
+      open: false
+    }
+  ]);
+
+  toggleFaq(index: number): void {
+    this.faqs.update(f => f.map((item, i) =>
+      i === index ? { ...item, open: !item.open } : item
+    ));
+  }
 
   ngOnInit(): void {
     this.loadProfile();
@@ -68,6 +109,10 @@ export class SettingsComponent implements OnInit {
         dateOfBirth: user.dateOfBirth || '',
         address: user.address || '',
       });
+      if (user.profilePicture) {
+        const pic = user.profilePicture;
+        this.previewUrl.set(pic.startsWith('data:') || pic.startsWith('http') ? pic : `data:image/png;base64,${pic}`);
+      }
     }
 
     // Try loading full profile from API
@@ -86,14 +131,59 @@ export class SettingsComponent implements OnInit {
             emergencyContactName: profile.emergencyContactName || '',
             emergencyContactPhone: profile.emergencyContactPhone || '',
           });
+          if (profile.profilePicture && profile.profilePicture.trim() !== '') {
+            const pic = profile.profilePicture;
+            this.previewUrl.set(pic.startsWith('data:') || pic.startsWith('http') ? pic : `data:image/png;base64,${pic}`);
+          } else {
+            this.previewUrl.set(null);
+          }
         }
       },
       error: (err) => console.log('Profile API not available, using local data')
     });
   }
 
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.previewUrl.set(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  uploadPicture(): void {
+    if (!this.selectedFile) return;
+
+    this.isLoading.set(true);
+    this.profileService.uploadProfilePicture(this.selectedFile).subscribe({
+      next: (res: any) => {
+        this.isLoading.set(false);
+        this.successMessage.set('Profile picture updated!');
+
+        // Update user session
+        if (res?.data?.profilePicture) {
+          this.authService.updateUser({ profilePicture: res.data.profilePicture });
+        }
+
+        setTimeout(() => this.successMessage.set(null), 3000);
+        this.selectedFile = null;
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.errorMessage.set('Failed to upload picture.');
+      }
+    });
+  }
+
   saveProfile(): void {
-    if (this.profileForm.invalid) return;
+    if (this.profileForm.invalid) {
+      this.errorMessage.set('Please fill all required fields correctly.');
+      return;
+    }
 
     this.isLoading.set(true);
     this.successMessage.set(null);
@@ -106,10 +196,15 @@ export class SettingsComponent implements OnInit {
     this.profileService.updateProfile(data).subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
-        if (response?.success) {
-          this.successMessage.set('Profile updated successfully!');
-          setTimeout(() => this.successMessage.set(null), 3000);
+        this.successMessage.set('Profile updated successfully!');
+
+        // Sync with AuthService session using the returned updated profile
+        const updatedProfile = response?.data || response;
+        if (updatedProfile) {
+          this.authService.updateUser(updatedProfile);
         }
+
+        setTimeout(() => this.successMessage.set(null), 3000);
       },
       error: (error: any) => {
         this.isLoading.set(false);

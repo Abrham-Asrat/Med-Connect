@@ -1,155 +1,353 @@
-<div class="container-fluid p-4">
-
-  <h4 class="text-primary mb-4"><i class="bi bi-gear me-2"></i>Settings / ቅንጅቶች</h4>
+<div class="settings-container p-4">
+  <div class="header-section mb-4 mt-2">
+    <h2 class="fw-bold text-dark mb-1">Account Settings</h2>
+    <p class="text-muted small mb-0">Manage your profile, account preferences, and security settings.</p>
+  </div>
 
   @if (successMessage()) {
-  <div class="alert alert-success d-flex align-items-center gap-2">
-    <i class="bi bi-check-circle-fill"></i> {{ successMessage() }}
+  <div class="alert alert-success d-flex align-items-center gap-2 mb-4 animate fade-in">
+    <i class="bi bi-check-circle-fill fs-5"></i> <span>{{ successMessage() }}</span>
   </div>
   }
   @if (errorMessage()) {
-  <div class="alert alert-danger d-flex align-items-center gap-2">
-    <i class="bi bi-exclamation-triangle-fill"></i> {{ errorMessage() }}
+  <div class="alert alert-danger d-flex align-items-center gap-2 mb-4 animate fade-in">
+    <i class="bi bi-exclamation-triangle-fill fs-5"></i> <span>{{ errorMessage() }}</span>
   </div>
   }
 
-  <!-- Tabs -->
-  <ul class="nav nav-pills mb-4 gap-2">
-    <li class="nav-item"><a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='profile'"
-        (click)="activeTab.set('profile')" style="cursor:pointer">Profile / መገለጫ</a></li>
-    <li class="nav-item"><a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='password'"
-        (click)="activeTab.set('password')" style="cursor:pointer">Password / የይለፍ ቃል</a></li>
-    <li class="nav-item"><a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='notifications'"
-        (click)="activeTab.set('notifications')" style="cursor:pointer">Notifications / ማሳወቂያዎች</a></li>
-  </ul>
-
   <div class="row g-4">
-    <div class="col-lg-8">
+    <!-- Navigation Sidebar -->
+    <div class="col-lg-3">
+      <div class="settings-sidebar nav flex-column nav-pills shadow-sm p-3 bg-white rounded-4 border">
+        <div class="setting-group-title">General</div>
+        <a class="nav-link" [class.active]="activeTab()==='profile'" (click)="activeTab.set('profile')"
+          style="cursor:pointer">
+          <i class="bi bi-person-circle"></i> Profile info
+        </a>
+        <a class="nav-link" [class.active]="activeTab()==='notifications'" (click)="activeTab.set('notifications')"
+          style="cursor:pointer">
+          <i class="bi bi-bell"></i> Notifications
+        </a>
+
+        <div class="setting-group-title">Security</div>
+        <a class="nav-link" [class.active]="activeTab()==='password'" (click)="activeTab.set('password')"
+          style="cursor:pointer">
+          <i class="bi bi-shield-lock"></i> Password & Security
+        </a>
+
+        <div class="setting-group-title mt-4">Support</div>
+        <a class="nav-link" [class.active]="activeTab()==='help'" (click)="activeTab.set('help')"
+          style="cursor:pointer">
+          <i class="bi bi-question-circle"></i> Help Center
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="col-lg-9">
 
       <!-- Profile Section -->
       @if (activeTab() === 'profile') {
       <div class="card section-card">
-        <div class="card-header bg-white">
-          <h5 class="text-primary mb-0">Profile Information / የመገለጫ መረጃ</h5>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Personal Profile</h5>
+          <span class="badge bg-light text-primary border px-3 rounded-pill">Patient Account</span>
         </div>
         <div class="card-body">
+
+          <!-- Profile Header / Avatar -->
+          <div class="profile-header d-flex align-items-center gap-4 mb-5 pb-2">
+            <div class="profile-avatar-wrapper">
+              <img [src]="previewUrl() || 'assets/images/default-avatar.png'" alt="Profile">
+              <button class="edit-btn" (click)="fileInput.click()" title="Change photo">
+                <i class="bi bi-camera-fill"></i>
+              </button>
+              <input type="file" #fileInput hidden (change)="onFileSelected($event)" accept="image/*">
+            </div>
+            <div>
+              <h4 class="fw-bold text-dark mb-1">{{ user()?.firstName }} {{ user()?.lastName }}</h4>
+              <p class="text-muted mb-3">{{ user()?.email }}</p>
+              @if (selectedFile) {
+              <button class="btn btn-sm btn-primary btn-premium px-3" (click)="uploadPicture()"
+                [disabled]="isLoading()">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Save Photo
+              </button>
+              }
+            </div>
+          </div>
+
           <form [formGroup]="profileForm">
+            <div class="setting-group-title first">Basic Information</div>
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label class="form-label">First Name / ስም *</label>
-                <input type="text" class="form-control" formControlName="firstName">
+                <label class="form-label">First Name</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-person"></i>
+                  <input type="text" class="form-control" formControlName="firstName">
+                </div>
               </div>
               <div class="col-md-6 mb-3">
-                <label class="form-label">Last Name / የአባት ስም *</label>
-                <input type="text" class="form-control" formControlName="lastName">
+                <label class="form-label">Last Name</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-person"></i>
+                  <input type="text" class="form-control" formControlName="lastName">
+                </div>
               </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Email / ኢሜይል</label>
-              <input type="email" class="form-control" formControlName="email" readonly>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Phone / ስልክ *</label>
-              <input type="tel" class="form-control" formControlName="phone">
-            </div>
-            <div class="row">
+
+            <div class="row mt-2">
               <div class="col-md-6 mb-3">
-                <label class="form-label">Gender / ፆታ</label>
+                <label class="form-label">Gender</label>
                 <select class="form-select" formControlName="gender">
-                  <option value="">Select / ይምረጡ</option>
-                  <option>Male / ወንድ</option>
-                  <option>Female / ሴት</option>
-                  <option>Other / ሌላ</option>
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
                 </select>
               </div>
               <div class="col-md-6 mb-3">
-                <label class="form-label">Date of Birth / የትውልድ ቀን</label>
+                <label class="form-label">Date of Birth</label>
                 <input type="date" class="form-control" formControlName="dateOfBirth">
               </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Address / አድራሻ</label>
-              <input type="text" class="form-control" formControlName="address">
-            </div>
+
+            <div class="setting-group-title">Contact & Location</div>
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label class="form-label">Emergency Contact Name / የአደጋ ጊዜ ተጠሪ ስም</label>
-                <input type="text" class="form-control" formControlName="emergencyContactName">
+                <label class="form-label">Phone Number</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-telephone"></i>
+                  <input type="tel" class="form-control" formControlName="phone">
+                </div>
               </div>
               <div class="col-md-6 mb-3">
-                <label class="form-label">Emergency Contact Phone / የአደጋ ጊዜ ተጠሪ ስልክ</label>
-                <input type="tel" class="form-control" formControlName="emergencyContactPhone">
+                <label class="form-label">Address</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-geo-alt"></i>
+                  <input type="text" class="form-control" formControlName="address">
+                </div>
               </div>
             </div>
-            <button type="button" class="btn btn-primary rounded-pill px-4 mt-2" (click)="saveProfile()"
-              [disabled]="isLoading()">
-              @if (isLoading()) { Saving... / በማስቀመጥ ላይ... } @else { Save Changes / ለውጦችን አስቀምጥ }
-            </button>
+
+            <div class="setting-group-title">Emergency Contact</div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Contact Name</label>
+                <input type="text" class="form-control" formControlName="emergencyContactName" placeholder="Full name">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Contact Phone</label>
+                <input type="tel" class="form-control" formControlName="emergencyContactPhone"
+                  placeholder="Phone number">
+              </div>
+            </div>
+
+            <div class="pt-3 mt-4 border-top">
+              <button type="button" class="btn btn-primary btn-premium px-5" (click)="saveProfile()"
+                [disabled]="isLoading()">
+                @if (isLoading()) { <span class="spinner-border spinner-border-sm me-2"></span> Saving... } @else { Save
+                Changes }
+              </button>
+            </div>
           </form>
         </div>
       </div>
       }
 
-      <!-- Password Section -->
+      <!-- Notifications -->
+      @if (activeTab() === 'notifications') {
+      <div class="card section-card">
+        <div class="card-header">
+          <h5 class="mb-0">Notification Preferences</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-4">Choose how you'd like to stay informed about your health activities.</p>
+
+          <div class="notification-list">
+            @for (pref of notifications(); track pref.label; let i = $index) {
+            <div
+              class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-2 border hover-bg-light transition-all">
+              <div class="d-flex align-items-center gap-3">
+                <div class="icon-circle bg-light p-2 rounded-circle">
+                  <i class="bi bi-bell-fill text-muted"></i>
+                </div>
+                <span class="fw-semibold text-dark">{{ pref.label }}</span>
+              </div>
+              <div class="form-check form-switch ps-0">
+                <input class="form-check-input" type="checkbox" role="switch" [checked]="pref.enabled"
+                  (change)="toggleNotification(i)">
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Security Section -->
       @if (activeTab() === 'password') {
       <div class="card section-card">
-        <div class="card-header bg-white">
-          <h5 class="text-primary mb-0">Change Password / የይለፍ ቃል ይቀይሩ</h5>
+        <div class="card-header">
+          <h5 class="mb-0">Security Settings</h5>
         </div>
         <div class="card-body">
           <form [formGroup]="passwordForm">
+            <div class="setting-group-title first">Update Password</div>
+
             <div class="mb-3">
-              <label class="form-label">Current Password / የአሁኑ የይለፍ ቃል *</label>
-              <input type="password" class="form-control" formControlName="currentPassword">
+              <label class="form-label">Current Password <span class="text-danger">*</span></label>
+              <div class="input-icon-wrapper">
+                <i class="bi bi-lock"></i>
+                <input [type]="showCurrentPassword() ? 'text' : 'password'" class="form-control"
+                  [class.is-invalid]="passwordForm.get('currentPassword')?.touched && passwordForm.get('currentPassword')?.invalid"
+                  formControlName="currentPassword" placeholder="Enter current password">
+                <button type="button" class="password-toggle" (click)="showCurrentPassword.set(!showCurrentPassword())">
+                  <i class="bi" [class.bi-eye]="!showCurrentPassword()"
+                    [class.bi-eye-slash]="showCurrentPassword()"></i>
+                </button>
+              </div>
+              @if (passwordForm.get('currentPassword')?.touched &&
+              passwordForm.get('currentPassword')?.errors?.['required']) {
+              <div class="text-danger small mt-1">Current password is required.</div>
+              }
             </div>
-            <div class="mb-3">
-              <label class="form-label">New Password / አዲስ የይለፍ ቃል *</label>
-              <input type="password" class="form-control" formControlName="newPassword">
-              <small class="text-medium">Min 8 characters / ቢያንስ 8 ፊደላት</small>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">New Password <span class="text-danger">*</span></label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-shield-lock"></i>
+                  <input [type]="showNewPassword() ? 'text' : 'password'" class="form-control"
+                    [class.is-invalid]="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.invalid"
+                    formControlName="newPassword" placeholder="Minimum 8 characters">
+                  <button type="button" class="password-toggle" (click)="showNewPassword.set(!showNewPassword())">
+                    <i class="bi" [class.bi-eye]="!showNewPassword()" [class.bi-eye-slash]="showNewPassword()"></i>
+                  </button>
+                </div>
+                @if (passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.errors?.['required'])
+                {
+                <div class="text-danger small mt-1">New password is required.</div>
+                }
+                @if (passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.errors?.['minlength'])
+                {
+                <div class="text-danger small mt-1">Password must be at least 8 characters.</div>
+                }
+                @if (passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.errors?.['pattern']) {
+                <div class="text-danger small mt-1">Must contain uppercase, lowercase, number and special character.
+                </div>
+                }
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Confirm New Password <span class="text-danger">*</span></label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-shield-check"></i>
+                  <input [type]="showConfirmPassword() ? 'text' : 'password'" class="form-control"
+                    [class.is-invalid]="passwordForm.get('confirmPassword')?.touched && passwordForm.get('confirmPassword')?.invalid"
+                    formControlName="confirmPassword" placeholder="Repeat new password">
+                  <button type="button" class="password-toggle"
+                    (click)="showConfirmPassword.set(!showConfirmPassword())">
+                    <i class="bi" [class.bi-eye]="!showConfirmPassword()"
+                      [class.bi-eye-slash]="showConfirmPassword()"></i>
+                  </button>
+                </div>
+                @if (passwordForm.get('confirmPassword')?.touched &&
+                passwordForm.get('confirmPassword')?.errors?.['required']) {
+                <div class="text-danger small mt-1">Please confirm your password.</div>
+                }
+              </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Confirm Password / የይለፍ ቃሉን ያረጋግጡ *</label>
-              <input type="password" class="form-control" formControlName="confirmPassword">
-            </div>
-            <button type="button" class="btn btn-primary rounded-pill px-4 mt-2" (click)="changePassword()"
-              [disabled]="isLoading()">
-              @if (isLoading()) { Updating... / በማዘመን ላይ... } @else { Update Password / የይለፍ ቃል አዘምን }
+
+            <button type="button" class="btn btn-primary btn-premium px-4 mt-3" (click)="changePassword()"
+              [disabled]="isLoading() || passwordForm.invalid">
+              Update Password
             </button>
           </form>
-        </div>
-      </div>
-      }
 
-      <!-- Notifications Section -->
-      @if (activeTab() === 'notifications') {
-      <div class="card section-card">
-        <div class="card-header bg-white">
-          <h5 class="text-primary mb-0">Notification Preferences / የማሳወቂያ ምርጫዎች</h5>
-        </div>
-        <div class="card-body">
-          @for (pref of notifications(); track pref.label; let i = $index) {
-          <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" [checked]="pref.enabled" (change)="toggleNotification(i)">
-            <label class="form-check-label">{{ pref.label }}</label>
+          <hr class="my-5">
+
+          <div class="danger-zone p-4 rounded-4 border border-danger border-opacity-25 bg-danger bg-opacity-10">
+            <h5 class="text-danger fw-bold"><i class="bi bi-exclamation-octagon me-2"></i> Danger Zone</h5>
+            <p class="text-muted small mb-3">Permanently delete your account and all associated data. This action cannot
+              be undone.</p>
+            <button class="btn btn-outline-danger px-4 rounded-3 fw-bold" (click)="deleteAccount()">
+              Delete My Account
+            </button>
           </div>
-          }
         </div>
       </div>
       }
-    </div>
 
-    <!-- Danger Zone -->
-    <div class="col-lg-4">
-      <div class="card section-card danger mt-0">
-        <div class="card-header bg-white">
-          <h5 class="text-danger mb-0">Danger Zone / አደገኛ ዞን</h5>
+      <!-- Help Center Section -->
+      @if (activeTab() === 'help') {
+      <div class="card section-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Help & Support</h5>
+          <button class="btn btn-sm btn-outline-primary rounded-pill px-3">Contact Support</button>
         </div>
         <div class="card-body">
-          <p class="text-medium">Delete your account and all data permanently. / መለያዎን እና መረጃዎን በቋሚነት ይሰርዙ።</p>
-          <button class="btn btn-outline-danger rounded-pill px-4" (click)="deleteAccount()">Delete Account / መለያ
-            ይሰርዙ</button>
+          <div class="text-center mb-5 py-4 bg-light rounded-4">
+            <div
+              class="icon-box bg-white text-primary fs-1 mx-auto mb-3 shadow-sm d-flex align-items-center justify-content-center"
+              style="width: 70px; height: 70px; border-radius: 20px;">
+              <i class="bi bi-chat-heart"></i>
+            </div>
+            <h4 class="fw-bold">How can we help you?</h4>
+            <p class="text-muted">Search our knowledge base or browse frequently asked questions below.</p>
+            <div class="px-4 mx-auto mt-4" style="max-width: 500px">
+              <div class="input-icon-wrapper">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control border-0 shadow-sm" placeholder="Search for help...">
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold mb-3 px-1">Frequently Asked Questions</h6>
+          <div class="faq-accordion">
+            @for (faq of faqs(); track faq.question; let i = $index) {
+            <div class="faq-item mb-3 border rounded-4 overflow-hidden">
+              <div class="faq-question p-3 d-flex justify-content-between align-items-center bg-white"
+                (click)="toggleFaq(i)" style="cursor: pointer">
+                <span class="fw-semibold text-dark">{{ faq.question }}</span>
+                <i class="bi transition-all" [class.bi-plus-lg]="!faq.open" [class.bi-dash-lg]="faq.open"></i>
+              </div>
+              @if (faq.open) {
+              <div class="faq-answer p-3 pt-0 border-top bg-white animate fade-in">
+                <p class="text-muted mb-0 small">{{ faq.answer }}</p>
+              </div>
+              }
+            </div>
+            }
+          </div>
+
+          <div class="support-cards row g-3 mt-4">
+            <div class="col-md-6">
+              <div
+                class="p-3 border rounded-4 d-flex align-items-center gap-3 hover-bg-light transition-all cursor-pointer">
+                <div class="icon-circle bg-primary bg-opacity-10 text-primary p-2 rounded-3">
+                  <i class="bi bi-envelope-at fs-5"></i>
+                </div>
+                <div>
+                  <div class="fw-bold small">Email Support</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">support@medconnect.com</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div
+                class="p-3 border rounded-4 d-flex align-items-center gap-3 hover-bg-light transition-all cursor-pointer">
+                <div class="icon-circle bg-success bg-opacity-10 text-success p-2 rounded-3">
+                  <i class="bi bi-whatsapp fs-5"></i>
+                </div>
+                <div>
+                  <div class="fw-bold small">WhatsApp Support</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">+251 912 345 678</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      }
+
     </div>
   </div>
 </div>

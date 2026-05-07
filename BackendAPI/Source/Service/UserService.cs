@@ -85,6 +85,11 @@ namespace BackendAPI.Source.Service
                 user.IsEmailVerified = auth0User.IsEmailVerified;
 
 
+                if (user.Role == Role.Patient)
+                {
+                    user.IsEmailVerified = true;
+                }
+
                 // add User to the database 
                 var addUser = await appContext.Users.AddAsync(user);
 
@@ -176,9 +181,13 @@ namespace BackendAPI.Source.Service
                     throw new Exception("Database operation failed during user registration", ex);
                 }
 
+                var successMsg = role == Role.Patient 
+                    ? "Registration Successful! You can now log in to your account."
+                    : "Registration Success! A verification link has been sent to your email. Please verify your account before logging in.";
+
                 return new ServiceResponse<ProfileDto>(success: true,
                 statusCode: 201,
-                message: "Registration Success! We have sent you an email verification link to your email. Please verify your account.",
+                message: successMsg,
                 data: userProfile
      );
             }
@@ -240,6 +249,21 @@ namespace BackendAPI.Source.Service
                 if (user.Auth0Id == null)
                 {
                     throw new KeyNotFoundException("User does not have an Auth0 ID");
+                }
+
+                // Enforce email verification (Skip for patients)
+                if (!user.IsEmailVerified && user.Role != Role.Patient)
+                {
+                    var isVerified = await auth0Service.IsEmailVerified(user.Auth0Id);
+                    if (isVerified == true)
+                    {
+                        user.IsEmailVerified = true;
+                        await appContext.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        return new ServiceResponse<Auth0LoginDto>(false, 403, null, "Email verification required. Please check your inbox to verify your account before logging in.");
+                    }
                 }
 
                 var auth0LoginDto = await auth0Service.LoginUserAsync(loginUserDto, user.Auth0Id);
@@ -321,7 +345,7 @@ namespace BackendAPI.Source.Service
                 // Update only the fields that are provided in the DTO (non-null)
                 user.FirstName = updateProfileDto.FirstName ?? user.FirstName;
                 user.LastName = updateProfileDto.LastName ?? user.LastName;
-                user.ProfilePicture = updateProfileDto.ProfilePicture ?? user.ProfilePicture;
+                user.ProfilePicture = !string.IsNullOrWhiteSpace(updateProfileDto.ProfilePicture) ? updateProfileDto.ProfilePicture : user.ProfilePicture;
                 user.Phone = updateProfileDto.Phone ?? user.Phone;
 
                 user.Address = updateProfileDto.Address ?? user.Address;
@@ -356,7 +380,16 @@ namespace BackendAPI.Source.Service
                 }
                 await appContext.SaveChangesAsync();
 
-                return new ServiceResponse<ProfileDto>(true, 200, updatedProfile, "Profile Update Success");
+        if (user.Role == Role.Patient)
+        {
+            updatedProfile = await patientService.GetPatientProfileAsync(userId);
+        }
+        else if (user.Role == Role.Admin || updatedProfile == null)
+        {
+            updatedProfile = user.ToProfileDto();
+        }
+
+        return new ServiceResponse<ProfileDto>(true, 200, updatedProfile, "Profile Update Success");
 
 
 
@@ -368,6 +401,33 @@ namespace BackendAPI.Source.Service
                 throw;
             }
         }
+
+        public async Task<ServiceResponse<ProfileDto>> UpdateProfilePictureAsync(Guid userId, CreateFileDto createFileDto)
+        {
+            try
+            {
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+                if (user == null)
+                    return new ServiceResponse<ProfileDto>(false, 404, null, "User not found");
+
+                // Save file using FileService
+                var file = await fileService.CreateFileAsync(createFileDto);
+
+                // Update user profile picture path/base64
+                // Here we're using base64 for simplicity as seen in EntityExtensions.ToProfileDto
+                user.ProfilePicture = createFileDto.FileDataBase64;
+
+                await appContext.SaveChangesAsync();
+
+                return new ServiceResponse<ProfileDto>(true, 200, user.ToProfileDto(), "Profile picture updated successfully");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating profile picture in service");
+                return new ServiceResponse<ProfileDto>(false, 500, null, "Failed to update profile picture");
+            }
+        }
+
         // Delete User Service
         public async Task<ServiceResponse> DeleteUserAsync(Guid userId)
         {
@@ -425,6 +485,12 @@ namespace BackendAPI.Source.Service
                 {
                     profile = await patientService.GetPatientProfileAsync(userId);
                 }
+                else
+                {
+                    profile = user.ToProfileDto();
+                }
+
+                profile ??= user.ToProfileDto();
 
                 return new ServiceResponse<ProfileDto>(true, 200, profile, "User profile retrieved successfully");
             }

@@ -38,7 +38,7 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
       // Estabilish association between blog and a tag
       await CreateBlogTagAssocAsync(result.Entity.BlogId, tags);
 
-      return result.Entity.ToBlogDto(author.User, result.Entity.BlogLikes, tags);
+      return result.Entity.ToBlogDto(author.User, result.Entity.BlogLikes, tags, result.Entity.BlogComments);
     }
     catch (System.Exception ex)
     {
@@ -55,10 +55,12 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
         .Blogs.Include(b => b.Author)
         .Include(b => b.BlogLikes)
         .ThenInclude(b => b.User)
+        .Include(b => b.BlogComments)
+        .ThenInclude(bc => bc.Sender)
         .Include(b => b.BlogTags)
         .ThenInclude(bt => bt.Tag)
         .Where(b => b.Author != null)
-        .Select(b => b.ToBlogDto(b.Author!, b.BlogLikes, b.BlogTags.Select(bt => bt.Tag!).ToList()))
+        .Select(b => b.ToBlogDto(b.Author!, b.BlogLikes, b.BlogTags.Select(bt => bt.Tag!).ToList(), b.BlogComments))
         .ToListAsync();
       return blogs;
     }
@@ -77,12 +79,14 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
         .Blogs.Include(b => b.Author)
         .Include(b => b.BlogLikes)
         .ThenInclude(b => b.User)
+        .Include(b => b.BlogComments)
+        .ThenInclude(bc => bc.Sender)
         .Include(b => b.BlogTags)
         .ThenInclude(bt => bt.Tag)
         .Where(b => b.Author != null)
         .OrderByDescending(b => b.BlogLikes.Count)
         .Take(count)
-        .Select(b => b.ToBlogDto(b.Author!, b.BlogLikes, b.BlogTags.Select(bt => bt.Tag!).ToList()))
+        .Select(b => b.ToBlogDto(b.Author!, b.BlogLikes, b.BlogTags.Select(bt => bt.Tag!).ToList(), b.BlogComments))
         .ToListAsync();
       return blogs;
     }
@@ -102,6 +106,8 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
         .Blogs.Include(b => b.Author)
         .Include(b => b.BlogLikes)
         .ThenInclude(bl => bl.User)
+        .Include(b => b.BlogComments)
+        .ThenInclude(bc => bc.Sender)
         .Include(b => b.BlogTags)
         .ThenInclude(bt => bt.Tag)
         .FirstOrDefaultAsync(b => b.BlogId == blogId);
@@ -112,7 +118,8 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
       return blog.ToBlogDto(
         blog.Author!,
         blog.BlogLikes,
-        blog.BlogTags.Select(bt => bt.Tag!).ToList()
+        blog.BlogTags.Select(bt => bt.Tag!).ToList(),
+        blog.BlogComments
       );
     }
     catch (System.Exception ex)
@@ -131,6 +138,8 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
         .Where(b => b.Author != null)
         .Include(b => b.BlogLikes)
         .ThenInclude(bl => bl.User)
+        .Include(b => b.BlogComments)
+        .ThenInclude(bc => bc.Sender)
         .FirstOrDefaultAsync(b => b.BlogId == blogId);
 
       if (blog == default)
@@ -146,7 +155,7 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
       await CreateBlogTagAssocAsync(blog.BlogId, tags);
 
       await appContext.SaveChangesAsync();
-      return blog.ToBlogDto(blog.Author!, blog.BlogLikes, tags);
+      return blog.ToBlogDto(blog.Author!, blog.BlogLikes, tags, blog.BlogComments);
     }
     catch (System.Exception ex)
     {
@@ -304,28 +313,68 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
   {
     try
     {
-      var blog = await appContext.Blogs.FirstOrDefaultAsync(b => b.BlogId == blogId);
-      if (blog == default)
-        throw new KeyNotFoundException(
-          "Blog with the given id doesn't exist. Unable to get blog comments."
-        );
-
-      var comments = await appContext
-        .Blogs.Where(b => b.BlogId == blogId)
-        .Include(b => b.BlogComments)
-        .ThenInclude(bc => bc.Sender)
-        .SelectMany(b => b.BlogComments)
+      var comments = await appContext.BlogComments
+        .Where(bc => bc.BlogId == blogId && bc.ParentCommentId == null)
+        .Include(bc => bc.Sender)
+        .Include(bc => bc.Replies)
+          .ThenInclude(r => r.Sender)
+        .OrderByDescending(bc => bc.CreatedAt)
         .ToListAsync();
 
       return comments
-        .Where(c => c.Sender != null)
-        .Select(c => c.ToBlogCommentDto(c.Sender!))
+        .Select(c => c.ToBlogCommentDto(c.Sender ?? throw new Exception("Include sender")))
         .ToList();
     }
     catch (System.Exception ex)
     {
       logger.LogError(ex, "An error occured trying to get blog comments.");
       throw;
+    }
+  }
+
+  public async Task<BlogCommentDto> UpdateBlogCommentAsync(Guid commentId, EditBlogCommentDto editBlogCommentDto)
+  {
+    try
+    {
+      var comment = await appContext.BlogComments
+        .Include(c => c.Sender)
+        .FirstOrDefaultAsync(c => c.BlogCommentId == commentId);
+
+      if (comment == default)
+        throw new KeyNotFoundException("Comment not found.");
+
+      comment.CommentText = editBlogCommentDto.CommentText;
+      await appContext.SaveChangesAsync();
+
+      return comment.ToBlogCommentDto(comment.Sender!);
+    }
+    catch (Exception ex)
+    {
+       logger.LogError(ex, "Error updating blog comment");
+       throw;
+    }
+  }
+
+  public async Task<bool> DeleteBlogCommentAsync(Guid commentId)
+  {
+    try
+    {
+      var comment = await appContext.BlogComments
+        .Include(c => c.Replies)
+        .FirstOrDefaultAsync(c => c.BlogCommentId == commentId);
+
+      if (comment == default) return false;
+
+      // Also recursively delete replies or handle them? 
+      // For now let's just delete the comment. (Cascading delete should handle replies if configured)
+      appContext.BlogComments.Remove(comment);
+      await appContext.SaveChangesAsync();
+      return true;
+    }
+    catch (Exception ex)
+    {
+       logger.LogError(ex, "Error deleting blog comment");
+       throw;
     }
   }
 

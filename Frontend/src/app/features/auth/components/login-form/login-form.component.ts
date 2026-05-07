@@ -69,7 +69,8 @@ export class LoginFormComponent {
         }
 
         if (error.status === 403) {
-          this.errorMessage.set('Your account is pending admin approval. Please wait for verification.');
+          const msg = error.error?.message || 'Your account is pending admin approval. Please wait for verification.';
+          this.errorMessage.set(msg);
         } else if (error.status === 429) {
           this.errorMessage.set('Too many requests. Please try again later.');
         } else {

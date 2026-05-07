@@ -18,7 +18,8 @@ interface Conversation {
   id: string;
   name: string;
   role: string;
-  avatar: string;
+  avatar: string;       // initials fallback
+  avatarUrl?: string;    // actual profile picture URL
   lastMessage: string;
   time: string;
   unread: number;
@@ -98,16 +99,23 @@ export class ChatComponent implements OnInit, OnDestroy {
         const data = response?.data || response || [];
         const convs = Array.isArray(data) ? data : [];
 
-        this.conversations.set(convs.map((c: any) => ({
-          id: c.conversationId || c.id,
-          name: c.participantName || 'User',
-          role: c.participantRole || '',
-          avatar: (c.participantName || 'U').charAt(0),
-          lastMessage: c.lastMessage || 'Start a conversation',
-          time: c.lastMessageTime ? new Date(c.lastMessageTime).toLocaleTimeString() : '',
-          unread: c.unreadCount || 0,
-          online: c.isOnline || false
-        })));
+        this.conversations.set(convs.map((c: any) => {
+          // participants is an array; pick the one that is NOT the current user
+          const participants: any[] = c.participants || [];
+          const other = participants.find((p: any) => p.userId !== this.userId) || participants[0] || {};
+          const fullName = `${other.firstName || ''} ${other.lastName || ''}`.trim() || 'User';
+          return {
+            id: c.conversationId || c.id,
+            name: fullName,
+            role: other.role || other.specialization || '',
+            avatar: this.getInitials(fullName),
+            avatarUrl: other.profilePictureUrl || other.profilePicture || null,
+            lastMessage: c.lastMessage || 'Start a conversation',
+            time: c.lastMessageTime ? new Date(c.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+            unread: c.unreadCount || 0,
+            online: false
+          };
+        }));
 
         if (convs.length > 0) {
           this.selectConversation(this.conversations()[0].id);
@@ -166,6 +174,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   activeConv(): Conversation | undefined {
     return this.conversations().find(c => c.id === this.activeConversation());
+  }
+
+  getInitials(name: string): string {
+    return name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase();
   }
 
   onKeyPress(event: KeyboardEvent): void {

@@ -121,13 +121,17 @@ namespace BackendAPI.Source.Validation.UserValidation
 
             if (role == Role.Patient)
             {
-                RuleFor(u => u.EmergencyContactName)
-                  .NotEmpty()
-                  .WithMessage("Emergency contact name is required for patients.");
+                When(u => u.EmergencyContactName != null, () => {
+                    RuleFor(u => u.EmergencyContactName)
+                      .NotEmpty()
+                      .WithMessage("Emergency contact name is required for patients.");
+                });
 
-                RuleFor(u => u.EmergencyContactPhone)
-                  .NotEmpty()
-                  .WithMessage("Emergency contact phone is required for patients.");
+                When(u => u.EmergencyContactPhone != null, () => {
+                    RuleFor(u => u.EmergencyContactPhone)
+                      .NotEmpty()
+                      .WithMessage("Emergency contact phone is required for patients.");
+                });
             }
 
             if (role == Role.Doctor)

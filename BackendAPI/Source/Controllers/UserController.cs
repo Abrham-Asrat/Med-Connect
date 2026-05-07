@@ -18,6 +18,7 @@ using BackendAPI.Source.Helpers.Extensions;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using BackendAPI.Source.Services;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 
 namespace BackendAPI.Source.Controllers
 {
@@ -228,6 +229,49 @@ namespace BackendAPI.Source.Controllers
             }
         }
 
+        [HttpPost("profile-picture")]
+        [Authorize]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadProfilePicture(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest(new ApiResponse<object>(false, "No file uploaded", null));
+
+                // Check file size (e.g., 5MB limit)
+                if (file.Length > 5 * 1024 * 1024)
+                    return BadRequest(new ApiResponse<object>(false, "File size exceeds 5MB limit", null));
+
+                var userId = await User.GetUserIdAsync(context);
+                if (!userId.HasValue)
+                    return Unauthorized(new ApiResponse<object>(false, "User not identified", null));
+
+                // Convert file to byte array
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+                var fileBytes = ms.ToArray();
+
+                var createFileDto = new CreateFileDto(
+                    file.ContentType,
+                    Convert.ToBase64String(fileBytes),
+                    file.FileName
+                );
+
+                var response = await userService.UpdateProfilePictureAsync(userId.Value, createFileDto);
+
+                if (!response.Success)
+                    return StatusCode(response.StatusCode, response);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error uploading profile picture");
+                return StatusCode(500, new ApiResponse<object>(false, "Internal server error during upload", null));
+            }
+        }
+
         // Delete User Profile Controller
         [HttpDelete("{userId}")]
         [Authorize] // Must be authenticated to delete user
@@ -332,7 +376,18 @@ namespace BackendAPI.Source.Controllers
                 
                 if (string.IsNullOrEmpty(email))
                 {
-                    throw new UnauthorizedAccessException("User email not found in token");
+                    // Fallback: lookup user by Auth0 ID (sub)
+                    var auth0Id = User.GetAuth0Id();
+                    if (!string.IsNullOrEmpty(auth0Id))
+                    {
+                        var user = await context.Users.FirstOrDefaultAsync(u => u.Auth0Id == auth0Id);
+                        email = user?.Email;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    throw new UnauthorizedAccessException("User email not found");
                 }
 
                 // Verify current password first

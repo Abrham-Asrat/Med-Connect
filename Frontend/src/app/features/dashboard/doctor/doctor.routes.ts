@@ -24,7 +24,7 @@ export const DOCTOR_ROUTES: Routes = [
         path: 'settings',
         loadComponent: () => import('../../settings/pages/doctor-settings/doctor-settings.component').then(m => m.DoctorSettingsComponent)
       },
-      { path: 'about', loadComponent: () => import('../../support/pages/about-us/about-us.component').then(m => m.AboutUsComponent) },
+
       { path: 'contact', loadComponent: () => import('../../support/pages/contact-us/contact-us.component').then(m => m.ContactUsComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
 

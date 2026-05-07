@@ -45,27 +45,21 @@
   <div class="card mb-4">
     <div class="card-body">
       <h5 class="text-primary mb-3">Quick Actions / ፈጣን እርምጃዎች</h5>
+
       <div class="row g-3 justify-content-center">
-        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/doctors">
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2 me-2" routerLink="/patient/doctors">
           <i class="bi bi-search text-primary fs-4 d-block mb-1"></i><small>Find Dr / ሀኪም ፈልግ</small>
         </div>
-        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/doctors">
-          <i class="bi bi-calendar-plus text-primary fs-4 d-block mb-1"></i><small>Book / ቀጠሮ ያዙ</small>
-        </div>
-        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/chat">
-          <i class="bi bi-chat-dots text-primary fs-4 d-block mb-1"></i><small>Chat / ውይይት</small>
-        </div>
-        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/medical-records">
-          <i class="bi bi-file-medical text-primary fs-4 d-block mb-1"></i><small>Records / መዝገብ</small>
-        </div>
-        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/blog">
+
+
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2 me-2" routerLink="/patient/blog">
           <i class="bi bi-journal-text text-primary fs-4 d-block mb-1"></i><small>Blogs / ጦማር</small>
         </div>
 
-        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" routerLink="/patient/payments">
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2 me-2" routerLink="/patient/payments">
           <i class="bi bi-wallet2 text-primary fs-4 d-block mb-1"></i><small>Pay / ክፍያ</small>
         </div>
-        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2" (click)="showEmergency.set(true)">
+        <div class="col-4 col-md-2 text-center quick-action rounded-3 p-2 me-2" (click)="showEmergency.set(true)">
           <i class="bi bi-telephone text-danger fs-4 d-block mb-1"></i>
           <small class="text-danger">Emergency / አደጋ ጊዜ</small>
         </div>

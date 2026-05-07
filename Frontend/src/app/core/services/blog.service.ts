@@ -42,4 +42,14 @@ export class BlogService {
   likeBlog(blogId: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/blogs/${blogId}/like`, {});
   }
+
+  // PUT /api/blogs/comment/{id}
+  updateComment(commentId: string, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/blogs/comment/${commentId}`, data);
+  }
+
+  // DELETE /api/blogs/comment/{id}
+  deleteComment(commentId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/blogs/comment/${commentId}`);
+  }
 }

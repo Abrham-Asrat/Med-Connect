@@ -17,10 +17,31 @@ export class DoctorSettingsComponent implements OnInit {
     private fb = inject(FormBuilder);
 
     user = this.authService.currentUser;
-    activeTab = signal('profile');
+    activeTab = signal('personal');
     isLoading = signal(false);
     successMessage = signal<string | null>(null);
     errorMessage = signal<string | null>(null);
+
+    // Personal form
+    personalForm: FormGroup = this.fb.group({
+        firstName: ['', Validators.required],
+        lastName: ['', Validators.required],
+        email: [{ value: '', disabled: true }],
+        phone: ['', Validators.required],
+        gender: ['', Validators.required],
+        dateOfBirth: ['', Validators.required],
+        address: ['', Validators.required],
+    });
+
+    selectedFile: File | null = null;
+    previewUrl = signal<string | null>(null);
+
+    private clearMessageAfter(ms: number) {
+        setTimeout(() => {
+            this.successMessage.set(null);
+            this.errorMessage.set(null);
+        }, ms);
+    }
 
     // Professional form
     professionalForm: FormGroup = this.fb.group({
@@ -50,6 +71,23 @@ export class DoctorSettingsComponent implements OnInit {
                 this.isLoading.set(false);
                 const profile = response?.data || response;
                 if (profile) {
+                    this.personalForm.patchValue({
+                        firstName: profile.firstName || '',
+                        lastName: profile.lastName || '',
+                        email: profile.email || '',
+                        phone: profile.phone || '',
+                        gender: profile.gender || '',
+                        dateOfBirth: profile.dateOfBirth || '',
+                        address: profile.address || '',
+                    });
+
+                    if (profile.profilePicture && profile.profilePicture.trim() !== '') {
+                        const pic = profile.profilePicture;
+                        this.previewUrl.set(pic.startsWith('data:') || pic.startsWith('http') ? pic : `data:image/png;base64,${pic}`);
+                    } else {
+                        this.previewUrl.set(null);
+                    }
+
                     this.professionalForm.patchValue({
                         biography: profile.biography || '',
                         qualifications: profile.qualifications || '',
@@ -57,17 +95,57 @@ export class DoctorSettingsComponent implements OnInit {
                         specialties: profile.specialties ? profile.specialties.join(', ') : '',
                     });
 
+                    // Clear and reload availabilities
+                    while (this.availabilities.length !== 0) {
+                        this.availabilities.removeAt(0);
+                    }
+
                     if (profile.availabilities && profile.availabilities.length > 0) {
                         profile.availabilities.forEach((avail: any) => {
                             this.addAvailability(avail.availableDay, avail.startTime, avail.endTime);
                         });
                     } else {
-                        // Default blank one if nothing
                         this.addAvailability();
                     }
                 }
             },
             error: () => this.isLoading.set(false)
+        });
+    }
+
+    onFileSelected(event: any): void {
+        const file = event.target.files[0];
+        if (file) {
+            this.selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = () => {
+                this.previewUrl.set(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    uploadPicture(): void {
+        if (!this.selectedFile) return;
+
+        this.isLoading.set(true);
+        this.profileService.uploadProfilePicture(this.selectedFile).subscribe({
+            next: (res: any) => {
+                this.isLoading.set(false);
+                this.successMessage.set('Profile picture updated!');
+
+                // Update session
+                if (res?.data?.profilePicture) {
+                    this.authService.updateUser({ profilePicture: res.data.profilePicture });
+                }
+
+                this.selectedFile = null;
+                this.clearMessageAfter(3000);
+            },
+            error: (err) => {
+                this.isLoading.set(false);
+                this.errorMessage.set('Failed to upload picture.');
+            }
         });
     }
 
@@ -96,23 +174,28 @@ export class DoctorSettingsComponent implements OnInit {
         }
     }
 
-    saveProfessionalProfile(): void {
-        if (this.professionalForm.invalid) return;
+    saveProfile(): void {
+        const form = this.activeTab() === 'personal' ? this.personalForm : this.professionalForm;
+        if (form.invalid) {
+            this.errorMessage.set('Please fill all required fields correctly.');
+            return;
+        }
 
         this.isLoading.set(true);
         this.successMessage.set(null);
         this.errorMessage.set(null);
 
-        const values = this.professionalForm.value;
-        const availValues = this.availabilitiesForm.getRawValue().availabilities;
+        const personalData = this.personalForm.getRawValue();
+        const values = {
+            ...personalData,
+            ...this.professionalForm.value,
+            availabilities: this.availabilitiesForm.getRawValue().availabilities
+        };
 
         const data: any = {
+            ...values,
             userId: this.user()?.userId || JSON.parse(localStorage.getItem('user') || '{}').userId,
-            biography: values.biography,
-            qualifications: values.qualifications,
-            doctorStatus: values.doctorStatus,
-            specialties: values.specialties.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0),
-            availabilities: availValues
+            specialties: values.specialties ? values.specialties.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0) : []
         };
 
         const submitData = () => {
@@ -120,13 +203,20 @@ export class DoctorSettingsComponent implements OnInit {
                 next: (response: any) => {
                     this.isLoading.set(false);
                     if (response?.success) {
-                        this.successMessage.set('Professional profile updated successfully!');
-                        setTimeout(() => this.successMessage.set(null), 3000);
+                        this.successMessage.set('Profile updated successfully.');
+
+                        // Sync with session using returned profile
+                        const updatedProfile = response?.data || response;
+                        if (updatedProfile) {
+                            this.authService.updateUser(updatedProfile);
+                        }
+
+                        this.clearMessageAfter(3000);
                     }
                 },
                 error: (error: any) => {
                     this.isLoading.set(false);
-                    this.errorMessage.set(error?.error?.message || 'Failed to update professional profile.');
+                    this.errorMessage.set(error?.error?.message || 'Failed to update profile.');
                 }
             });
         };

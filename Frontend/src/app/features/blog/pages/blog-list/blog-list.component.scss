@@ -1,6 +1,6 @@
 .blog-hero {
     position: relative;
-    min-height: 500px;
+    // min-height: 500px;
     background: linear-gradient(135deg, #078930 0%, #056B24 100%);
 
     border-radius: 0 0 3rem 3rem;
@@ -156,4 +156,63 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.social-btn {
+    color: #64748b;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+
+    i {
+        font-size: 1.1rem;
+    }
+
+    &:hover {
+        color: #078930;
+        transform: scale(1.1);
+    }
+}
+
+.comment-input-wrapper {
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+
+    .form-control {
+        background: white;
+        border-radius: 8px 0 0 8px;
+
+        &:focus {
+            box-shadow: none;
+            border-color: #078930;
+        }
+    }
+
+    .btn {
+        border-radius: 0 8px 8px 0;
+    }
+}
+
+.custom-scrollbar {
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+}
+
+.placeholder-light::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
 }

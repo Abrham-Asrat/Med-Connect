@@ -53,6 +53,7 @@ public record BlogDto
   public IList<string> Tags { get; set; } = [];
   public required IProfileDto Author { get; set; }
   public required ICollection<BlogLikeDto> BlogLikes { get; set; } = new HashSet<BlogLikeDto>();
+  public required ICollection<BlogCommentDto> Comments { get; set; } = new HashSet<BlogCommentDto>();
   public required DateTime CreatedAt { get; set; }
 };
 
@@ -70,6 +71,15 @@ public record CreateBlogCommentDto
   [Required]
   [MinLength(1)]
   public required string CommentText { get; set; }
+
+  public Guid? ParentCommentId { get; set; }
+}
+
+public record EditBlogCommentDto
+{
+  [Required]
+  [MinLength(1)]
+  public required string CommentText { get; set; }
 }
 
 public record BlogCommentDto
@@ -79,6 +89,9 @@ public record BlogCommentDto
   public required Guid SenderId { get; set; }
   public required string CommentText { get; set; }
   public required IProfileDto Sender { get; set; }
+  public Guid? ParentCommentId { get; set; }
+  public ICollection<BlogCommentDto> Replies { get; set; } = new List<BlogCommentDto>();
+  public DateTime CreatedAt { get; set; }
 }
 
 // Request DTO for creating a blog like

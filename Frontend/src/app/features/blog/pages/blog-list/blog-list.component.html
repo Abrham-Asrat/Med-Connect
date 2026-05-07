@@ -1,4 +1,4 @@
-<section class="blog-hero py-5 mb-5 text-white position-relative">
+<section class="blog-hero mx-2 py-5  mb-5 text-white position-relative">
     <div class="hero-overlay"></div>
     <div class="container py-5 position-relative z-1">
         <div class="row align-items-center">
@@ -30,18 +30,105 @@
                             style="height: 250px;">
                         <span class="category-float">{{ featuredBlog.category }}</span>
                     </div>
-                    <div>
-                        <h3 class="fw-bold mb-2">{{ featuredBlog.title }}</h3>
-                        <p class="text-white-50 line-clamp-2 small">{{ featuredBlog.content }}</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="avatar-sm bg-warning rounded-circle"></div>
-                                <small class="fw-bold">{{ featuredBlog.authorName }}</small>
-                            </div>
-                            <small class="text-white-50">{{ featuredBlog.publishedAt | date:'mediumDate' }}</small>
+                    <h3 class="fw-bold mb-2">{{ featuredBlog.title }}</h3>
+                    <p class="text-white-50 line-clamp-2 small">{{ featuredBlog.content }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <button
+                                class="btn btn-link text-white p-0 text-decoration-none d-flex align-items-center gap-1"
+                                (click)="toggleLike(featuredBlog, $event)">
+                                <i class="bi" [class.bi-heart-fill]="featuredBlog.isLiked"
+                                    [class.bi-heart]="!featuredBlog.isLiked"
+                                    [class.text-warning]="featuredBlog.isLiked"></i>
+                                <span>{{ featuredBlog.likeCount }}</span>
+                            </button>
+                            <button
+                                class="btn btn-link text-white p-0 text-decoration-none d-flex align-items-center gap-1"
+                                (click)="toggleCommentInput(featuredBlog.id, $event)">
+                                <i class="bi bi-chat-text"></i>
+                                <span>{{ featuredBlog.commentCount }}</span>
+                            </button>
                         </div>
+                        <small class="text-white-50">{{ featuredBlog.publishedAt | date:'mediumDate' }}</small>
                     </div>
                 </div>
+
+                @if (activeCommentBlogId() === featuredBlog.id) {
+                <div class="comment-input-wrapper mt-3 animate-fade-in" (click)="onCommentInputClick($event)"
+                    style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2);">
+                    <div class="comments-list mb-3 custom-scrollbar" style="max-height: 150px; overflow-y: auto;">
+                        @for (comm of featuredBlog.comments; track comm.blogCommentId) {
+                        <div
+                            class="comment-item p-2 mb-2 rounded bg-white bg-opacity-10 shadow-sm border-start border-warning border-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold text-warning d-block" style="font-size: 0.75rem;">{{
+                                    comm.sender?.firstName }}</span>
+                                <div class="d-flex gap-2">
+                                    @if (userId === comm.senderId) {
+                                    <button class="btn btn-link btn-sm p-0 text-white-50"
+                                        (click)="startEdit(comm, $event)"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="btn btn-link btn-sm p-0 text-danger"
+                                        (click)="deleteComment(comm.blogCommentId, featuredBlog, $event)"><i
+                                            class="bi bi-trash"></i></button>
+                                    }
+                                    <button class="btn btn-link btn-sm p-0 text-warning"
+                                        (click)="startReply(comm.blogCommentId, $event)"><i
+                                            class="bi bi-reply-all"></i></button>
+                                </div>
+                            </div>
+
+                            @if (editingCommentId() === comm.blogCommentId) {
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control bg-dark border-0 text-white"
+                                    [(ngModel)]="editCommentText">
+                                <button class="btn btn-success btn-sm" (click)="saveEdit(comm, $event)"><i
+                                        class="bi bi-check"></i></button>
+                                <button class="btn btn-light btn-sm" (click)="cancelEdit()"><i
+                                        class="bi bi-x"></i></button>
+                            </div>
+                            } @else {
+                            <p class="mb-0 text-white" style="font-size: 0.8rem;">{{ comm.commentText }}</p>
+                            }
+
+                            <!-- Featured Replies -->
+                            @if (comm.replies?.length) {
+                            <div class="ms-3 mt-2 border-start border-white border-opacity-10 ps-2">
+                                @for (reply of comm.replies; track reply.blogCommentId) {
+                                <div class="small mb-1 text-white-50 d-flex justify-content-between">
+                                    <span>{{ reply.commentText }}</span>
+                                    @if (userId === reply.senderId) {
+                                    <i class="bi bi-trash text-danger"
+                                        (click)="deleteComment(reply.blogCommentId, featuredBlog, $event)"></i>
+                                    }
+                                </div>
+                                }
+                            </div>
+                            }
+                        </div>
+                        }
+                    </div>
+
+                    @if (replyingToCommentId()) {
+                    <div
+                        class="d-flex justify-content-between align-items-center mb-1 px-2 py-1 bg-white bg-opacity-10 rounded-top">
+                        <small class="text-warning fw-bold" style="font-size: 0.7rem;">Replying...</small>
+                        <button class="btn btn-link btn-sm p-0 text-white" (click)="cancelReply()"><i
+                                class="bi bi-x-circle"></i></button>
+                    </div>
+                    }
+
+                    <div class="input-group input-group-sm">
+                        <input type="text"
+                            class="form-control bg-white bg-opacity-25 border-0 text-white placeholder-light"
+                            [placeholder]="replyingToCommentId() ? 'Write a reply...' : 'Write a comment...'"
+                            [(ngModel)]="commentText" (keyup.enter)="submitComment(featuredBlog)">
+                        <button class="btn btn-warning" type="button" (click)="submitComment(featuredBlog)"
+                            [disabled]="isSubmittingComment() || !commentText()">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </div>
+                }
             </div>
             }
         </div>
@@ -83,11 +170,117 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="text-muted small"><i class="bi bi-calendar-event me-1"></i> {{ blog.publishedAt |
                             date:'mediumDate' }}</span>
-                        <span class="text-primary small fw-bold"><i class="bi bi-heart-fill me-1"></i> {{ blog.viewCount
-                            }}</span>
+                        <div class="d-flex gap-3">
+                            <button
+                                class="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1 social-btn"
+                                (click)="toggleLike(blog, $event)">
+                                <i class="bi" [class.bi-heart-fill]="blog.isLiked" [class.bi-heart]="!blog.isLiked"
+                                    [class.text-danger]="blog.isLiked"></i>
+                                <small class="fw-bold">{{ blog.likeCount }}</small>
+                            </button>
+                            <button
+                                class="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1 social-btn"
+                                (click)="toggleCommentInput(blog.id, $event)">
+                                <i class="bi bi-chat-text"></i>
+                                <small class="fw-bold">{{ blog.commentCount }}</small>
+                            </button>
+                        </div>
                     </div>
                     <h4 class="card-title fw-bold h5 mb-3 line-clamp-2" style="color: #0d3b66;">{{ blog.title }}</h4>
-                    <p class="card-text text-secondary small mb-4 line-clamp-3">{{ blog.content }}</p>
+                    <p class="card-text text-secondary small mb-3 line-clamp-2">{{ blog.content }}</p>
+
+                    @if (activeCommentBlogId() === blog.id) {
+                    <div class="comment-input-wrapper mb-3 animate-fade-in" (click)="onCommentInputClick($event)">
+                        <!-- Comments List -->
+                        <div class="comments-list mb-3 custom-scrollbar"
+                            style="max-height: 200px; overflow-y: auto; scroll-behavior: smooth;">
+                            @for (comm of blog.comments; track comm.blogCommentId) {
+                            <div class="comment-item p-2 mb-2 rounded shadow-sm border-start border-primary border-3"
+                                style="background: white;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold text-primary" style="font-size: 0.75rem;">{{
+                                        comm.sender?.firstName }} {{ comm.sender?.lastName }}</span>
+                                    <div class="d-flex gap-2">
+                                        @if (userId === comm.senderId) {
+                                        <button class="btn btn-link p-0 text-muted" title="Edit"
+                                            (click)="startEdit(comm, $event)"><i class="bi bi-pencil-square"
+                                                style="font-size: 0.75rem;"></i></button>
+                                        <button class="btn btn-link p-0 text-danger" title="Delete"
+                                            (click)="deleteComment(comm.blogCommentId, blog, $event)"><i
+                                                class="bi bi-trash" style="font-size: 0.75rem;"></i></button>
+                                        }
+                                        <button class="btn btn-link p-0 text-primary" title="Reply"
+                                            (click)="startReply(comm.blogCommentId, $event)"><i class="bi bi-reply-all"
+                                                style="font-size: 0.85rem;"></i></button>
+                                    </div>
+                                </div>
+
+                                @if (editingCommentId() === comm.blogCommentId) {
+                                <div class="input-group input-group-sm mt-1">
+                                    <input type="text" class="form-control" [(ngModel)]="editCommentText"
+                                        (keyup.enter)="saveEdit(comm, $event)">
+                                    <button class="btn btn-success" (click)="saveEdit(comm, $event)"><i
+                                            class="bi bi-check-lg"></i></button>
+                                    <button class="btn btn-secondary" (click)="cancelEdit()"><i
+                                            class="bi bi-x-lg"></i></button>
+                                </div>
+                                } @else {
+                                <p class="mb-0 text-dark" style="font-size: 0.8rem;">{{ comm.commentText }}</p>
+                                }
+
+                                <!-- Nested Replies -->
+                                @if (comm.replies?.length) {
+                                <div class="replies-list ms-3 mt-2 border-start ps-2">
+                                    @for (reply of comm.replies; track reply.blogCommentId) {
+                                    <div class="reply-item small mb-1 p-1 rounded bg-light position-relative">
+                                        <div class="d-flex justify-content-between align-items-baseline">
+                                            <span class="fw-bold text-secondary" style="font-size: 0.65rem;">{{
+                                                reply.sender?.firstName }}</span>
+                                            @if (userId === reply.senderId) {
+                                            <button class="btn btn-link p-0 text-danger"
+                                                (click)="deleteComment(reply.blogCommentId, blog, $event)">
+                                                <i class="bi bi-x-circle-fill" style="font-size: 0.6rem;"></i>
+                                            </button>
+                                            }
+                                        </div>
+                                        <p class="mb-0 text-dark" style="font-size: 0.75rem;">{{ reply.commentText }}
+                                        </p>
+                                    </div>
+                                    }
+                                </div>
+                                }
+                            </div>
+                            }
+                            @if (blog.comments?.length === 0) {
+                            <div class="text-center py-3 opacity-50">
+                                <i class="bi bi-chat-dots fs-4 d-block mb-1"></i>
+                                <small>No comments yet. Start the conversation!</small>
+                            </div>
+                            }
+                        </div>
+
+                        <!-- Main Input Area -->
+                        @if (replyingToCommentId()) {
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-1 px-1 bg-primary bg-opacity-10 rounded-top py-1">
+                            <small class="text-primary fw-bold" style="font-size: 0.7rem;"><i
+                                    class="bi bi-reply-fill"></i> Replying to comment...</small>
+                            <button class="btn btn-link btn-sm p-0 text-danger" (click)="cancelReply()"><i
+                                    class="bi bi-x-circle"></i></button>
+                        </div>
+                        }
+
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control border-primary-subtle"
+                                [placeholder]="replyingToCommentId() ? 'Write a reply...' : 'Write a comment...'"
+                                [(ngModel)]="commentText" (keyup.enter)="submitComment(blog)">
+                            <button class="btn btn-primary" type="button" (click)="submitComment(blog)"
+                                [disabled]="isSubmittingComment() || !commentText()">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                    }
 
                     <div class="mt-auto pt-3 border-top d-flex align-items-center">
                         <div class="author-avatar me-3 bg-light rounded-circle d-flex align-items-center justify-content-center"

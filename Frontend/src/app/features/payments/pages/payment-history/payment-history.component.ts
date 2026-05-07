@@ -1,13 +1,12 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { AppointmentService } from '../../../../core/services/appointment.service';
 import { PaymentService } from '../../../../core/services/payment.service';
 
 @Component({
   selector: 'app-payment-history',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './payment-history.component.html',
   styleUrls: ['./payment-history.component.scss']
 })

@@ -1,5 +1,19 @@
 <div class="container-fluid p-4">
-  
+
+  <!-- Verification Alert -->
+  @if (!user()?.isVerified) {
+  <div class="alert alert-warning border-0 rounded-4 p-3 mb-4 d-flex align-items-center gap-3 shadow-sm">
+    <div class="bg-warning-light p-2 rounded-circle">
+      <i class="bi bi-shield-lock-fill text-warning-dark fs-4"></i>
+    </div>
+    <div>
+      <h6 class="mb-1 fw-bold text-dark">Account Pending Verification / ሂሳብዎ በመረጋገጥ ላይ ነው</h6>
+      <p class="mb-0 small text-muted">You can access the system, but your profile will be fully active once an admin
+        reviews your credentials. This usually takes 1-3 business days.</p>
+    </div>
+  </div>
+  }
+
   <!-- Welcome -->
   <div class="welcome-card rounded-4 p-4 text-white mb-4">
     <div class="row align-items-center">
@@ -22,28 +36,36 @@
   <!-- Stats -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
-      <div class="card stat-card"><div class="card-body">
-        <small class="text-medium">Today's Appts</small>
-        <h3 class="text-primary mb-0">{{ todayAppointments() }}</h3>
-      </div></div>
+      <div class="card stat-card">
+        <div class="card-body">
+          <small class="text-medium">Today's Appts</small>
+          <h3 class="text-primary mb-0">{{ todayAppointments() }}</h3>
+        </div>
+      </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card stat-card pending"><div class="card-body">
-        <small class="text-medium">Pending</small>
-        <h3 class="text-warning-dark mb-0">{{ pendingConfirmations() }}</h3>
-      </div></div>
+      <div class="card stat-card pending">
+        <div class="card-body">
+          <small class="text-medium">Pending</small>
+          <h3 class="text-warning-dark mb-0">{{ pendingConfirmations() }}</h3>
+        </div>
+      </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card stat-card"><div class="card-body">
-        <small class="text-medium">Patients</small>
-        <h3 class="text-primary mb-0">{{ totalPatients() }}</h3>
-      </div></div>
+      <div class="card stat-card">
+        <div class="card-body">
+          <small class="text-medium">Patients</small>
+          <h3 class="text-primary mb-0">{{ totalPatients() }}</h3>
+        </div>
+      </div>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card stat-card"><div class="card-body">
-        <small class="text-medium">Completed Today</small>
-        <h3 class="text-primary mb-0">{{ completedToday() }}</h3>
-      </div></div>
+      <div class="card stat-card">
+        <div class="card-body">
+          <small class="text-medium">Completed Today</small>
+          <h3 class="text-primary mb-0">{{ completedToday() }}</h3>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -55,35 +77,38 @@
     </div>
     <div class="card-body p-0">
       @if (isLoading()) {
-        <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+      <div class="text-center py-4">
+        <div class="spinner-border text-primary"></div>
+      </div>
       }
       @for (apt of appointments(); track apt.appointmentId) {
-        <div class="appointment-row p-3 border-bottom" [class.pending]="apt.status==='Pending'">
-          <div class="row align-items-center">
-            <div class="col-md-2">
-              <span class="text-primary fw-bold">{{ apt.appointmentTime }}</span>
-            </div>
-            <div class="col-md-4">
-              <strong>{{ apt.patientName || 'Patient' }}</strong>
-              <br><small class="text-medium">{{ apt.appointmentType || 'Virtual' }}</small>
-            </div>
-            <div class="col-md-3">
-              <span class="badge rounded-pill px-3" [ngClass]="getStatusClass(apt.status)">{{ apt.status }}</span>
-            </div>
-            <div class="col-md-3 text-end">
-              @if (apt.status === 'Pending') {
-                <button class="btn btn-primary btn-sm me-1" (click)="confirmAppointment(apt.appointmentId)">Confirm</button>
-                <button class="btn btn-outline-danger btn-sm" (click)="declineAppointment(apt.appointmentId)">Decline</button>
-              }
-              @if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
-                <button class="btn btn-outline-primary btn-sm">Start</button>
-              }
-            </div>
+      <div class="appointment-row p-3 border-bottom" [class.pending]="apt.status==='Pending'">
+        <div class="row align-items-center">
+          <div class="col-md-2">
+            <span class="text-primary fw-bold">{{ apt.appointmentTime }}</span>
+          </div>
+          <div class="col-md-4">
+            <strong>{{ apt.patientName || 'Patient' }}</strong>
+            <br><small class="text-medium">{{ apt.appointmentType || 'Virtual' }}</small>
+          </div>
+          <div class="col-md-3">
+            <span class="badge rounded-pill px-3" [ngClass]="getStatusClass(apt.status)">{{ apt.status }}</span>
+          </div>
+          <div class="col-md-3 text-end">
+            @if (apt.status === 'Pending') {
+            <button class="btn btn-primary btn-sm me-1" (click)="confirmAppointment(apt.appointmentId)">Confirm</button>
+            <button class="btn btn-outline-danger btn-sm"
+              (click)="declineAppointment(apt.appointmentId)">Decline</button>
+            }
+            @if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
+            <button class="btn btn-outline-primary btn-sm">Start</button>
+            }
           </div>
         </div>
+      </div>
       }
       @if (appointments().length === 0 && !isLoading()) {
-        <p class="text-center text-medium py-4">No appointments yet</p>
+      <p class="text-center text-medium py-4">No appointments yet</p>
       }
     </div>
   </div>

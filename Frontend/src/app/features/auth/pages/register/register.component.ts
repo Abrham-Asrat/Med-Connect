@@ -169,8 +169,8 @@ export class RegisterComponent {
 
           this.successMessage.set(
             isDoctor
-              ? 'Application submitted! Check email to verify. Admin review within 1-3 days.'
-              : 'Account created! Check email to verify, then login.'
+              ? 'Application submitted! Please check your email for a verification link. Admin review within 1-3 days.'
+              : 'Account created! Please check your email for a verification link before logging in.'
           );
         } else {
           this.errorMessage.set(r?.message || 'Registration failed.');

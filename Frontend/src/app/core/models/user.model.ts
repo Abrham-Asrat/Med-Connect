@@ -11,7 +11,8 @@ export interface User {
   address?: string;
   role: UserRole;
   status: string;
-  profilePhoto?: string;
+  isVerified: boolean;
+  profilePicture?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,6 +37,7 @@ export interface LoginResponse {
       phone: string;
       gender: string;
       dateOfBirth: string;
+      profilePicture: string;
     };
   };
 }

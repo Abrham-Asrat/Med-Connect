@@ -30,9 +30,8 @@ namespace BackendAPI.Source.Models.Entities
 
         public int? Otp { get; set; }
 
-        [Required]
         [Phone]
-        public required string Phone { get; set; }
+        public string? Phone { get; set; }
 
         [Required]
         [GenderAttribute]
@@ -43,8 +42,7 @@ namespace BackendAPI.Source.Models.Entities
 
         public string? ProfilePicture { get; set; }
 
-        [Required]
-        public required string? Address { get; set; }
+        public string? Address { get; set; }
 
         [Required]
         [RoleValidation]

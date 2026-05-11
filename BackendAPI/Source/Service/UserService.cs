@@ -49,8 +49,7 @@ namespace BackendAPI.Source.Service
                 if (userByEmail)
                 {
                     logger.LogInformation("User with this email exists");
-                    throw new BadHttpRequestException("User with  this email already exist ");
-
+                    throw new BadHttpRequestException("An account with this email already exists.", StatusCodes.Status409Conflict);
                 }
 
                 // search the user by phone number 
@@ -59,8 +58,7 @@ namespace BackendAPI.Source.Service
                 if (userByPhone)
                 {
                     logger.LogInformation("User with this phone number exists");
-                    throw new BadHttpRequestException("User with  this phone number already exist ");
-
+                    throw new BadHttpRequestException("An account with this phone number already exists.", StatusCodes.Status409Conflict);
                 }
 
                 // Create user in Auth0
@@ -184,14 +182,21 @@ namespace BackendAPI.Source.Service
             }
             catch (Exception ex)
             {
+                // Log the full error server-side but return a clean message to the client
+                logger.LogError(ex, "Failed to register user");
 
-                // include message in response during development; remove or sanitize for production
-                var errorMessage = $"failed To register user {ex}";
+                string clientMessage = ex switch
+                {
+                    BadHttpRequestException => ex.Message,   // safe, intentional messages
+                    KeyNotFoundException    => ex.Message,
+                    _                       => "Registration failed. Please try again later."
+                };
+
                 return new ServiceResponse<ProfileDto>(
                     false,
                     500,
                     null,
-                    errorMessage
+                    clientMessage
                 );
             }
         }

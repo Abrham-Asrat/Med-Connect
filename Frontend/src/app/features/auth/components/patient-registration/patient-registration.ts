@@ -70,8 +70,16 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
       </div>
 
       <div class="mb-3">
+        <label class="form-label">Address *</label>
+        <textarea class="form-control" formControlName="address" rows="2"
+                  [class.is-invalid]="isInvalid('address')"
+                  placeholder="Street address, city, region"></textarea>
+        <div class="invalid-feedback">Address is required</div>
+      </div>
+
+      <div class="mb-3">
         <label class="form-label">Emergency Contact Phone (Optional)</label>
-        <input type="tel" class="form-control" formControlName="emergencyContact">
+        <input type="tel" class="form-control" formControlName="emergencyContactPhone">
       </div>
     </form>
   `

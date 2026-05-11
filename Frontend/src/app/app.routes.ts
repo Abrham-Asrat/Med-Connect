@@ -14,6 +14,15 @@ export const routes: Routes = [
     loadChildren: () => import('./features/auth/auth.routes')
       .then(m => m.AUTH_ROUTES)
   },
+
+  // Email verification link target — /verify-email?token=XYZ
+  // The backend sends this URL in the verification email.
+  // This redirects into the auth feature so the component handles the token.
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/pages/email-verified/email-verified.component')
+      .then(m => m.EmailVerifiedComponent)
+  },
   
   // Patient routes (lazy loaded)
   {

@@ -12,6 +12,18 @@ export const AUTH_ROUTES: Routes = [
       .then(m => m.RegisterComponent)
   },
   {
+    // Shown right after registration — "check your inbox"
+    path: 'email-sent',
+    loadComponent: () => import('./pages/email-sent/email-sent.component')
+      .then(m => m.EmailSentComponent)
+  },
+  {
+    // User lands here after clicking the link in the email (/verify-email?token=XYZ)
+    path: 'verify-email',
+    loadComponent: () => import('./pages/email-verified/email-verified.component')
+      .then(m => m.EmailVerifiedComponent)
+  },
+  {
     path: 'verify-otp',
     loadComponent: () => import('./pages/otp-verification/otp-verification.component')
       .then(m => m.OtpVerificationComponent)

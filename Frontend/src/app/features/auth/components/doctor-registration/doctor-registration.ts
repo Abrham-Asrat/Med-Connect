@@ -42,6 +42,42 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         <input type="password" class="form-control" formControlName="password">
       </div>
 
+      <div class="mb-3">
+        <label class="form-label">Phone Number *</label>
+        <input type="tel" class="form-control" formControlName="phone"
+               [class.is-invalid]="isInvalid('phone')"
+               placeholder="e.g. 0912345678">
+        <div class="invalid-feedback">Phone number is required</div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Gender *</label>
+          <select class="form-select" formControlName="gender"
+                  [class.is-invalid]="isInvalid('gender')">
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          <div class="invalid-feedback">Please select your gender</div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Date of Birth *</label>
+          <input type="date" class="form-control" formControlName="dateOfBirth"
+                 [class.is-invalid]="isInvalid('dateOfBirth')">
+          <div class="invalid-feedback">Date of birth is required (must be 18+)</div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Address *</label>
+        <textarea class="form-control" formControlName="address" rows="2"
+                  [class.is-invalid]="isInvalid('address')"
+                  placeholder="Street address, city, region"></textarea>
+        <div class="invalid-feedback">Address is required</div>
+      </div>
+
       <hr class="my-4">
       <h6 class="text-primary mb-3"><i class="bi bi-briefcase me-2"></i>Professional Information</h6>
 
@@ -71,6 +107,23 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         <label class="form-label">Qualifications *</label>
         <textarea class="form-control" formControlName="qualifications" rows="3"
                   placeholder="e.g., MD, Board Certified in Cardiology"></textarea>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Online Appointment Fee (ETB) *</label>
+          <input type="number" class="form-control" formControlName="onlineAppointmentFee"
+                 min="0" placeholder="e.g. 500"
+                 [class.is-invalid]="isInvalid('onlineAppointmentFee')">
+          <div class="invalid-feedback">Online fee is required</div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">In-Person Appointment Fee (ETB) *</label>
+          <input type="number" class="form-control" formControlName="inPersonAppointmentFee"
+                 min="0" placeholder="e.g. 800"
+                 [class.is-invalid]="isInvalid('inPersonAppointmentFee')">
+          <div class="invalid-feedback">In-person fee is required</div>
+        </div>
       </div>
 
       <hr class="my-4">

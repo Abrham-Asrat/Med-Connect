@@ -57,4 +57,17 @@
     <Folder Include="Service\" />
   </ItemGroup>
 
+  <!-- Exclude MiniRazor email templates from the ASP.NET Razor source generator.
+       These files are read and compiled at runtime by MiniRazor, not at build time. -->
+  <ItemGroup>
+    <Content Remove="Source\Views\WelcomeEmail.cshtml" />
+    <None Include="Source\Views\WelcomeEmail.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Remove="Source\Views\VerifyEmail.cshtml" />
+    <None Include="Source\Views\VerifyEmail.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

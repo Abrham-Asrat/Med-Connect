@@ -40,7 +40,7 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
           gender = userDto.Gender,
           dateOfBirth = userDto.DateOfBirth,
         },
-        verify_email = false
+        verify_email = true
       };
 
       var token = await GetManagementApiTokenAsync();
@@ -474,6 +474,66 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
     catch (Exception ex)
     {
       logger.LogError(ex, "Failed to resend verification email in Auth0");
+      return false;
+    }
+  }
+
+  public async Task<string?> GetEmailVerificationTicketAsync(string auth0UserId, string? resultUrl = null)
+  {
+    try
+    {
+      var token = await GetManagementApiTokenAsync();
+      var client = new RestClient($"{appConfig.Auth0Authority}/api/v2/tickets/email-verification");
+      var request = new RestRequest() { Method = Method.Post };
+
+      request.AddHeader("Authorization", $"Bearer {token}");
+      request.AddHeader("content-type", "application/json");
+
+      var payload = new { user_id = auth0UserId, result_url = resultUrl };
+      request.AddJsonBody(payload);
+
+      var response = await client.ExecuteAsync(request);
+      if (!response.IsSuccessStatusCode)
+      {
+        logger.LogError(response.Content, "Failed to get email verification ticket from Auth0");
+        return null;
+      }
+
+      var data = JsonSerializer.Deserialize<JsonElement>(response.Content!);
+      return data.GetProperty("ticket_url").GetString();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Exception while getting email verification ticket");
+      return null;
+    }
+  }
+
+  public async Task<bool> WipeAllUsersAsync()
+  {
+    try
+    {
+      var token = await GetManagementApiTokenAsync();
+      var client = new RestClient($"{appConfig.Auth0Authority}/api/v2/users");
+      var request = new RestRequest() { Method = Method.Get };
+      request.AddHeader("Authorization", $"Bearer {token}");
+
+      var response = await client.ExecuteAsync(request);
+      if (!response.IsSuccessStatusCode) return false;
+
+      var users = JsonSerializer.Deserialize<List<JsonElement>>(response.Content!);
+      foreach (var user in users)
+      {
+        var userId = user.GetProperty("user_id").GetString();
+        var deleteRequest = new RestRequest($"{userId?.Replace("|", "%7C")}") { Method = Method.Delete };
+        deleteRequest.AddHeader("Authorization", $"Bearer {token}");
+        await client.ExecuteAsync(deleteRequest);
+      }
+      return true;
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to wipe Auth0 users");
       return false;
     }
   }

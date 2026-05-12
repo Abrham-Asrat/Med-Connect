@@ -26,7 +26,9 @@ namespace BackendAPI.Source.Service
         DoctorSpecialtyService doctorSpecialtyService,
         SpecialtyService specialtyService,
         PatientService patientService,
-        AdminService adminService
+        AdminService adminService,
+        BackendAPI.Source.Services.EmailService emailService,
+        BackendAPI.Source.Services.RenderingService renderingService
     )
 
     {
@@ -85,10 +87,7 @@ namespace BackendAPI.Source.Service
                 user.IsEmailVerified = auth0User.IsEmailVerified;
 
 
-                if (user.Role == Role.Patient)
-                {
-                    user.IsEmailVerified = true;
-                }
+
 
                 // add User to the database 
                 var addUser = await appContext.Users.AddAsync(user);
@@ -172,18 +171,14 @@ namespace BackendAPI.Source.Service
                 {
                     await appContext.SaveChangesAsync();
                     logger.LogInformation("Successfully saved changes to database for user registration ");
-
                 }
                 catch (System.Exception ex)
                 {
-
                     logger.LogError(ex, "Failed to save changes to database during user registration");
                     throw new Exception("Database operation failed during user registration", ex);
                 }
 
-                var successMsg = role == Role.Patient 
-                    ? "Registration Successful! You can now log in to your account."
-                    : "Registration Success! A verification link has been sent to your email. Please verify your account before logging in.";
+                var successMsg = "Registration Success! A verification link has been sent to your email. Please verify your account before logging in.";
 
                 return new ServiceResponse<ProfileDto>(success: true,
                 statusCode: 201,
@@ -251,8 +246,8 @@ namespace BackendAPI.Source.Service
                     throw new KeyNotFoundException("User does not have an Auth0 ID");
                 }
 
-                // Enforce email verification (Skip for patients)
-                if (!user.IsEmailVerified && user.Role != Role.Patient)
+                // Enforce email verification for all roles
+                if (!user.IsEmailVerified)
                 {
                     var isVerified = await auth0Service.IsEmailVerified(user.Auth0Id);
                     if (isVerified == true)
@@ -559,11 +554,6 @@ namespace BackendAPI.Source.Service
             {
                 logger.LogError(ex, "Failed to resend verification email");
                 throw;
-            }
-        }
-                logger.LogError(ex, "Failed to check email verification for email: {Email}", email);
-
-                throw new Exception("Failed to check email verification", ex);
             }
         }
 

@@ -12,6 +12,7 @@ namespace BackendAPI.Source.Controllers
 {[Route("api/verify")]
 public class VerificationController(UserService userService, ILogger<VerificationController> logger) : ControllerBase {
 
+
   /// <summary>
   /// This endpoint is responsible for verifying a user's email.
   /// </summary>

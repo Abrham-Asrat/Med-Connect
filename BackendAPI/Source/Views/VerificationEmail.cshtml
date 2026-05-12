@@ -1,0 +1,52 @@
+@namespace BackendAPI.Source.Views
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta content="telephone=no" name="format-detection">
+  <title>Med-Connect Verification</title>
+  <style type="text/css">
+    body { font-family: arial, 'helvetica neue', helvetica, sans-serif; }
+    .button {
+        display: inline-block;
+        padding: 12px 30px;
+        background-color: #078930;
+        color: #ffffff !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        margin: 20px 0;
+    }
+  </style>
+ </head>
+ <body style="margin:0; padding:0; background-color:#FAFAFA;">
+   <table width="100%" cellspacing="0" cellpadding="0" style="background-color:#FAFAFA; padding: 20px;">
+     <tr>
+      <td align="center">
+       <table bgcolor="#ffffff" width="600" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+         <tr>
+          <td align="center">
+            <h1 style="color:#333333; margin-bottom: 10px;">Welcome to Med-Connect!</h1>
+            <p style="color:#666666; font-size: 16px; line-height: 24px;">Hello <strong>@Model.Name</strong>,<br />Thanks for joining Med-Connect. To complete your registration and secure your account, please verify your email address by clicking the button below.</p>
+            
+            <a href="@Model.VerificationLink" class="button">Verify Email Address</a>
+            
+            <p style="color:#999999; font-size: 14px;">If the button doesn't work, you can copy and paste this link into your browser:</p>
+            <p style="color:#078930; font-size: 12px; word-break: break-all;">@Model.VerificationLink</p>
+            
+            <hr style="border: 0; border-top: 1px solid #EEEEEE; margin: 30px 0;" />
+            
+            <p style="color:#666666; font-size: 14px;">Got a question? Email us at <a href="mailto:@Model.SupportEmail" style="color:#078930;">@Model.SupportEmail</a></p>
+            <p style="color:#666666; font-size: 14px;">Best regards,<br /><strong>The Med-Connect Team</strong></p>
+          </td>
+         </tr>
+       </table>
+      </td>
+     </tr>
+   </table>
+ </body>
+</html>

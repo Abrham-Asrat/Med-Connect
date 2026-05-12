@@ -174,7 +174,7 @@ Avoid long explanations unless necessary.
     - Keep formatting clean and readable
 ";
 
-        var payload = newgit 
+        var payload = new 
         {
             systemInstruction = new
             {

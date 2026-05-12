@@ -278,6 +278,7 @@ var builder = WebApplication.CreateBuilder(args);
   builder.Services.AddScoped<AuthService>();
   builder.Services.AddScoped<Auth0Service>();
   builder.Services.AddScoped<EmailService>();
+  builder.Services.AddScoped<EmailVerificationService>();
   builder.Services.AddScoped<RenderingService>();
   builder.Services.AddScoped<DoctorService>();
   builder.Services.AddScoped<DoctorSpecialtyService>();

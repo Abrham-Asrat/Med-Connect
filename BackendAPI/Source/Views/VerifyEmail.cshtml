@@ -1,0 +1,88 @@
+@inherits MiniRazor.TemplateBase<BackendAPI.Source.Models.ViewModel.VerifyEmailModel>
+@using System
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Verify Your Email – MedConnect</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f4f8;padding:48px 16px;">
+    <tr>
+      <td align="center">
+
+        <!-- Card -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:500px;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,0.08);">
+
+          <!-- Body -->
+          <tr>
+            <td align="center" style="padding:48px 48px 0;">
+
+              <!-- Brand name -->
+              <h2 style="margin:0 0 24px;font-size:26px;font-weight:700;color:#078930;letter-spacing:-0.5px;">MedConnect</h2>
+
+              <!-- Heading -->
+              <h1 style="margin:0 0 12px;font-size:20px;font-weight:600;color:#111827;">
+                Verify your email address
+              </h1>
+
+              <!-- Subtext -->
+              <p style="margin:0 0 8px;font-size:15px;color:#6b7280;line-height:1.6;text-align:center;">
+                Hi <strong style="color:#111827;">@Model.Name</strong>,
+              </p>
+              <p style="margin:0 0 32px;font-size:15px;color:#6b7280;line-height:1.6;text-align:center;">
+                Thanks for signing up for MedConnect! Please verify your email address to get started.
+              </p>
+
+              <!-- Button -->
+              <a href="@Model.VerificationLink"
+                 style="display:inline-block;background-color:#078930;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 36px;border-radius:8px;">
+                Verify Email Address
+              </a>
+
+            </td>
+          </tr>
+
+          <!-- Divider + small print -->
+          <tr>
+            <td style="padding:32px 48px 0;">
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:0;">
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:20px 48px 0;">
+              <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;line-height:1.6;">
+                If you didn't create an account, you can safely ignore this email.
+              </p>
+              <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;text-align:center;line-height:1.6;">
+                Link expires in <strong>24 hours</strong>. If the button doesn't work, paste this URL into your browser:
+              </p>
+              <p style="margin:8px 0 0;font-size:11px;color:#078930;text-align:center;word-break:break-all;">
+                @Model.VerificationLink
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:28px 48px 36px;">
+              <p style="margin:0;font-size:12px;color:#d1d5db;">
+                &copy; @DateTime.UtcNow.Year MedConnect &nbsp;&middot;&nbsp;
+                <a href="mailto:@Model.SupportEmail" style="color:#9ca3af;text-decoration:none;">@Model.SupportEmail</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Card -->
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

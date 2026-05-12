@@ -23,4 +23,14 @@ namespace BackendAPI.Source.Models.Dto
         [Range(100000, 999999, ErrorMessage = "OTP must be a 6-digit number.")]
         public required int Otp { get; set;}
     }
+
+    /// <summary>
+    /// Payload for requesting a new email verification link.
+    /// </summary>
+    public class ResendVerificationDto
+    {
+        [Required]
+        [EmailAddress]
+        public required string Email { get; set; }
+    }
 }

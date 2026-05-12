@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using BackendAPI.Source.Views;
 
 public record MessageDto(Guid MessageId, Guid? SenderId, string? MessageText, List<FileDto>? Files);
 

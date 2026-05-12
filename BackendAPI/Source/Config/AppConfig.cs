@@ -21,4 +21,10 @@ public class AppConfig(IConfiguration configuration)
   public string? ChapaApiOrigin { get; set; } = configuration["CHAPA_API_ORIGIN"];
   public string? ChapaPublicKey { get; set; } = configuration["CHAPA_PUBLIC_KEY"];
   public string? ChapaSecretKey { get; set; } = configuration["CHAPA_SECRET_KEY"];
+
+  /// <summary>
+  /// Base URL of the frontend application (e.g. https://myapp.com).
+  /// Used to build the email verification link sent to users.
+  /// </summary>
+  public string? FrontendUrl { get; set; } = configuration["FRONTEND_URL"];
 }

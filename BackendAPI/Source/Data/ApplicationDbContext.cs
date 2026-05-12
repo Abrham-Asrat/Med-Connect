@@ -40,6 +40,7 @@ namespace BackendAPI.Source.Data
 
         public DbSet<MessageFileAssociation> MessageFileAssociations { get; set; }
 
+        public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
 
 
     
@@ -87,6 +88,19 @@ namespace BackendAPI.Source.Data
                 .HasKey(cm => new { cm.ConversationId, cm.UserId });
             modelBuilder.Entity<Notification>().HasKey(n => n.NotificationId);
             modelBuilder.Entity<MessageFileAssociation>().HasKey(fa => fa.FileAssociationId);
+
+            modelBuilder.Entity<EmailVerificationToken>().HasKey(e => e.TokenId);
+
+            modelBuilder.Entity<EmailVerificationToken>()
+                .HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<EmailVerificationToken>()
+                .HasIndex(e => e.Token)
+                .IsUnique()
+                .HasDatabaseName("IX_EmailVerificationTokens_Token");
             
 
 

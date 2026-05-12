@@ -25,13 +25,16 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   data: {
-    userId: string;
-    token: string;
+    accessToken: string;
     expiresIn: number;
-    user: {
-      email: string;
+    profile: {
+      userId: string;
       firstName: string;
+      lastName: string;
       role: UserRole;
+      phone: string;
+      gender: string;
+      dateOfBirth: string;
     };
   };
 }
@@ -41,14 +44,24 @@ export interface RegisterRequest {
   lastName: string;
   email: string;
   password: string;
-  phone?: string;
+  phone: string;
   gender: 'Male' | 'Female' | 'Other';
   dateOfBirth: string;
+  address: string;
   role: UserRole;
   emergencyContactPhone?: string;
+  onlineAppointmentFee: number;
+  inPersonAppointmentFee: number;
   // Doctor-specific fields
   licenseNumber?: string;
   specialty?: string;
+  specialties?: string[];
   experience?: number;
   qualifications?: string;
+  biography?: string;
+  cv?: {
+    fileName: string;
+    mimeType: string;
+    fileDataBase64: string;
+  };
 }

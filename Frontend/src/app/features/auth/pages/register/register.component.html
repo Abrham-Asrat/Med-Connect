@@ -76,7 +76,11 @@
             }
 
             @if (selectedRole() === 'Doctor') {
-              <app-doctor-registration [form]="commonForm"></app-doctor-registration>
+              <app-doctor-registration
+                [form]="commonForm"
+                [doctorForm]="doctorForm"
+                (cvSelected)="onCvSelected($event)">
+              </app-doctor-registration>
             }
 
             <!-- Submit Button -->

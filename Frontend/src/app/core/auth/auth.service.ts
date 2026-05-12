@@ -38,22 +38,32 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/user/login`, credentials)
+    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(tap(response => {
-        if (response.success) this.setSession(response);
+        if (response.success) this.setSession(response, credentials.email);
       }));
   }
 
   register(data: RegisterRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/user/register`, data);
+    return this.http.post(`${this.apiUrl}/auth/register`, data);
+  }
+
+  /** Validates the email verification token from the link the user clicked. */
+  verifyEmail(token: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/auth/verify-email`, { params: { token } });
+  }
+
+  /** Resends the verification email for an unverified account. */
+  resendVerification(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/resend-verification`, { email });
   }
 
   verifyOTP(email: string, otp: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/user/verify-otp`, { email, otp });
+    return this.http.post(`${this.apiUrl}/verify-otp`, { email, otp });
   }
 
   resendOTP(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/user/resend-otp`, { email });
+    return this.http.post(`${this.apiUrl}/send-otp`, { email });
   }
 
   forgotPassword(email: string): Observable<any> {
@@ -64,14 +74,19 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/user/reset-password`, { token, newPassword });
   }
 
-  private setSession(response: LoginResponse): void {
-    localStorage.setItem('token', response.data.token);
-    this.tokenSignal.set(response.data.token);
+  private setSession(response: LoginResponse, email: string): void {
+    const token = response.data.accessToken;
+    const profile = response.data.profile;
+
+    localStorage.setItem('token', token);
+    this.tokenSignal.set(token);
+
     const userData: Partial<User> = {
-      userId: response.data.userId,
-      email: response.data.user.email,
-      firstName: response.data.user.firstName,
-      role: response.data.user.role,
+      userId: profile.userId,
+      email: email,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      role: profile.role,
     };
     localStorage.setItem('user', JSON.stringify(userData));
     this.currentUserSignal.set(userData as User);

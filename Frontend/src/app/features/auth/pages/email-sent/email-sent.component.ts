@@ -22,7 +22,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 
           <h4 class="fw-bold mb-2">Check Your Email</h4>
           <p class="text-muted mb-1">We sent a verification link to</p>
-          <p class="fw-semibold text-primary mb-4">{{ email() || 'your email address' }}</p>
+          <p class="fw-semibold text-success mb-4">{{ email() || 'your email address' }}</p>
 
           <p class="text-muted mb-4" style="font-size:14px;">
             Click the link in the email to verify your account.

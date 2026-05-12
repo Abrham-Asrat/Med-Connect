@@ -8,7 +8,7 @@ import { UserRole } from '../../../../core/enums/user-role.enum';
 import { RegisterRequest } from '../../../../core/models/user.model';
 import { RoleSelectionComponent } from '../../components/role-selection/role-selection';
 import { PatientRegistrationComponent } from '../../components/patient-registration/patient-registration';
-import { DoctorRegistrationComponent } from '../../components/doctor-registration/doctor-registration';
+import { DoctorRegistrationComponent, CvFileData } from '../../components/doctor-registration/doctor-registration';
 
 @Component({
   selector: 'app-register',
@@ -53,6 +53,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   // clear the message as soon as the user edits that specific field.
   private duplicateField = signal<'email' | 'phone' | null>(null);
   private formSubs: Subscription[] = [];
+  private cvData = signal<CvFileData | null>(null);
 
   // ── Forms ──────────────────────────────────────────────────────────────
   commonForm = this.fb.group({
@@ -68,10 +69,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
   });
 
   doctorForm = this.fb.group({
-    licenseNumber:        ['', Validators.required],
     specialty:            ['', Validators.required],
-    experience:           ['', [Validators.required, Validators.min(0)]],
     qualifications:       ['', Validators.required],
+    biography:            ['', Validators.required],
     onlineAppointmentFee: [0,  [Validators.required, Validators.min(0)]],
     inPersonAppointmentFee:[0, [Validators.required, Validators.min(0)]],
   });
@@ -110,15 +110,26 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.selectedRole.set(null);
   }
 
+  // ── CV handler ─────────────────────────────────────────────────────────
+  onCvSelected(data: CvFileData | null): void {
+    this.cvData.set(data);
+  }
+
   // ── Submit ─────────────────────────────────────────────────────────────
   onSubmit(): void {
     if (this.commonForm.invalid) {
       this.commonForm.markAllAsTouched();
       return;
     }
-    if (this.selectedRole() === UserRole.Doctor && this.doctorForm.invalid) {
-      this.doctorForm.markAllAsTouched();
-      return;
+    if (this.selectedRole() === UserRole.Doctor) {
+      if (this.doctorForm.invalid) {
+        this.doctorForm.markAllAsTouched();
+        return;
+      }
+      if (!this.cvData()) {
+        this.errorMessage.set('Please upload your CV before submitting.');
+        return;
+      }
     }
 
     this.isLoading.set(true);
@@ -143,10 +154,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
       onlineAppointmentFee:  dv ? Number(dv.onlineAppointmentFee)  || 0 : 0,
       inPersonAppointmentFee:dv ? Number(dv.inPersonAppointmentFee)|| 0 : 0,
       ...(dv ? {
-        licenseNumber:  dv.licenseNumber  || undefined,
         specialty:      dv.specialty      || undefined,
-        experience:     dv.experience ? Number(dv.experience) : undefined,
         qualifications: dv.qualifications || undefined,
+        biography:      dv.biography      || undefined,
+        cv:             this.cvData() ? {
+          fileName:       this.cvData()!.fileName,
+          mimeType:       this.cvData()!.mimeType,
+          fileDataBase64: this.cvData()!.fileDataBase64,
+        } : undefined,
+        specialties:    dv.specialty ? [dv.specialty] : [],
       } : {}),
     };
 

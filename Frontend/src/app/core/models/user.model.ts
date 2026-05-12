@@ -55,6 +55,13 @@ export interface RegisterRequest {
   // Doctor-specific fields
   licenseNumber?: string;
   specialty?: string;
+  specialties?: string[];
   experience?: number;
   qualifications?: string;
+  biography?: string;
+  cv?: {
+    fileName: string;
+    mimeType: string;
+    fileDataBase64: string;
+  };
 }

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
@@ -31,6 +31,15 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+
+  pollingInterval: any;
+  pollingCount = 0;
+
+  ngOnDestroy(): void {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+  }
 
   selectedRole = signal<'Patient' | 'Doctor' | null>(null);
   currentStep = signal(1);
@@ -167,16 +176,43 @@ export class RegisterComponent {
           localStorage.setItem('pendingEmail', data.email);
           localStorage.setItem('pendingRole', this.selectedRole() || '');
 
-          this.successMessage.set(
-            isDoctor
-              ? 'Application submitted! Please check your email for a verification link. Admin review within 1-3 days.'
-              : 'Account created! Please check your email for a verification link before logging in.'
-          );
+          this.successMessage.set(null);
+          this.startPollingEmail(data.email, data.password);
         } else {
           this.errorMessage.set(r?.message || 'Registration failed.');
         }
       },
       error: (e: any) => { this.isLoading.set(false); this.errorMessage.set(e?.error?.message || 'Registration failed.'); }
     });
+  }
+
+  startPollingEmail(email: string, password: string): void {
+    this.currentStep.set(4);
+    this.pollingCount = 0;
+    this.pollingInterval = setInterval(() => {
+      this.pollingCount++;
+      if (this.pollingCount > 120) { // Timeout after 10 mins
+        clearInterval(this.pollingInterval);
+        this.errorMessage.set('Email verification timed out. Please login manually after verifying.');
+        this.router.navigate(['/auth/login']);
+        return;
+      }
+      this.authService.checkEmailVerified(email).subscribe({
+        next: (res) => {
+          if (res?.data === true || res === true) {
+            clearInterval(this.pollingInterval);
+            this.authService.login({ email, password }).subscribe({
+              next: () => {
+                // auth.service handles the routing automatically based on role
+              },
+              error: () => {
+                this.router.navigate(['/auth/login']);
+              }
+            });
+          }
+        },
+        error: () => { } // Hide errors to keep polling quiet
+      });
+    }, 5000);
   }
 }

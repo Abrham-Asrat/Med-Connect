@@ -63,6 +63,10 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/verify-otp`, { email, otp: Number(otp) });
   }
 
+  checkEmailVerified(email: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/verify/email/${email}`);
+  }
+
   resendOTP(email: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/send-otp`, { email });
   }

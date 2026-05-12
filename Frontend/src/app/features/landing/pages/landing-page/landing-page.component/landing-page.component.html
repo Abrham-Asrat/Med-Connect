@@ -186,7 +186,7 @@
       <h2 class="display-5 fw-bold">Don't just take our word for it</h2>
     </div>
     <div class="row g-4">
-      @for (test of testimonials; track test.name; let i = $index) {
+      @for (test of testimonials(); track test.name; let i = $index) {
       <div class="col-md-4 animate fade-up" [class.delay-1]="i===0" [class.delay-2]="i===1" [class.delay-3]="i===2"
         #animatedEl>
         <div class="testimonial-card h-100 d-flex flex-column">

@@ -54,11 +54,11 @@ export class LandingPageComponent implements OnInit, AfterViewInit {
     { icon: 'bi-chat-heart', title: 'Connect & Heal', desc: 'Consult with your doctor and get your digital records.' }
   ];
 
-  testimonials = [
+  testimonials = signal<any[]>([
     { name: 'Tewodros A.', role: 'Patient', quote: 'Med-Connect saved me so much time. I found a specialist and booked my appointment on the same day.', rating: 5 },
     { name: 'Dr. Selamawit T.', role: 'Pediatrician', quote: 'The platform helps me manage my schedule effortlessly while giving my patients a top-tier digital experience.', rating: 5 },
     { name: 'Betelhem Y.', role: 'Patient', quote: 'Having all my medical records in one secure place gives me incredible peace of mind. Highly recommended!', rating: 5 }
-  ];
+  ]);
 
   faqs = [
     { q: 'Is Med-Connect completely free for patients?', a: 'Yes! Creating an account and searching for doctors is 100% free. You only pay standard consultation fees to the doctors.', open: false },
@@ -69,6 +69,7 @@ export class LandingPageComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.loadBlogs();
+    this.loadTestimonials();
   }
 
   ngAfterViewInit(): void {
@@ -95,10 +96,12 @@ export class LandingPageComponent implements OnInit, AfterViewInit {
 
     this.http.get(`${this.apiUrl}/blogs/all`).subscribe({
       next: (response: any) => {
-        let data = response?.data || response || [];
+        let data = response?.Data || response?.data || response || [];
         // Extract array from response wrapper if data contains an array-like structure.
         if (response?.data && Array.isArray(response.data)) {
           data = response.data;
+        } else if (response?.Data && Array.isArray(response.Data)) {
+          data = response.Data;
         } else if (Array.isArray(response)) {
           data = response;
         }
@@ -122,6 +125,42 @@ export class LandingPageComponent implements OnInit, AfterViewInit {
       error: () => {
         // Fallback mock blogs on error
         this.blogs.set(mockBlogs);
+      }
+    });
+  }
+
+  loadTestimonials(): void {
+    const mockTestimonials = [
+      { name: 'Tewodros A.', role: 'Patient', quote: 'Med-Connect saved me so much time. I found a specialist and booked my appointment on the same day.', rating: 5 },
+      { name: 'Dr. Selamawit T.', role: 'Pediatrician', quote: 'The platform helps me manage my schedule effortlessly while giving my patients a top-tier digital experience.', rating: 5 },
+      { name: 'Betelhem Y.', role: 'Patient', quote: 'Having all my medical records in one secure place gives me incredible peace of mind. Highly recommended!', rating: 5 }
+    ];
+
+    this.http.get(`${this.apiUrl}/reviews`).subscribe({
+      next: (response: any) => {
+        let data = response?.Data || response?.data || response || [];
+        if (response?.data && Array.isArray(response.data)) {
+          data = response.data;
+        } else if (response?.Data && Array.isArray(response.Data)) {
+          data = response.Data;
+        } else if (Array.isArray(response)) {
+          data = response;
+        }
+
+        if (Array.isArray(data) && data.length > 0) {
+          const mappedReviews = data.slice(0, 3).map((r: any) => ({
+            name: r.patient?.firstName ? `${r.patient.firstName} ${r.patient.lastName?.charAt(0) || ''}.` : (r.patientName || 'Patient'),
+            role: 'Patient',
+            quote: r.reviewText || '',
+            rating: r.starRating || 5
+          }));
+          this.testimonials.set(mappedReviews);
+        } else {
+          this.testimonials.set(mockTestimonials);
+        }
+      },
+      error: () => {
+        this.testimonials.set(mockTestimonials);
       }
     });
   }

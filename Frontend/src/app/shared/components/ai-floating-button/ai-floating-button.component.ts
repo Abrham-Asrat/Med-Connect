@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-ai-floating-button',
@@ -35,18 +37,27 @@ import { FormsModule } from '@angular/forms';
         @for (msg of messages(); track msg.id) {
           <div [class]="msg.sender === 'user' ? 'ai-msg-user' : 'ai-msg-bot'" [innerHTML]="msg.text"></div>
         }
-        <div class="d-flex flex-wrap gap-2 mt-2">
-          <button class="ai-quick-btn" (click)="ask('I have a headache')">🤕 Headache</button>
-          <button class="ai-quick-btn" (click)="ask('What is normal blood pressure?')">💓 BP Info</button>
-          <button class="ai-quick-btn" (click)="ask('Set medication reminder')">💊 Reminder</button>
-          <button class="ai-quick-btn" (click)="ask('Health tip of the day')">💡 Health Tip</button>
-        </div>
+        
+        @if (isTyping()) {
+          <div class="ai-msg-bot typing-indicator">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+        }
+        
+        @if (messages().length === 1) {
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <button class="ai-quick-btn" (click)="ask('I have a headache')">🤕 Headache</button>
+            <button class="ai-quick-btn" (click)="ask('What is normal blood pressure?')">💓 BP Info</button>
+            <button class="ai-quick-btn" (click)="ask('Set medication reminder')">💊 Reminder</button>
+            <button class="ai-quick-btn" (click)="ask('Health tip of the day')">💡 Health Tip</button>
+          </div>
+        }
       </div>
 
       <div class="ai-panel-input">
         <input type="text" [(ngModel)]="inputText" placeholder="Ask a health question..." 
-               (keyup.enter)="ask(inputText)">
-        <button (click)="ask(inputText)">➤</button>
+               (keyup.enter)="ask(inputText)" [disabled]="isTyping()">
+        <button (click)="ask(inputText)" [disabled]="isTyping()">➤</button>
       </div>
     </div>
   `,
@@ -113,43 +124,102 @@ import { FormsModule } from '@angular/forms';
       border: 1px solid #078930; background: white; color: #078930; cursor: pointer;
     }
     .ai-quick-btn:hover { background: #078930; color: white; }
+    .typing-indicator { display: inline-flex; gap: 4px; padding: 12px 16px; align-items: center; }
+    .typing-indicator .dot {
+      width: 6px; height: 6px; background: #078930; border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+    .typing-indicator .dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-indicator .dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+    .ai-panel-input input:disabled, .ai-panel-input button:disabled {
+      opacity: 0.6; cursor: not-allowed;
+    }
   `]
 })
 export class AiFloatingButtonComponent {
+  @ViewChild('chatBody') private chatBody!: ElementRef;
+
   isOpen = signal(false);
   inputText = '';
+  isTyping = signal(false);
 
   messages = signal<{ id: string; sender: 'user' | 'bot'; text: string }[]>([
     { id: '1', sender: 'bot', text: 'Hello! I\'m your Med-Connect AI Health Assistant. I can help with general health questions, symptom information, and medication reminders. How can I help you today?' }
   ]);
 
+  constructor(private http: HttpClient) { }
+
   togglePanel(): void {
     this.isOpen.update(v => !v);
+    if (this.isOpen()) {
+      this.scrollToBottom();
+    }
+  }
+
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      try {
+        this.chatBody.nativeElement.scrollTop = this.chatBody.nativeElement.scrollHeight;
+      } catch (err) { }
+    }, 50);
   }
 
   ask(question: string): void {
-    if (!question || !question.trim()) return;
+    if (!question || !question.trim() || this.isTyping()) return;
 
     this.messages.update(msgs => [...msgs, { id: crypto.randomUUID(), sender: 'user', text: question }]);
     this.inputText = '';
+    this.isTyping.set(true);
+    this.scrollToBottom();
 
-    setTimeout(() => {
-      let response = '';
-      const q = question.toLowerCase();
+    this.http.post<{ success: boolean, answer: string }>(`${environment.apiUrl}/Ai/ask`, { question })
+      .subscribe({
+        next: (res: { success: boolean, answer: string }) => {
+          this.isTyping.set(false);
+          if (res.success) {
+            const formattedText = res.answer.replace(/\n/g, '<br>');
+            const botMsgId = crypto.randomUUID();
 
-      if (q.includes('headache')) {
-        response = 'Headaches can be caused by stress, dehydration, or lack of sleep. 💧 Try drinking water, resting, or OTC pain relievers. <b>Seek help if:</b> severe pain, fever, stiff neck, or vision changes.';
-      } else if (q.includes('blood pressure')) {
-        response = '📊 <b>Normal blood pressure</b> is around <b>120/80 mmHg</b>. High: 130/80+. Maintain with exercise, low-sodium diet, and stress management.';
-      } else if (q.includes('reminder')) {
-        response = '💊 Tell me the medication name, dosage, and frequency. I\'ll help you remember!';
-      } else if (q.includes('tip')) {
-        response = '🩺 <b>Health Tip:</b> Get 30 min exercise daily, drink 8 glasses of water, and sleep 7-8 hours.';
-      } else {
-        response = 'For specific medical concerns, I recommend consulting a verified doctor on Med-Connect. Would you like help finding a doctor?';
-      }
+            // Add an empty bot message first
+            this.messages.update(msgs => [...msgs, { id: botMsgId, sender: 'bot', text: '' }]);
 
-      this.messages.update(msgs => [...msgs, { id: crypto.randomUUID(), sender: 'bot', text: response }]);
-    }, 1000);
+            let i = 0;
+            const typeSpeed = 15; // Speed between characters in milliseconds
+
+            const typeWriter = () => {
+              if (i < formattedText.length) {
+                // Instantly skip over complete HTML tags (like <b> or <br>) to avoid rendering partial tags
+                if (formattedText.charAt(i) === '<') {
+                  const endIdx = formattedText.indexOf('>', i);
+                  if (endIdx !== -1) {
+                    i = endIdx + 1;
+                  } else {
+                    i++;
+                  }
+                } else {
+                  i++;
+                }
+
+                this.messages.update(msgs => msgs.map(m => m.id === botMsgId ? { ...m, text: formattedText.substring(0, i) } : m));
+                this.scrollToBottom();
+                setTimeout(typeWriter, typeSpeed);
+              }
+            };
+
+            // Start the typewriter animation
+            typeWriter();
+          }
+        },
+        error: (err: any) => {
+          this.isTyping.set(false);
+          console.error('Error calling AI API:', err);
+          this.messages.update(msgs => [...msgs, { id: crypto.randomUUID(), sender: 'bot', text: 'Sorry, I am having trouble connecting to the server. Please try again later.' }]);
+          this.scrollToBottom();
+        }
+      });
   }
 }

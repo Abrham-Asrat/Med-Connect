@@ -239,21 +239,62 @@ $light-bg: #F8F9FA;
     .conversation-list {
         width: 80px;
         min-width: 80px;
+        z-index: 1040;
     }
 
-    .conversation-list h5,
-    .conversation-list .flex-grow-1,
+    .conversation-list .sidebar-title {
+        display: none !important;
+    }
+
+    .conversation-list .input-group {
+        display: none !important;
+    }
+
+    .conversation-list .p-2.border-bottom {
+        padding: 0 !important;
+        height: 0;
+        border: none !important;
+    }
+
+    .conversation-list .min-width-0 {
+        display: none !important;
+    }
+
     .conversation-list .online-dot {
         display: none !important;
     }
 
-    .conv-item {
+    .conversation-list .conv-item {
         padding: 1rem !important;
         justify-content: center;
     }
 
+    .conversation-list h5 {
+        text-align: center;
+        width: 100%;
+    }
+
+    .conversation-list .bi-chat-dots-fill {
+        margin-right: 0 !important;
+        font-size: 1.5rem;
+    }
+
     .chat-container {
         height: calc(100vh - 100px);
+    }
+
+    .profile-sidebar {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 1050;
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+
+        &.open {
+            width: 280px;
+            min-width: 280px;
+        }
     }
 }
 

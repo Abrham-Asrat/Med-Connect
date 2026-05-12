@@ -21,4 +21,6 @@ public class AppConfig(IConfiguration configuration)
   public string? ChapaApiOrigin { get; set; } = configuration["CHAPA_API_ORIGIN"];
   public string? ChapaPublicKey { get; set; } = configuration["CHAPA_PUBLIC_KEY"];
   public string? ChapaSecretKey { get; set; } = configuration["CHAPA_SECRET_KEY"];
+
+  public string? GeminiApiKey { get; set; } = Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? configuration["GEMINI_API_KEY"];
 }

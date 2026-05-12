@@ -1,7 +1,7 @@
 <div class="auth-wrapper">
   <div class="auth-card">
     <div class="auth-header">
-      <div class="logo-icon mb-3">
+      <div class="logo-icon mb-1">
         <img src="favicon.png" alt="Logo" class="rounded-circle shadow-sm"
           style="width: 64px; height: 64px; object-fit: contain;">
       </div>
@@ -16,14 +16,14 @@
       </div>
       }
 
-      <div class="alert alert-info px-3 py-2 mb-4 d-flex align-items-center gap-2 rounded-3 border-0"
+      <!-- <div class="alert alert-info px-1 py-2 mb-1 d-flex align-items-center gap-2 rounded-3 border-0"
         style="background:#EEF5F0;color:#078930">
         <i class="bi bi-info-circle"></i> <small>Please verify your email before logging in. / እባክዎ ከመግባትዎ በፊት ኢሜልዎን
           ያረጋግጡ።</small>
-      </div>
+      </div> -->
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-        <div class="mb-4">
+        <div class="mb-1">
           <label class="form-label text-dark fw-bold small mb-2">Email Address / የኢሜል አድራሻ</label>
           <div class="input-group">
             <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-envelope"></i></span>

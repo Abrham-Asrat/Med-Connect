@@ -333,6 +333,7 @@ builder.Services.AddCors(options =>
   builder.Services.AddScoped<IBlogService, BlogService>();
   builder.Services.AddScoped<IChatService, ChatService>();
   builder.Services.AddScoped<NotificationService>();
+  builder.Services.AddHttpClient<AiService>();
 
 
   // Register Global Exception Filter
@@ -484,5 +485,5 @@ var app = builder.Build();
     app.UseSwaggerUI();
   }
 
-   app.Run(new AppConfig(app.Configuration).ApiOrigin);
+   app.Run();
 }

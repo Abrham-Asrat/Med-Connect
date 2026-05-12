@@ -543,6 +543,24 @@ namespace BackendAPI.Source.Service
 
             catch (System.Exception ex)
             {
+                logger.LogError(ex, "Failed to Check Email Verification");
+                throw;
+            }
+        }
+
+        public async Task<ServiceResponse<bool>> ResendVerificationEmail(string email)
+        {
+            try
+            {
+                var result = await auth0Service.ResendVerificationEmailAsync(email);
+                return new ServiceResponse<bool>(result, result ? 200 : 400, result, result ? "Verification email resent successfully" : "Failed to resend verification email");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to resend verification email");
+                throw;
+            }
+        }
                 logger.LogError(ex, "Failed to check email verification for email: {Email}", email);
 
                 throw new Exception("Failed to check email verification", ex);

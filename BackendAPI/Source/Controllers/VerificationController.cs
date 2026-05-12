@@ -33,6 +33,22 @@ public class VerificationController(UserService userService, ILogger<Verificatio
       throw;
     }
   }
+
+  [HttpGet("resend/{email}")]
+  public async Task<IApiResponse<bool>> ResendEmailVerificationAsync(string email) {
+    try {
+      if (!ModelState.IsValid) {
+        return new ApiResponse<bool>(false, "Invalid Model State", false);
+      }
+
+      var result = await userService.ResendVerificationEmail(email);
+
+      return new ApiResponse<bool>(result.Success, result.Message, result.Data);
+    } catch (Exception ex) {
+      logger.LogError(ex, "Failed to Resend Email Verification");
+      throw;
+    }
+  }
 }
 
 }

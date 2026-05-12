@@ -186,6 +186,27 @@ export class RegisterComponent {
     });
   }
 
+  resendCountdown = signal(0);
+  resendLoading = signal(false);
+
+  resendVerification(): void {
+    const email = this.getForm().get('email')?.value;
+    if (!email || this.resendCountdown() > 0) return;
+
+    this.resendLoading.set(true);
+    this.authService.resendVerificationEmail(email).subscribe({
+      next: () => {
+        this.resendLoading.set(false);
+        this.resendCountdown.set(60);
+        const interval = setInterval(() => {
+          this.resendCountdown.update(v => v - 1);
+          if (this.resendCountdown() <= 0) clearInterval(interval);
+        }, 1000);
+      },
+      error: () => this.resendLoading.set(false)
+    });
+  }
+
   startPollingEmail(email: string, password: string): void {
     this.currentStep.set(4);
     this.pollingCount = 0;

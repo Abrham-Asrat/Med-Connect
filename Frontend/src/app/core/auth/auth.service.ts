@@ -67,6 +67,10 @@ export class AuthService {
     return this.http.get(`${this.apiUrl}/verify/email/${email}`);
   }
 
+  resendVerificationEmail(email: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/verify/resend/${email}`);
+  }
+
   resendOTP(email: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/send-otp`, { email });
   }

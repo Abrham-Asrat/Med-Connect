@@ -39,7 +39,8 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
           phone = userDto.Phone,
           gender = userDto.Gender,
           dateOfBirth = userDto.DateOfBirth,
-        }
+        },
+        verify_email = false
       };
 
       var token = await GetManagementApiTokenAsync();
@@ -448,6 +449,32 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
     {
       logger.LogError(ex, "Failed to get user by email from Auth0");
       return null;
+    }
+  }
+
+  public async Task<bool> ResendVerificationEmailAsync(string email)
+  {
+    try
+    {
+      var token = await GetManagementApiTokenAsync();
+      var auth0User = await GetUserByEmailAsync(email);
+
+      if (auth0User == null) return false;
+
+      var client = new RestClient($"{appConfig.Auth0Authority}/api/v2/jobs/verification-email");
+      var request = new RestRequest() { Method = Method.Post };
+
+      request.AddHeader("Authorization", $"Bearer {token}");
+      request.AddHeader("content-type", "application/json");
+      request.AddJsonBody(new { user_id = auth0User.UserId });
+
+      var response = await client.ExecuteAsync(request);
+      return response.IsSuccessStatusCode;
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to resend verification email in Auth0");
+      return false;
     }
   }
 }

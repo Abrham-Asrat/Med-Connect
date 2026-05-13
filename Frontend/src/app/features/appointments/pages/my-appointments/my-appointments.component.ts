@@ -61,12 +61,12 @@ export class MyAppointmentsComponent implements OnInit {
     switch (filter) {
       case 'upcoming':
         this.filteredAppointments.set(all.filter(a =>
-          a.status === 'Scheduled' || a.status === 'Confirmed' || a.status === 'Pending'
+          a.status?.toLowerCase() === 'scheduled' || a.status?.toLowerCase() === 'confirmed' || a.status?.toLowerCase() === 'pending' || a.status?.toLowerCase() === 'active' || a.status?.toLowerCase() === 'follow_up'
         ));
         break;
       case 'past':
         this.filteredAppointments.set(all.filter(a =>
-          a.status === 'Completed' || a.status === 'Cancelled'
+          a.status?.toLowerCase() === 'completed' || a.status?.toLowerCase() === 'cancelled' || a.status?.toLowerCase() === 'closed'
         ));
         break;
       default:
@@ -129,23 +129,29 @@ export class MyAppointmentsComponent implements OnInit {
 
   // ─── Helpers ─────────────────────────────────
   getStatusClass(status: string): string {
-    switch (status) {
-      case 'Scheduled':
-      case 'Confirmed': return 'bg-primary-light text-primary';
-      case 'Pending': return 'bg-warning-light text-warning-dark';
-      case 'Completed': return 'bg-success-light text-success';
-      case 'Cancelled': return 'bg-danger-light text-danger';
+    switch (status?.toLowerCase()) {
+      case 'scheduled':
+      case 'confirmed': return 'bg-primary-light text-primary';
+      case 'pending': return 'bg-warning-light text-warning-dark';
+      case 'completed': return 'bg-success-light text-success';
+      case 'cancelled': return 'bg-danger-light text-danger';
+      case 'active':
+      case 'follow_up': return 'bg-info-light text-info';
+      case 'closed': return 'bg-secondary-light text-secondary';
       default: return 'bg-light text-medium';
     }
   }
 
   getStatusIcon(status: string): string {
-    switch (status) {
-      case 'Scheduled': return 'bi-calendar-check';
-      case 'Confirmed': return 'bi-check-circle';
-      case 'Pending': return 'bi-clock';
-      case 'Completed': return 'bi-check-circle-fill';
-      case 'Cancelled': return 'bi-x-circle';
+    switch (status?.toLowerCase()) {
+      case 'scheduled': return 'bi-calendar-check';
+      case 'confirmed': return 'bi-check-circle';
+      case 'pending': return 'bi-clock';
+      case 'completed': return 'bi-check-circle-fill';
+      case 'cancelled': return 'bi-x-circle';
+      case 'active':
+      case 'follow_up': return 'bi-activity';
+      case 'closed': return 'bi-archive';
       default: return 'bi-info-circle';
     }
   }

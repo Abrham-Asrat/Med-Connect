@@ -5,6 +5,7 @@ import { ChatService } from '../../../../core/services/chat.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ReviewService } from '../../../../core/services/review.service';
 import { Subscription } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 
 interface Message {
   id: string;
@@ -50,6 +51,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private chatService = inject(ChatService);
   private authService = inject(AuthService);
   private reviewService = inject(ReviewService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
@@ -231,7 +234,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Dummy data fully purged as per user request to use real backend only.
 
-  loadConversations(): void {
+  loadConversations(autoSelectUserId?: string): void {
     if (!this.userId) return;
     this.isLoading.set(true);
 
@@ -242,6 +245,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           // DB returned empty array - explicitly set an empty state, do not load mock data
           this.conversations.set([]);
           this.isLoading.set(false);
+          this.handleStartChatWith(null, autoSelectUserId);
           return;
         }
 
@@ -265,6 +269,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
         this.conversations.set(mappedConvs);
         this.isLoading.set(false);
+        this.handleStartChatWith(mappedConvs, autoSelectUserId);
       },
       error: (err) => {
         console.error('Failed to load conversations exclusively from API', err);
@@ -272,6 +277,39 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.errorMessage.set('Could not load chat data. Please check connection.');
       }
     });
+  }
+
+  private handleStartChatWith(mappedConvs: Conversation[] | null, forceSelectUserId?: string): void {
+    // Auto-select if explicitly requested (e.g. after creation)
+    if (forceSelectUserId && mappedConvs) {
+      const existing = mappedConvs.find(c => c.otherUserId === forceSelectUserId);
+      if (existing) {
+        this.selectConversation(existing.id);
+      }
+    }
+
+    const targetUserId = this.route.snapshot.queryParamMap.get('startChatWith');
+    if (targetUserId) {
+      // Clear param immediately so we don't re-trigger on refresh
+      this.router.navigate([], { queryParams: { startChatWith: null }, queryParamsHandling: 'merge', replaceUrl: true });
+
+      const existing = mappedConvs ? mappedConvs.find(c => c.otherUserId === targetUserId) : null;
+      if (existing) {
+        this.selectConversation(existing.id);
+      } else {
+        // Create new conversation
+        this.chatService.createConversation({ participants: [this.userId, targetUserId] }).subscribe({
+          next: () => {
+            // Reload and auto select
+            this.loadConversations(targetUserId);
+          },
+          error: (err: any) => {
+            console.error('Create conversation error:', err);
+            this.errorMessage.set('Could not initialize a new chat session.');
+          }
+        });
+      }
+    }
   }
 
   selectConversation(id: string): void {

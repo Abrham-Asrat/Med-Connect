@@ -70,17 +70,15 @@
           </span>
         </div>
         <div class="col-md-3 text-md-end mt-2 mt-md-0">
-          @if (apt.status === 'scheduled') {
-          <button class="btn btn-outline-primary btn-sm me-1">Reschedule</button>
-          <button class="btn btn-outline-danger btn-sm me-1">Cancel</button>
-          <a routerLink="/patient/chat" class="btn btn-primary btn-sm">Chat <i class="bi bi-chat"></i></a>
+          @if (apt.status?.toLowerCase() === 'scheduled' || apt.status?.toLowerCase() === 'pending' ||
+          apt.status?.toLowerCase() === 'confirmed' || apt.status?.toLowerCase() === 'active' ||
+          apt.status?.toLowerCase() === 'follow_up') {
+          <button class="btn btn-outline-primary btn-sm me-1" (click)="openReschedule(apt)">Reschedule</button>
+          <button class="btn btn-outline-danger btn-sm me-1" (click)="openCancel(apt)">Cancel</button>
+          <a [routerLink]="['/patient/chat']" [queryParams]="{ startChatWith: apt.doctor?.userId || apt.doctorId }"
+            class="btn btn-primary btn-sm">Chat <i class="bi bi-chat"></i></a>
           }
-          @if (apt.status === 'active' || apt.status === 'follow_up') {
-          <a routerLink="/patient/chat" class="btn btn-primary btn-sm px-3">
-            <i class="bi bi-chat-dots-fill me-1"></i> Open Chat
-          </a>
-          }
-          @if (apt.status === 'closed') {
+          @if (apt.status?.toLowerCase() === 'completed' || apt.status?.toLowerCase() === 'closed') {
           <a routerLink="/patient/reviews" class="btn btn-outline-primary btn-sm">Review <i class="bi bi-star"></i></a>
           }
         </div>

@@ -1,0 +1,992 @@
+[
+  {
+    "firstName": "Doctor1",
+    "lastName": "Smith1",
+    "email": "doctor1@example.com",
+    "password": "Password123!",
+    "phone": "+10000000000",
+    "gender": "Male",
+    "dateOfBirth": "1980-05-12",
+    "address": "1 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative1",
+    "emergencyContactPhone": "+10000000100",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 1.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor1.pdf"
+    },
+    "onlineAppointmentFee": 50,
+    "inPersonAppointmentFee": 100,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Doctor2",
+    "lastName": "Smith2",
+    "email": "doctor2@example.com",
+    "password": "Password123!",
+    "phone": "+10000000001",
+    "gender": "Female",
+    "dateOfBirth": "1980-05-12",
+    "address": "2 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative2",
+    "emergencyContactPhone": "+10000000101",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 2.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor2.pdf"
+    },
+    "onlineAppointmentFee": 60,
+    "inPersonAppointmentFee": 110,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Doctor3",
+    "lastName": "Smith3",
+    "email": "doctor3@example.com",
+    "password": "Password123!",
+    "phone": "+10000000002",
+    "gender": "Male",
+    "dateOfBirth": "1980-05-12",
+    "address": "3 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative3",
+    "emergencyContactPhone": "+10000000102",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 3.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor3.pdf"
+    },
+    "onlineAppointmentFee": 70,
+    "inPersonAppointmentFee": 120,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Doctor4",
+    "lastName": "Smith4",
+    "email": "doctor4@example.com",
+    "password": "Password123!",
+    "phone": "+10000000003",
+    "gender": "Female",
+    "dateOfBirth": "1980-05-12",
+    "address": "4 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative4",
+    "emergencyContactPhone": "+10000000103",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 4.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor4.pdf"
+    },
+    "onlineAppointmentFee": 80,
+    "inPersonAppointmentFee": 130,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Doctor5",
+    "lastName": "Smith5",
+    "email": "doctor5@example.com",
+    "password": "Password123!",
+    "phone": "+10000000004",
+    "gender": "Male",
+    "dateOfBirth": "1980-05-12",
+    "address": "5 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative5",
+    "emergencyContactPhone": "+10000000104",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 5.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor5.pdf"
+    },
+    "onlineAppointmentFee": 90,
+    "inPersonAppointmentFee": 140,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Doctor6",
+    "lastName": "Smith6",
+    "email": "doctor6@example.com",
+    "password": "Password123!",
+    "phone": "+10000000005",
+    "gender": "Female",
+    "dateOfBirth": "1980-05-12",
+    "address": "6 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative6",
+    "emergencyContactPhone": "+10000000105",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 6.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor6.pdf"
+    },
+    "onlineAppointmentFee": 100,
+    "inPersonAppointmentFee": 150,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Doctor7",
+    "lastName": "Smith7",
+    "email": "doctor7@example.com",
+    "password": "Password123!",
+    "phone": "+10000000006",
+    "gender": "Male",
+    "dateOfBirth": "1980-05-12",
+    "address": "7 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative7",
+    "emergencyContactPhone": "+10000000106",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 7.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor7.pdf"
+    },
+    "onlineAppointmentFee": 110,
+    "inPersonAppointmentFee": 160,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Doctor8",
+    "lastName": "Smith8",
+    "email": "doctor8@example.com",
+    "password": "Password123!",
+    "phone": "+10000000007",
+    "gender": "Female",
+    "dateOfBirth": "1980-05-12",
+    "address": "8 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative8",
+    "emergencyContactPhone": "+10000000107",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 8.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor8.pdf"
+    },
+    "onlineAppointmentFee": 120,
+    "inPersonAppointmentFee": 170,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Doctor9",
+    "lastName": "Smith9",
+    "email": "doctor9@example.com",
+    "password": "Password123!",
+    "phone": "+10000000008",
+    "gender": "Male",
+    "dateOfBirth": "1980-05-12",
+    "address": "9 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative9",
+    "emergencyContactPhone": "+10000000108",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 9.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor9.pdf"
+    },
+    "onlineAppointmentFee": 130,
+    "inPersonAppointmentFee": 180,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Doctor10",
+    "lastName": "Smith10",
+    "email": "doctor10@example.com",
+    "password": "Password123!",
+    "phone": "+10000000009",
+    "gender": "Female",
+    "dateOfBirth": "1980-05-12",
+    "address": "10 Health Ave, Medical City",
+    "role": "Doctor",
+    "medicalHistory": "None",
+    "emergencyContactName": "Relative10",
+    "emergencyContactPhone": "+10000000109",
+    "specialties": [
+      "Cardiology",
+      "Neurology"
+    ],
+    "availabilities": [
+      {
+        "availableDay": "Monday",
+        "startTime": "09:00:00",
+        "endTime": "17:00:00"
+      }
+    ],
+    "qualifications": "MD, PhD",
+    "biography": "Experienced doctor 10.",
+    "doctorStatus": 1,
+    "cv": {
+      "mimeType": "application/pdf",
+      "fileDataBase64": "JVBERi0xLjQKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA1OTUgODQyXQo+PgplbmRvYmoKeHJlZgowIDQKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAwNjggMDAwMDAgbiAKMDAwMDAwMDEyNSAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9TaXplIDQKL1Jvb3QgMSAwIFIKPj4Kc3RhcnR4cmVmCjE3OAolJUVPRgo=",
+      "fileName": "cv_doctor10.pdf"
+    },
+    "onlineAppointmentFee": 140,
+    "inPersonAppointmentFee": 190,
+    "education": [
+      {
+        "degree": "MD",
+        "institution": "State Medical University",
+        "graduationDate": "2010-05-12"
+      }
+    ],
+    "experience": [
+      {
+        "institution": "City Hospital",
+        "position": "Resident",
+        "startDate": "2010-06-01",
+        "endDate": "2015-06-01",
+        "description": "Completed residency"
+      }
+    ]
+  },
+  {
+    "firstName": "Patient1",
+    "lastName": "Doe1",
+    "email": "patient1@example.com",
+    "password": "Password123!",
+    "phone": "+20000000000",
+    "gender": "Female",
+    "dateOfBirth": "1995-10-20",
+    "address": "1 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe1",
+    "emergencyContactPhone": "+20000000100",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Patient2",
+    "lastName": "Doe2",
+    "email": "patient2@example.com",
+    "password": "Password123!",
+    "phone": "+20000000001",
+    "gender": "Male",
+    "dateOfBirth": "1995-10-20",
+    "address": "2 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe2",
+    "emergencyContactPhone": "+20000000101",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Patient3",
+    "lastName": "Doe3",
+    "email": "patient3@example.com",
+    "password": "Password123!",
+    "phone": "+20000000002",
+    "gender": "Female",
+    "dateOfBirth": "1995-10-20",
+    "address": "3 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe3",
+    "emergencyContactPhone": "+20000000102",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Patient4",
+    "lastName": "Doe4",
+    "email": "patient4@example.com",
+    "password": "Password123!",
+    "phone": "+20000000003",
+    "gender": "Male",
+    "dateOfBirth": "1995-10-20",
+    "address": "4 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe4",
+    "emergencyContactPhone": "+20000000103",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Patient5",
+    "lastName": "Doe5",
+    "email": "patient5@example.com",
+    "password": "Password123!",
+    "phone": "+20000000004",
+    "gender": "Female",
+    "dateOfBirth": "1995-10-20",
+    "address": "5 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe5",
+    "emergencyContactPhone": "+20000000104",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Patient6",
+    "lastName": "Doe6",
+    "email": "patient6@example.com",
+    "password": "Password123!",
+    "phone": "+20000000005",
+    "gender": "Male",
+    "dateOfBirth": "1995-10-20",
+    "address": "6 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe6",
+    "emergencyContactPhone": "+20000000105",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Patient7",
+    "lastName": "Doe7",
+    "email": "patient7@example.com",
+    "password": "Password123!",
+    "phone": "+20000000006",
+    "gender": "Female",
+    "dateOfBirth": "1995-10-20",
+    "address": "7 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe7",
+    "emergencyContactPhone": "+20000000106",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Patient8",
+    "lastName": "Doe8",
+    "email": "patient8@example.com",
+    "password": "Password123!",
+    "phone": "+20000000007",
+    "gender": "Male",
+    "dateOfBirth": "1995-10-20",
+    "address": "8 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe8",
+    "emergencyContactPhone": "+20000000107",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Patient9",
+    "lastName": "Doe9",
+    "email": "patient9@example.com",
+    "password": "Password123!",
+    "phone": "+20000000008",
+    "gender": "Female",
+    "dateOfBirth": "1995-10-20",
+    "address": "9 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe9",
+    "emergencyContactPhone": "+20000000108",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Patient10",
+    "lastName": "Doe10",
+    "email": "patient10@example.com",
+    "password": "Password123!",
+    "phone": "+20000000009",
+    "gender": "Male",
+    "dateOfBirth": "1995-10-20",
+    "address": "10 Main St, Hometown",
+    "role": "Patient",
+    "medicalHistory": "Healthy",
+    "emergencyContactName": "EmergencyDoe10",
+    "emergencyContactPhone": "+20000000109",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin1",
+    "lastName": "Super1",
+    "email": "admin1@example.com",
+    "password": "Password123!",
+    "phone": "+30000000000",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "1 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup1",
+    "emergencyContactPhone": "+30000000100",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin2",
+    "lastName": "Super2",
+    "email": "admin2@example.com",
+    "password": "Password123!",
+    "phone": "+30000000001",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "2 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup2",
+    "emergencyContactPhone": "+30000000101",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin3",
+    "lastName": "Super3",
+    "email": "admin3@example.com",
+    "password": "Password123!",
+    "phone": "+30000000002",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "3 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup3",
+    "emergencyContactPhone": "+30000000102",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin4",
+    "lastName": "Super4",
+    "email": "admin4@example.com",
+    "password": "Password123!",
+    "phone": "+30000000003",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "4 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup4",
+    "emergencyContactPhone": "+30000000103",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin5",
+    "lastName": "Super5",
+    "email": "admin5@example.com",
+    "password": "Password123!",
+    "phone": "+30000000004",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "5 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup5",
+    "emergencyContactPhone": "+30000000104",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin6",
+    "lastName": "Super6",
+    "email": "admin6@example.com",
+    "password": "Password123!",
+    "phone": "+30000000005",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "6 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup6",
+    "emergencyContactPhone": "+30000000105",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin7",
+    "lastName": "Super7",
+    "email": "admin7@example.com",
+    "password": "Password123!",
+    "phone": "+30000000006",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "7 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup7",
+    "emergencyContactPhone": "+30000000106",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin8",
+    "lastName": "Super8",
+    "email": "admin8@example.com",
+    "password": "Password123!",
+    "phone": "+30000000007",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "8 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup8",
+    "emergencyContactPhone": "+30000000107",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin9",
+    "lastName": "Super9",
+    "email": "admin9@example.com",
+    "password": "Password123!",
+    "phone": "+30000000008",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "9 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup9",
+    "emergencyContactPhone": "+30000000108",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  },
+  {
+    "firstName": "Admin10",
+    "lastName": "Super10",
+    "email": "admin10@example.com",
+    "password": "Password123!",
+    "phone": "+30000000009",
+    "gender": "Other",
+    "dateOfBirth": "1988-03-15",
+    "address": "10 Admin Blvd, Tech City",
+    "role": "Admin",
+    "medicalHistory": "None",
+    "emergencyContactName": "AdminBackup10",
+    "emergencyContactPhone": "+30000000109",
+    "specialties": [],
+    "availabilities": [],
+    "qualifications": "",
+    "biography": "",
+    "doctorStatus": 0,
+    "cv": null,
+    "onlineAppointmentFee": 0,
+    "inPersonAppointmentFee": 0,
+    "education": [],
+    "experience": []
+  }
+]

@@ -98,36 +98,19 @@ export class SettingsComponent implements OnInit {
   }
 
   loadProfile(): void {
-    const user = this.user();
-    if (user) {
-      this.profileForm.patchValue({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        gender: user.gender || '',
-        dateOfBirth: user.dateOfBirth || '',
-        address: user.address || '',
-      });
-      if (user.profilePicture) {
-        const pic = user.profilePicture;
-        this.previewUrl.set(pic.startsWith('data:') || pic.startsWith('http') ? pic : `data:image/png;base64,${pic}`);
-      }
-    }
-
-    // Try loading full profile from API
+    // Always fetch fresh data from the API as the source of truth
     this.profileService.getProfile().subscribe({
       next: (response: any) => {
         const profile = response?.data || response;
         if (profile) {
           this.profileForm.patchValue({
-            firstName: profile.firstName || user?.firstName || '',
-            lastName: profile.lastName || user?.lastName || '',
-            email: profile.email || user?.email || '',
-            phone: profile.phone || user?.phone || '',
-            gender: profile.gender || user?.gender || '',
-            dateOfBirth: profile.dateOfBirth || user?.dateOfBirth || '',
-            address: profile.address || user?.address || '',
+            firstName: profile.firstName || '',
+            lastName: profile.lastName || '',
+            email: profile.email || '',
+            phone: profile.phone || '',
+            gender: profile.gender || '',
+            dateOfBirth: profile.dateOfBirth || '',
+            address: profile.address || '',
             emergencyContactName: profile.emergencyContactName || '',
             emergencyContactPhone: profile.emergencyContactPhone || '',
           });
@@ -137,9 +120,29 @@ export class SettingsComponent implements OnInit {
           } else {
             this.previewUrl.set(null);
           }
+          // Sync the fresh server data into the local session so it persists on refresh
+          this.authService.updateUser(profile);
         }
       },
-      error: (err) => console.log('Profile API not available, using local data')
+      error: () => {
+        // Fallback to cached session data if API is unavailable
+        const user = this.user();
+        if (user) {
+          this.profileForm.patchValue({
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || '',
+            phone: (user as any).phone || '',
+            gender: (user as any).gender || '',
+            dateOfBirth: (user as any).dateOfBirth || '',
+            address: (user as any).address || '',
+          });
+          if ((user as any).profilePicture) {
+            const pic = (user as any).profilePicture;
+            this.previewUrl.set(pic.startsWith('data:') || pic.startsWith('http') ? pic : `data:image/png;base64,${pic}`);
+          }
+        }
+      }
     });
   }
 
@@ -198,10 +201,22 @@ export class SettingsComponent implements OnInit {
         this.isLoading.set(false);
         this.successMessage.set('Profile updated successfully!');
 
-        // Sync with AuthService session using the returned updated profile
+        // Sync the full returned profile into the session so it persists on refresh
         const updatedProfile = response?.data || response;
         if (updatedProfile) {
           this.authService.updateUser(updatedProfile);
+          // Re-patch the form with the confirmed server values
+          this.profileForm.patchValue({
+            firstName: updatedProfile.firstName || '',
+            lastName: updatedProfile.lastName || '',
+            email: updatedProfile.email || '',
+            phone: updatedProfile.phone || '',
+            gender: updatedProfile.gender || '',
+            dateOfBirth: updatedProfile.dateOfBirth || '',
+            address: updatedProfile.address || '',
+            emergencyContactName: updatedProfile.emergencyContactName || '',
+            emergencyContactPhone: updatedProfile.emergencyContactPhone || '',
+          });
         }
 
         setTimeout(() => this.successMessage.set(null), 3000);

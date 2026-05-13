@@ -1,9 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
 import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
+import { ChatService } from '../../../core/services/chat.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-doctor-layout',
@@ -39,7 +41,11 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
             </div>
           }
           <h6 class="mb-0 profile-name">{{ user()?.firstName || 'Doctor' }}</h6>
-          <small class="text-warning profile-role"><i class="bi bi-shield-check me-1"></i>Verified</small>
+          @if (user()?.isVerified) {
+            <small class="text-warning profile-role"><i class="bi bi-shield-check me-1"></i>Verified</small>
+          } @else {
+            <small class="text-danger profile-role"><i class="bi bi-shield-x me-1"></i>Unverified</small>
+          }
         </div>
         <nav class="nav flex-column p-3 flex-grow-1">
           <a routerLink="/doctor/dashboard" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-house-door me-2"></i><span class="nav-text">Dashboard</span></a>
@@ -52,8 +58,8 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
           <a routerLink="/doctor/health-blogs" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-journal-text me-2"></i><span class="nav-text">Public Blogs</span></a>
 
           <div class="nav-divider my-2 border-bottom border-white border-opacity-10"></div>
-          <a routerLink="/doctor/settings" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-gear me-2"></i><span class="nav-text">Settings</span></a>
-          <a routerLink="/doctor/about" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-info-circle me-2"></i><span class="nav-text">About Med-Connect</span></a>
+         
+         
           <a routerLink="/doctor/contact" routerLinkActive="bg-warning text-dark" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-headset me-2"></i><span class="nav-text">Help & Support</span></a>
         </nav>
         <div class="p-3 border-top border-white border-opacity-25">
@@ -71,7 +77,9 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
             <div class="ms-auto d-flex align-items-center gap-3">
               <a routerLink="/doctor/chat" class="btn btn-link position-relative p-0 text-decoration-none">
                 <i class="bi bi-chat-dots fs-5 text-primary"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.55rem; padding: 0.25rem 0.4rem;">5</span>
+                @if (unreadMessages() > 0) {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.55rem; padding: 0.25rem 0.4rem;">{{ unreadMessages() > 99 ? '99+' : unreadMessages() }}</span>
+                }
               </a>
               <a routerLink="/doctor/settings" class="btn btn-link p-0 text-primary" title="Settings">
                 <i class="bi bi-gear fs-5"></i>
@@ -104,6 +112,11 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
             </div>
           }
           <h6 class="mb-0">{{ user()?.firstName || 'Doctor' }}</h6>
+          @if (user()?.isVerified) {
+            <small class="text-warning"><i class="bi bi-shield-check me-1"></i>Verified</small>
+          } @else {
+            <small class="text-danger"><i class="bi bi-shield-x me-1"></i>Unverified</small>
+          }
       </div>
       <nav class="nav flex-column p-3 flex-grow-1">
         <a routerLink="/doctor/dashboard" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-house-door me-2"></i>Dashboard</a>
@@ -116,7 +129,7 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
         <a routerLink="/doctor/health-blogs" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-journal-text me-2"></i>Public Blogs</a>
 
         <div class="nav-divider my-2 border-bottom border-white border-opacity-10"></div>
-        <a routerLink="/doctor/settings" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-gear me-2"></i>Settings</a>
+      
 
         <a routerLink="/doctor/contact" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center"><i class="bi bi-headset me-2"></i>Contact Support</a>
       </nav>
@@ -128,11 +141,28 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
 }
   `
 })
-export class DoctorLayoutComponent {
+export class DoctorLayoutComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
+  private chatService = inject(ChatService);
+  private chatSub: Subscription | undefined;
+
   user = this.authService.currentUser;
   sidebarOpen = signal(false);
   desktopSidebarCollapsed = signal(false);
+  unreadMessages = signal(0);
+
+  ngOnInit(): void {
+    this.chatService.startConnection().then(() => {
+      this.chatSub = this.chatService.messageReceived$.subscribe(() => {
+        this.unreadMessages.update(n => n + 1);
+      });
+    }).catch(() => { /* silent */ });
+  }
+
+  ngOnDestroy(): void {
+    this.chatSub?.unsubscribe();
+  }
+
   toggleSidebar(): void { this.sidebarOpen.update(v => !v); }
   toggleDesktopSidebar(): void { this.desktopSidebarCollapsed.update(v => !v); }
   logout(): void { this.authService.logout(true); }

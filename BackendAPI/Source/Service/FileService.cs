@@ -39,29 +39,26 @@ namespace BackendAPI.Source.Service
         }
 
 
-          public async Task<FileModel> CreateFileAsync(
+        public async Task<FileModel> CreateFileAsync(
     CreateFileDto createFileDto,
     Guid assocId,
     DiscriminatorTypes entityType
   )
   {
-    using IDbContextTransaction transaction = await appContext.Database.BeginTransactionAsync();
+    // NOTE: No transaction here — callers (e.g. CreateMessageAsync) manage the ambient
+    // transaction. Starting a nested transaction on the same DbContext throws on SQL Server.
     try
     {
       var file = await appContext.Files.AddAsync(createFileDto.ToFileModel());
       await appContext.SaveChangesAsync();
 
-      // estabilish an association between the file and the EntityType
+      // establish an association between the file and the EntityType
       await CreateFileAssociationAsync(file.Entity.FileId, assocId, entityType);
-
-      await transaction.CommitAsync();
 
       return file.Entity;
     }
     catch (Exception ex)
     {
-      await transaction.RollbackAsync();
-
       logger.LogError($"{ex}: An error occured trying to create a file");
       throw;
     }

@@ -310,6 +310,37 @@ $light-bg: #F8F9FA;
     }
 }
 
+/* ── Image Bubble Styles ────────────────────────────────── */
+
+.image-bubble {
+    max-width: 280px;
+    border-radius: 1.2rem;
+    overflow: hidden;
+
+    img {
+        display: block;
+        border-radius: 0.8rem;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+            opacity: 0.92;
+        }
+    }
+}
+
+.msg-sent .image-bubble {
+    background: linear-gradient(135deg, $primary, color.adjust($primary, $lightness: -8%));
+    color: white;
+    border-radius: 1.2rem 1.2rem 0.3rem 1.2rem;
+    box-shadow: 0 5px 15px rgba($primary, 0.2);
+}
+
+.msg-received .image-bubble {
+    background: white;
+    border-radius: 1.2rem 1.2rem 1.2rem 0.3rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
 /* ── Voice Chat Styles ──────────────────────────────────── */
 
 .voice-bubble {
@@ -365,6 +396,18 @@ $light-bg: #F8F9FA;
         background: currentColor;
         opacity: 0.6;
         min-height: 4px;
+        transition: height 0.1s ease;
+
+        &.playing-bar {
+            animation: wavebar 0.8s ease-in-out infinite;
+            opacity: 0.9;
+
+            @for $i from 1 through 12 {
+                &:nth-child(#{$i}) {
+                    animation-delay: #{$i * 0.07}s;
+                }
+            }
+        }
     }
 }
 

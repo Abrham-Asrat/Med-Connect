@@ -27,6 +27,8 @@ public interface IChatService
 
   Task BlockConversationAsync(Guid conversationId, Guid requestUserId);
 
+  Task UpdateConversationStatusAsync(Guid conversationId, Guid requestUserId, BackendAPI.Source.Models.Enums.AppointmentStatus newStatus);
+
   Task<ICollection<UserModel>> GetConversationParticipantsAsync(Guid conversationId);
 }
 }

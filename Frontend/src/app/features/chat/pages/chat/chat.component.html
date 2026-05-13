@@ -16,12 +16,13 @@
       <div class="p-2 border-bottom">
         <div class="input-group input-group-sm">
           <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
-          <input type="text" class="form-control bg-light border-0" placeholder="Search conversations...">
+          <input type="text" class="form-control bg-light border-0" placeholder="Search conversations..."
+            [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)">
         </div>
       </div>
 
       <div class="flex-grow-1 overflow-auto">
-        @for (conv of conversations(); track conv.id) {
+        @for (conv of filteredConversations(); track conv.id) {
         <div class="conv-item p-3 border-bottom" [class.active]="activeConversation() === conv.id"
           (click)="selectConversation(conv.id)">
           <div class="d-flex gap-3 align-items-center">
@@ -60,10 +61,10 @@
         </div>
         }
 
-        @if (conversations().length === 0 && !isLoading()) {
+        @if (filteredConversations().length === 0 && !isLoading()) {
         <div class="text-center p-5 text-muted">
           <i class="bi bi-chat-square-text" style="font-size:40px;opacity:0.3"></i>
-          <p class="mt-3 small">No conversations yet</p>
+          <p class="mt-3 small">{{ searchTerm() ? 'No conversations match your search' : 'No conversations yet' }}</p>
         </div>
         }
       </div>
@@ -133,39 +134,73 @@
             msg.text }}</span>
         </div>
         } @else if (msg.type === 'review_prompt') {
+        <!-- Review prompt — only interactive for patients -->
         <div class="d-flex justify-content-center my-4 fade-in">
-          <div class="card shadow-sm border-0 text-center" style="max-width: 400px; border-radius: 1rem;">
+          @if (userRole === 'Patient') {
+          <div class="card shadow-sm border-0 text-center" style="max-width:420px;width:100%;border-radius:1.2rem;overflow:hidden">
+            <!-- Gradient header -->
+            <div class="py-3 px-4" style="background:linear-gradient(135deg,#078930,#05611f)">
+              <i class="bi bi-star-fill text-warning" style="font-size:2rem"></i>
+              <h5 class="fw-bold text-white mb-0 mt-2">Rate Your Consultation</h5>
+              <small class="text-white-50">Your feedback helps improve Med-Connect</small>
+            </div>
             <div class="card-body p-4">
-              <div class="mb-3">
-                <i class="bi bi-star-fill text-warning" style="font-size: 2.5rem;"></i>
-              </div>
-              <h5 class="fw-bold mb-2">How was your consultation?</h5>
-              <p class="text-muted small mb-4">Your feedback helps us improve Med-Connect for everyone.</p>
+              <!-- Doctor name -->
+              <p class="text-muted small mb-3">
+                <i class="bi bi-person-badge me-1 text-primary"></i>
+                Consultation with <strong>{{ activeConv()?.name }}</strong>
+              </p>
 
-              <div class="d-flex justify-content-center gap-2 mb-3">
+              <!-- Star selector -->
+              <div class="d-flex justify-content-center gap-1 mb-2">
                 @for (star of [1,2,3,4,5]; track star) {
-                <button class="btn btn-light rounded-circle d-flex align-items-center justify-content-center"
-                  style="width: 45px; height: 45px; transition: all 0.2s;"
-                  [class.text-warning]="(msg.rating || 0) >= star" [class.text-muted]="(msg.rating || 0) < star"
-                  (click)="msg.rating = star">
-                  <i class="bi" [class.bi-star-fill]="(msg.rating || 0) >= star"
-                    [class.bi-star]="(msg.rating || 0) < star" style="font-size: 1.5rem;"></i>
+                <button class="btn p-1 border-0 bg-transparent"
+                  style="font-size:2rem;transition:transform 0.15s"
+                  [style.transform]="(msg.rating || 0) >= star ? 'scale(1.15)' : 'scale(1)'"
+                  (click)="msg.rating = star"
+                  [attr.aria-label]="star + ' star'">
+                  <i class="bi"
+                    [class.bi-star-fill]="(msg.rating || 0) >= star"
+                    [class.bi-star]="(msg.rating || 0) < star"
+                    [class.text-warning]="(msg.rating || 0) >= star"
+                    [class.text-muted]="(msg.rating || 0) < star"></i>
                 </button>
                 }
               </div>
+
+              <!-- Rating label -->
               @if (msg.rating) {
-              <div class="mb-3 fade-in text-start">
-                <label class="small text-muted mb-2 fw-semibold">Share more about your experience <span
-                    class="fw-normal" style="opacity: 0.7">(optional)</span></label>
-                <textarea class="form-control bg-light border-0" rows="3" placeholder="Tell us what you liked..."
-                  [(ngModel)]="msg.reviewText"
-                  style="border-radius: 12px; font-size: 0.85rem; resize: none;"></textarea>
+              <p class="text-primary fw-semibold small mb-3 fade-in">
+                {{ msg.rating === 1 ? '😞 Poor' : msg.rating === 2 ? '😐 Fair' : msg.rating === 3 ? '🙂 Good' : msg.rating === 4 ? '😊 Very Good' : '🌟 Excellent' }}
+              </p>
+
+              <!-- Review text -->
+              <div class="mb-3 text-start fade-in">
+                <label class="form-label small fw-semibold text-muted mb-1">
+                  Share your experience <span class="fw-normal opacity-75">(optional)</span>
+                </label>
+                <textarea class="form-control bg-light border-0" rows="3"
+                  placeholder="What did you like about this consultation?"
+                  [(ngModel)]="msg.reviewText" maxlength="1000"
+                  style="border-radius:10px;font-size:0.85rem;resize:none"></textarea>
+                <small class="text-muted d-block text-end mt-1" style="font-size:0.7rem">
+                  {{ (msg.reviewText || '').length }}/1000
+                </small>
               </div>
-              <button class="btn btn-primary rounded-pill w-100 fw-semibold fade-in" (click)="submitReview(msg)">Submit
-                Review</button>
+
+              <button class="btn btn-primary rounded-pill w-100 fw-bold py-2 shadow-sm fade-in"
+                (click)="submitReview(msg)">
+                <i class="bi bi-send-fill me-2"></i>Submit Review
+              </button>
               }
             </div>
           </div>
+          } @else {
+          <!-- Doctor sees a read-only notice -->
+          <span class="badge bg-light text-muted border px-3 py-2 rounded-pill shadow-sm" style="font-size:0.75rem">
+            <i class="bi bi-hourglass-split me-1"></i> Waiting for patient review...
+          </span>
+          }
         </div>
         } @else {
 
@@ -175,10 +210,18 @@
 
           <!-- Avatar on LEFT for received messages -->
           @if (msg.sender === 'them') {
-          <div
-            class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-primary flex-shrink-0"
-            style="width:30px;height:30px;font-size:11px;background:rgba(7,137,48,0.1);margin-bottom:2px">
-            {{ activeConv()?.avatar }}
+          <div class="flex-shrink-0" style="margin-bottom:2px">
+            @if (activeConv()?.avatarUrl) {
+            <img [src]="activeConv()?.avatarUrl" [alt]="activeConv()?.name"
+              class="rounded-circle object-fit-cover"
+              style="width:30px;height:30px;border:1.5px solid rgba(7,137,48,0.2)">
+            } @else {
+            <div
+              class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-primary"
+              style="width:30px;height:30px;font-size:11px;background:rgba(7,137,48,0.1)">
+              {{ activeConv()?.avatar }}
+            </div>
+            }
           </div>
           }
 
@@ -191,37 +234,87 @@
             <div [class.msg-sent]="msg.sender==='me'" [class.msg-received]="msg.sender==='them'"
               class="voice-bubble d-flex align-items-center gap-2">
               <button class="voice-play-btn"
-                (click)="$any($event.target).closest('.voice-bubble').querySelector('audio').paused ? $any($event.target).closest('.voice-bubble').querySelector('audio').play() : $any($event.target).closest('.voice-bubble').querySelector('audio').pause()">
-                <i class="bi bi-play-fill"></i>
+                (click)="toggleAudio(msg.id, msg.audioUrl)">
+                <i class="bi" [class.bi-play-fill]="playingMessageId() !== msg.id" [class.bi-pause-fill]="playingMessageId() === msg.id"></i>
               </button>
               <div class="voice-waveform">
-                @for (b of [1,2,3,4,5,6,7,8,9,10,11,12]; track b) {
-                <span [style.height]="(Math.random() * 16 + 6) + 'px'"></span>
+                @for (h of (msg.waveformHeights ?? []); track $index) {
+                <span [style.height]="h + 'px'"
+                  [class.playing-bar]="playingMessageId() === msg.id"></span>
                 }
               </div>
               <small class="voice-duration">{{ msg.audioDuration }}</small>
-              <audio [src]="msg.audioUrl" style="display:none"></audio>
+            </div>
+            } @else if (msg.type === 'image') {
+            <!-- Image Message -->
+            <div [class.msg-sent]="msg.sender==='me'" [class.msg-received]="msg.sender==='them'"
+              class="image-bubble p-1">
+              @if (msg.imageUrl) {
+              <img [src]="msg.imageUrl" [alt]="msg.imageFileName || 'Image'"
+                class="rounded-3 d-block"
+                style="max-width:260px;max-height:260px;width:100%;object-fit:cover;cursor:pointer"
+                (click)="openImagePreview(msg.imageUrl)">
+              } @else {
+              <div class="d-flex align-items-center gap-2 px-2 py-1 text-muted">
+                <i class="bi bi-image" style="font-size:1.4rem"></i>
+                <small>{{ msg.imageFileName || 'Image' }}</small>
+              </div>
+              }
+              @if (msg.imageFileName) {
+              <small class="d-block mt-1 text-truncate opacity-75"
+                style="font-size:0.68rem;max-width:260px">{{ msg.imageFileName }}</small>
+              }
             </div>
             } @else {
             <!-- Text / Prescription Message -->
             <div [class.msg-sent]="msg.sender==='me'" [class.msg-received]="msg.sender==='them'">
               @if (msg.prescriptionDetails) {
-              <div class="px-2 py-1">
+              <div class="px-2 py-1" style="min-width:260px;max-width:320px">
+                <!-- Header -->
                 <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom border-secondary border-opacity-25">
                   <i class="bi bi-file-medical text-primary" style="font-size: 1.5rem"></i>
                   <div>
                     <strong class="d-block mb-0 text-primary" style="font-size:0.9rem;">Official Prescription</strong>
-                    <small class="text-muted" style="font-size:0.7rem;">Med-Connect Pharmacy</small>
+                    <small class="text-muted" style="font-size:0.7rem;">Med-Connect · {{ msg.prescriptionDetails.issuedAt || msg.time }}</small>
                   </div>
                 </div>
-                <h6 class="mb-1 text-dark fw-bold">Rx: {{ msg.prescriptionDetails.medication }}</h6>
-                <p class="mb-1 small text-dark"><i class="bi bi-capsule me-1 text-secondary"></i>Dosage: {{
-                  msg.prescriptionDetails.dosage }}</p>
-                <p class="mb-1 small text-dark"><i class="bi bi-clock me-1 text-secondary"></i>Frequency: {{
-                  msg.prescriptionDetails.frequency }}</p>
-                <p class="mb-2 small text-dark"><i class="bi bi-calendar-event me-1 text-secondary"></i>Duration: {{
-                  msg.prescriptionDetails.duration }}</p>
-                <button class="btn btn-primary btn-sm w-100 fw-semibold shadow-sm mt-1" style="font-size: 0.8rem">
+                <!-- Medication -->
+                <h6 class="mb-2 fw-bold" [class.text-white]="msg.sender==='me'" [class.text-dark]="msg.sender!=='me'">
+                  &#x1F48A; Rx: {{ msg.prescriptionDetails.medication }}
+                </h6>
+                <p class="mb-1 small" [class.text-white-50]="msg.sender==='me'" [class.text-dark]="msg.sender!=='me'">
+                  <i class="bi bi-capsule me-1 text-secondary"></i>Dosage: {{ msg.prescriptionDetails.dosage }}
+                </p>
+                <p class="mb-1 small" [class.text-white-50]="msg.sender==='me'" [class.text-dark]="msg.sender!=='me'">
+                  <i class="bi bi-clock me-1 text-secondary"></i>Frequency: {{ msg.prescriptionDetails.frequency }}
+                </p>
+                <p class="mb-2 small" [class.text-white-50]="msg.sender==='me'" [class.text-dark]="msg.sender!=='me'">
+                  <i class="bi bi-calendar-event me-1 text-secondary"></i>Duration: {{ msg.prescriptionDetails.duration }}
+                </p>
+                <!-- Doctor signature strip -->
+                <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top border-secondary border-opacity-25">
+                  <div>
+                    <small class="d-block fw-bold" [class.text-white]="msg.sender==='me'" [class.text-primary]="msg.sender!=='me'" style="font-size:0.75rem">
+                      {{ msg.prescriptionDetails.doctorName || 'Dr. Unknown' }}
+                    </small>
+                    <small class="text-muted" style="font-size:0.65rem">Licensed Physician</small>
+                  </div>
+                  <!-- Stylised stamp -->
+                  <div class="d-flex align-items-center justify-content-center rounded-circle border border-2"
+                    [class.border-white]="msg.sender==='me'"
+                    [class.border-primary]="msg.sender!=='me'"
+                    style="width:38px;height:38px;opacity:0.7;font-size:0.45rem;font-weight:bold;text-align:center;line-height:1.2"
+                    [class.text-white]="msg.sender==='me'"
+                    [class.text-primary]="msg.sender!=='me'">
+                    VERIFIED
+                  </div>
+                </div>
+                <!-- Download button -->
+                <button class="btn btn-sm w-100 fw-semibold shadow-sm mt-2"
+                  [class.btn-light]="msg.sender==='me'"
+                  [class.btn-primary]="msg.sender!=='me'"
+                  style="font-size: 0.8rem"
+                  (click)="downloadPrescription(msg)">
                   <i class="bi bi-download me-1"></i> Download PDF
                 </button>
               </div>
@@ -254,10 +347,25 @@
 
       <!-- Input Area -->
       @if (activeConv()?.status === 'closed') {
-      <div class="bg-light border-top p-3 text-center">
-        <p class="text-muted small mb-0"><i class="bi bi-lock-fill me-1"></i> {{ userRole === 'Doctor' ? 'This
-          consultation has been resolved and is closed.' : 'This consultation is closed. Please book a new appointment
-          to send more messages.' }}</p>
+      <div class="border-top p-3" style="background:#f4fbf6">
+        @if (userRole === 'Doctor') {
+        <p class="text-muted small mb-0 text-center">
+          <i class="bi bi-check-circle-fill text-success me-1"></i>
+          This consultation has been resolved and closed.
+        </p>
+        } @else {
+        <div class="d-flex flex-column align-items-center gap-2 py-1">
+          <p class="text-muted small mb-0 text-center">
+            <i class="bi bi-lock-fill me-1"></i>
+            This consultation is closed.
+          </p>
+          <a [routerLink]="['/patient/book-appointment']"
+            [queryParams]="{ doctorId: activeConv()?.otherUserId }"
+            class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm">
+            <i class="bi bi-calendar-plus me-2"></i>Book New Appointment with {{ activeConv()?.name }}
+          </a>
+        </div>
+        }
       </div>
       } @else {
       @if (activeConv()?.status === 'follow_up' && userRole === 'Patient') {
@@ -329,8 +437,14 @@
         }
 
         <div class="d-flex gap-2 align-items-center">
-          <button class="btn btn-light rounded-circle flex-shrink-0" style="width:40px;height:40px" title="Attach file">
-            <i class="bi bi-paperclip"></i>
+          <!-- Hidden file input — triggered by the paperclip button -->
+          <input type="file" id="chatFileInput" class="d-none"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp"
+            (change)="onFileSelected($event)">
+
+          <button class="btn btn-light rounded-circle flex-shrink-0" style="width:40px;height:40px"
+            title="Attach photo" (click)="attachFile()">
+            <i class="bi bi-image text-primary"></i>
           </button>
 
           @if (userRole === 'Doctor') {
@@ -382,7 +496,7 @@
           : 'Select a doctor and schedule an appointment to begin a secure consultation.' }}
         </p>
         @if (userRole === 'Patient') {
-        <a href="/patient/book-appointment"
+        <a routerLink="/patient/book-appointment"
           class="btn btn-primary rounded-pill px-4 py-2 mt-3 fw-semibold shadow-sm transition-all hover-scale">
           <i class="bi bi-calendar-plus me-2"></i> Book Appointment
         </a>
@@ -473,6 +587,29 @@
     </div>
   </div>
 </div>
+
+<!-- ============================================== -->
+<!-- IMAGE LIGHTBOX OVERLAY                        -->
+<!-- ============================================== -->
+@if (lightboxUrl()) {
+<div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+  style="z-index:1060;background:rgba(0,0,0,0.85);animation:fadeIn 0.2s ease"
+  (click)="closeImagePreview()">
+  <div class="position-relative" (click)="$event.stopPropagation()">
+    <img [src]="lightboxUrl()!" alt="Preview"
+      style="max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+    <button class="btn btn-dark rounded-circle position-absolute top-0 end-0 m-2 d-flex align-items-center justify-content-center"
+      style="width:36px;height:36px;opacity:0.85" (click)="closeImagePreview()">
+      <i class="bi bi-x-lg text-white"></i>
+    </button>
+    <a [href]="lightboxUrl()!" download
+      class="btn btn-primary rounded-pill position-absolute bottom-0 end-0 m-3 px-3 py-2 fw-semibold shadow"
+      style="font-size:0.8rem" (click)="$event.stopPropagation()">
+      <i class="bi bi-download me-1"></i> Download
+    </a>
+  </div>
+</div>
+}
 
 <!-- ============================================== -->
 <!-- SECURE REAL-TIME VIDEO CONSULTATION OVERLAY UI -->

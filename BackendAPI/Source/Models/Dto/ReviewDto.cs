@@ -146,9 +146,23 @@ public record PatientReviewHistoryDto
 };
 
 /// <summary>
-/// DTO for review search/filter criteria
+/// DTO for creating a review using UserId values (chat component flow).
+/// The backend resolves DoctorId and PatientId from the provided UserIds.
 /// </summary>
-public record ReviewSearchDto
+public record CreateReviewByUserIdDto
+{
+  [Required] public required Guid DoctorUserId  { get; set; }
+  [Required] public required Guid PatientUserId { get; set; }
+
+  [Required]
+  [Range(1, 5, ErrorMessage = "Star rating must be between 1 and 5")]
+  public required decimal StarRating { get; set; }
+
+  [Required]
+  [MinLength(3, ErrorMessage = "Review text must be at least 3 characters")]
+  [MaxLength(1000)]
+  public required string ReviewText { get; set; }
+};
 {
   public Guid? DoctorId { get; set; }
   public Guid? PatientId { get; set; }

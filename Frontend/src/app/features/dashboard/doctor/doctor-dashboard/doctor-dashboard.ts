@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppointmentService } from '../../../../core/services/appointment.service';
+import { ProfileService } from '../../../../core/services/profile.service';
 
 @Component({
   selector: 'app-doctor-dashboard',
@@ -21,6 +22,7 @@ import { AppointmentService } from '../../../../core/services/appointment.servic
 export class DoctorDashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private appointmentService = inject(AppointmentService);
+  private profileService = inject(ProfileService);
 
   user = this.authService.currentUser;
   doctorId = localStorage.getItem('doctorId') || '';
@@ -35,7 +37,22 @@ export class DoctorDashboardComponent implements OnInit {
   appointments = signal<any[]>([]);
 
   ngOnInit(): void {
+    this.refreshVerificationStatus();
     this.loadAppointments();
+  }
+
+  // Fetch fresh profile from the server so isVerified reflects any admin approval
+  // without requiring the doctor to log out and back in.
+  private refreshVerificationStatus(): void {
+    this.profileService.getProfile().subscribe({
+      next: (response: any) => {
+        const profile = response?.data || response;
+        if (profile) {
+          this.authService.updateUser({ isVerified: !!profile.isVerified });
+        }
+      },
+      error: () => { /* silently ignore — stale cached value is fine as fallback */ }
+    });
   }
 
   loadAppointments(): void {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -7,6 +7,7 @@ import { NotificationBellComponent } from '../../../shared/components/notificati
 import { SignalRService } from '../../../core/services/signalr.service';
 import { NotificationStoreService } from '../../../core/services/notification-store.service';
 import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
+import { ChatService } from '../../../core/services/chat.service';
 
 @Component({
   selector: 'app-patient-layout',
@@ -25,12 +26,15 @@ export class PatientLayoutComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private signalRService = inject(SignalRService);
   private store = inject(NotificationStoreService);
+  private chatService = inject(ChatService);
   private subscription!: Subscription;
+  private chatSub: Subscription | undefined;
 
   user = this.authService.currentUser;
   sidebarOpen = signal(false);
   desktopSidebarCollapsed = signal(false);
   unreadCount = 0;
+  unreadMessages = signal(0);
 
   ngOnInit(): void {
     // Update notification count in real-time
@@ -43,10 +47,18 @@ export class PatientLayoutComponent implements OnInit, OnDestroy {
       });
       this.unreadCount = this.store.unreadCount();
     });
+
+    // Track unread chat messages via SignalR
+    this.chatService.startConnection().then(() => {
+      this.chatSub = this.chatService.messageReceived$.subscribe(() => {
+        this.unreadMessages.update(n => n + 1);
+      });
+    }).catch(() => { /* silent — chat badge just won't update in real-time */ });
   }
 
   ngOnDestroy(): void {
     this.subscription?.unsubscribe();
+    this.chatSub?.unsubscribe();
   }
 
   toggleSidebar(): void {

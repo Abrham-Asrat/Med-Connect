@@ -11,6 +11,39 @@ public class ReviewService(
   ILogger<ReviewService> logger
 ) : IReviewService
 {
+  public async Task<ReviewDto> CreateReviewByUserIdAsync(CreateReviewByUserIdDto dto)
+  {
+    try
+    {
+      // Resolve DoctorModel.DoctorId from UserId
+      var doctor = await appContext.Doctors
+        .FirstOrDefaultAsync(d => d.UserId == dto.DoctorUserId);
+      if (doctor == null)
+        throw new KeyNotFoundException($"Doctor with UserId {dto.DoctorUserId} not found.");
+
+      // Resolve PatientModel.PatientId from UserId
+      var patient = await appContext.Patients
+        .FirstOrDefaultAsync(p => p.UserId == dto.PatientUserId);
+      if (patient == null)
+        throw new KeyNotFoundException($"Patient with UserId {dto.PatientUserId} not found.");
+
+      var createDto = new CreateReviewDto
+      {
+        DoctorId   = doctor.DoctorId,
+        PatientId  = patient.PatientId,
+        StarRating = dto.StarRating,
+        ReviewText = dto.ReviewText
+      };
+
+      return await CreateReviewAsync(createDto);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "An error occurred trying to create review by user ID.");
+      throw;
+    }
+  }
+
   public async Task<ReviewDto> CreateReviewAsync(CreateReviewDto createReviewDto)
   {
     try

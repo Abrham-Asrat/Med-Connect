@@ -92,7 +92,32 @@ export class AuthService {
     const token = d.accessToken;
     const p = d.profile;
     if (token) { localStorage.setItem('token', token); this.tokenSignal.set(token); }
-    const user: any = { userId: p?.userId || '', email: p?.email || '', firstName: p?.firstName || '', lastName: p?.lastName || '', role: p?.role || '', phone: p?.phone || '', gender: p?.gender || '', dateOfBirth: p?.dateOfBirth || '', isVerified: !!p?.isVerified };
+    // Store all profile fields so they survive page refresh and re-login
+    const user: any = {
+      userId: p?.userId || '',
+      email: p?.email || '',
+      firstName: p?.firstName || '',
+      lastName: p?.lastName || '',
+      role: p?.role || '',
+      phone: p?.phone || '',
+      gender: p?.gender || '',
+      dateOfBirth: p?.dateOfBirth || '',
+      address: p?.address || '',
+      profilePicture: p?.profilePicture || '',
+      isVerified: !!p?.isVerified,
+      // Patient-specific
+      patientId: p?.patientId || '',
+      medicalHistory: p?.medicalHistory || '',
+      emergencyContactName: p?.emergencyContactName || '',
+      emergencyContactPhone: p?.emergencyContactPhone || '',
+      // Doctor-specific
+      doctorId: p?.doctorId || '',
+      biography: p?.biography || '',
+      qualifications: p?.qualifications || '',
+      specialties: p?.specialties || [],
+      doctorStatus: p?.doctorStatus || '',
+      isVerifiedDoctor: !!p?.isVerified,
+    };
     localStorage.setItem('user', JSON.stringify(user));
 
     if (user.role === 'Patient') {
@@ -125,7 +150,18 @@ export class AuthService {
     if (current) {
       const updated = { ...current, ...userData };
       localStorage.setItem('user', JSON.stringify(updated));
-      this.currentUserSignal.set(updated);
+      this.currentUserSignal.set(updated as User);
+
+      // Keep role-specific IDs in sync if they come back from the server
+      const anyData = userData as any;
+      if (anyData.patientId) {
+        localStorage.setItem('patientId', anyData.patientId);
+        this.patientIdSignal.set(anyData.patientId);
+      }
+      if (anyData.doctorId) {
+        localStorage.setItem('doctorId', anyData.doctorId);
+        this.doctorIdSignal.set(anyData.doctorId);
+      }
     }
   }
 

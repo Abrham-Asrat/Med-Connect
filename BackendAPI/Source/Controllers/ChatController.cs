@@ -3,6 +3,9 @@ using BackendAPI.Source.Service;
 using BackendAPI.Source.Service.ChatService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using BackendAPI.Source.Hubs;
+using BackendAPI.Source.Models.Enums;
 
 [ApiController]
 [Route("api/conversations")]
@@ -10,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 public class ChatController(
   UserService userService,
   IChatService chatService,
+  IHubContext<ChatHub> hubContext,
   ILogger<ChatController> logger
 ) : ControllerBase
 {
@@ -175,6 +179,65 @@ public class ChatController(
       throw;
     }
   }
+
+  /// <summary>
+  /// Updates the conversation status (active → follow_up or follow_up → closed).
+  /// Broadcasts a system message to all participants via SignalR so both sides see the change in real time.
+  /// </summary>
+  [HttpPatch("{conversationId}/status")]
+  public async Task<IActionResult> UpdateConversationStatus(
+    [FromRoute] [Required] [Guid] Guid conversationId,
+    [FromBody] [Required] UpdateConversationStatusDto requestBody
+  )
+  {
+    try
+    {
+      if (!Enum.TryParse<AppointmentStatus>(requestBody.Status, ignoreCase: true, out var newStatus))
+        return BadRequest($"Invalid status value '{requestBody.Status}'. Allowed: follow_up, closed.");
+
+      await chatService.UpdateConversationStatusAsync(conversationId, requestBody.UserId, newStatus);
+
+      // Broadcast a system message to all participants so both sides update in real time
+      var participants = await chatService.GetConversationParticipantsAsync(conversationId);
+      var systemText = newStatus == AppointmentStatus.follow_up
+        ? "The doctor has marked this consultation as resolved. Please confirm if your issue is resolved."
+        : "This consultation has been closed. Thank you for using Med-Connect.";
+
+      var systemPayload = new
+      {
+        messageId    = Guid.NewGuid(),
+        conversationId,
+        senderId     = (Guid?)null,
+        messageText  = systemText,
+        type         = "system",
+        createdAt    = DateTime.UtcNow,
+        files        = Array.Empty<object>()
+      };
+
+      foreach (var participant in participants)
+      {
+        await hubContext.Clients
+          .User(participant.UserId.ToString())
+          .SendAsync("ReceiveMessage", systemPayload);
+      }
+
+      return NoContent();
+    }
+    catch (UnauthorizedAccessException ex)
+    {
+      return Unauthorized(ex.Message);
+    }
+    catch (InvalidOperationException ex)
+    {
+      return BadRequest(ex.Message);
+    }
+    catch (System.Exception ex)
+    {
+      logger.LogError(ex, "An error occurred while updating conversation status.");
+      throw;
+    }
+  }
 }
 
 public record BlockConversationRequestDto([Required] Guid UserId);
+public record UpdateConversationStatusDto([Required] Guid UserId, [Required] string Status);

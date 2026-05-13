@@ -28,6 +28,15 @@ export class ReviewService {
     return this.http.post(`${this.apiUrl}/reviews`, reviewData);
   }
 
+  postReviewByUserId(data: {
+    doctorUserId: string;
+    patientUserId: string;
+    starRating: number;
+    reviewText: string;
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reviews/by-user`, data);
+  }
+
   editReview(reviewData: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/reviews`, reviewData);
   }

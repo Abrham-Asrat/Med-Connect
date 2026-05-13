@@ -16,18 +16,19 @@ namespace BackendAPI.Source.Controllers
     {
         private async Task<Guid> GetCurrentUserId()
         {
-            // 1. Try Cookies
-            if (Guid.TryParse(HttpContext.Request.Cookies[BackendAPI.Source.Helpers.Default.CookieDefaults.Profile.UserId]?.ToString(), out var userId))
-            {
-                return userId;
-            }
+            // 1. Try the custom "UserId" claim injected by OnTokenValidated in Program.cs
+            var userIdClaim = User.FindFirst("UserId")?.Value;
+            if (Guid.TryParse(userIdClaim, out var directId))
+                return directId;
 
-            // 2. Try Jwt Claim via centralized extension (checks NameIdentifier, sub, and DB lookup)
+            // 2. Try Cookies
+            if (Guid.TryParse(HttpContext.Request.Cookies[BackendAPI.Source.Helpers.Default.CookieDefaults.Profile.UserId]?.ToString(), out var cookieId))
+                return cookieId;
+
+            // 3. Try Jwt Claim via centralized extension (checks NameIdentifier, sub, and DB lookup)
             var id = await User.GetUserIdAsync(context);
             if (id.HasValue)
-            {
                 return id.Value;
-            }
 
             // Log available claims for debugging if identification fails
             var claimsList = string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}"));

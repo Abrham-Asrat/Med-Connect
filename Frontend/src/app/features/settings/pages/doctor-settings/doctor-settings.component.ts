@@ -107,6 +107,9 @@ export class DoctorSettingsComponent implements OnInit {
                     } else {
                         this.addAvailability();
                     }
+
+                    // Sync fresh server data into the local session so it persists on refresh
+                    this.authService.updateUser(profile);
                 }
             },
             error: () => this.isLoading.set(false)
@@ -209,6 +212,27 @@ export class DoctorSettingsComponent implements OnInit {
                         const updatedProfile = response?.data || response;
                         if (updatedProfile) {
                             this.authService.updateUser(updatedProfile);
+
+                            // Re-patch forms with confirmed server values
+                            this.personalForm.patchValue({
+                                firstName: updatedProfile.firstName || '',
+                                lastName: updatedProfile.lastName || '',
+                                email: updatedProfile.email || '',
+                                phone: updatedProfile.phone || '',
+                                gender: updatedProfile.gender || '',
+                                dateOfBirth: updatedProfile.dateOfBirth || '',
+                                address: updatedProfile.address || '',
+                            });
+                            this.professionalForm.patchValue({
+                                biography: updatedProfile.biography || '',
+                                qualifications: updatedProfile.qualifications || '',
+                                doctorStatus: updatedProfile.doctorStatus || 'Active',
+                                specialties: updatedProfile.specialties ? updatedProfile.specialties.join(', ') : '',
+                            });
+                            if (updatedProfile.profilePicture && updatedProfile.profilePicture.trim() !== '') {
+                                const pic = updatedProfile.profilePicture;
+                                this.previewUrl.set(pic.startsWith('data:') || pic.startsWith('http') ? pic : `data:image/png;base64,${pic}`);
+                            }
                         }
 
                         this.clearMessageAfter(3000);

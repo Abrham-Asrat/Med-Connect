@@ -12,6 +12,38 @@ public class ReviewController(IReviewService reviewService, ILogger<ReviewContro
   : ControllerBase
 {
   /// <summary>
+  /// Create a review using UserId values (resolves DoctorId and PatientId internally).
+  /// This is the endpoint used by the chat component after a consultation closes.
+  /// </summary>
+  [HttpPost("by-user")]
+  public async Task<IActionResult> PostReviewByUserId([FromBody] CreateReviewByUserIdDto dto)
+  {
+    if (dto == null || !ModelState.IsValid)
+      return BadRequest(new ApiResponse<ReviewDto>(false, "Invalid review data", null));
+
+    try
+    {
+      var review = await reviewService.CreateReviewByUserIdAsync(dto);
+      return CreatedAtAction(nameof(GetReviewById), new { reviewId = review.ReviewId },
+        new ApiResponse<ReviewDto>(true, "Review Created Successfully", review));
+    }
+    catch (KeyNotFoundException ex)
+    {
+      return NotFound(new ApiResponse<ReviewDto>(false, ex.Message, null));
+    }
+    catch (InvalidOperationException ex)
+    {
+      logger.LogWarning(ex, "Business rule violation when creating review by user ID");
+      return BadRequest(new ApiResponse<ReviewDto>(false, ex.Message, null));
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to create review by user ID");
+      return StatusCode(500, new ApiResponse<ReviewDto>(false, "An error occurred while creating the review", null));
+    }
+  }
+
+  /// <summary>
   /// Create a new review (only patients can post reviews)
   /// </summary>
   /// <param name="createReviewDto">Review data</param>

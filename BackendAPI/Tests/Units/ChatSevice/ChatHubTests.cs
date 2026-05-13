@@ -128,6 +128,7 @@ public class ChatHubTests
     // Setup the ChatService mock to return a test message
     var testMessage = new MessageDto(
       Guid.NewGuid(),
+      receiverId,  // conversationId
       Guid.Parse("DB1CA3D9-8F05-444E-9CF8-E8E3F20DD38E"),
       messageText,
       new List<FileDto>()

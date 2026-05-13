@@ -153,7 +153,7 @@ namespace BackendAPI.Source.Helpers.Extensions
             return new FileDto
             (
                 file.FileId,
-                Mime.GetReverseMime(file.MimeType),
+                file.MimeType,   // already stored as the MIME string e.g. "audio/webm"
                 FileHelper.ToBase64(file.FileData),
                 file.FileName,
                 file.FileSize
@@ -597,6 +597,7 @@ namespace BackendAPI.Source.Helpers.Extensions
   {
     return new MessageDto(
       message.MessageId,
+      message.ConversationId,
       message.SenderId,
       message.MessageText,
       files != null ? files.Select(f => f.ToFileDto()).ToList() : [],
@@ -623,7 +624,8 @@ namespace BackendAPI.Source.Helpers.Extensions
       FirstName = user.FirstName,
       LastName = user.LastName,
       UserId = user.UserId,
-      ProfilePicture = user.ProfilePicture ?? ""
+      ProfilePicture = user.ProfilePicture ?? "",
+      Role = user.Role.ToString()
     };
   }
 
@@ -635,7 +637,9 @@ namespace BackendAPI.Source.Helpers.Extensions
     return new ConversationDtoBase
     {
       ConversationId = conversation.ConversationId,
-      Participants = participants.Select(u => u.ToConversationProfileDto()).ToList()
+      Participants = participants.Select(u => u.ToConversationProfileDto()).ToList(),
+      LastMessageAt = conversation.LastMessageAt,
+      Status = conversation.Status.ToString().ToLower()
     };
   }
 

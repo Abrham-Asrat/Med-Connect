@@ -522,6 +522,8 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
       if (!response.IsSuccessStatusCode) return false;
 
       var users = JsonSerializer.Deserialize<List<JsonElement>>(response.Content!);
+      if (users == null) return false;
+
       foreach (var user in users)
       {
         var userId = user.GetProperty("user_id").GetString();

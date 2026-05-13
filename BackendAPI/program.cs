@@ -53,10 +53,14 @@ var builder = WebApplication.CreateBuilder(args);
 {
   // Configure Serilog with appropriate sinks
   Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug() // Set the minimum log level to Debug
+    .MinimumLevel.Information() // Debug is too verbose for normal use; switch to Information
+    .MinimumLevel.Override("Microsoft.AspNetCore.SignalR", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Http.Connections", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console() // Write logs to the console
     .WriteTo.File("Logs/MedConnecy.log", rollingInterval: RollingInterval.Day) // Write logs to a file
-    .WriteTo.Seq("http://localhost:5000/") // Write logs to Seq
+    // Seq sink removed — it was pointing at localhost:5000 (same port as the API),
+    // causing connection retries and blocking startup. Re-enable if you run a separate Seq instance.
     .CreateLogger();
 
   Log.Information("Application Starting...");
@@ -143,6 +147,20 @@ builder.Services.AddCors(options =>
        // Optional: Add logging for auth failures
     options.Events = new JwtBearerEvents
     {
+        // SignalR cannot send the token in the Authorization header like regular HTTP.
+        // It passes it as a query string parameter (?access_token=...).
+        // This handler extracts it so the JWT middleware can authenticate the hub connection.
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/chathub") || path.StartsWithSegments("/notificationhub")))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        },
         OnAuthenticationFailed = context =>
         {
             Log.Error($"Authentication failed: {context.Exception.Message}");
@@ -309,7 +327,19 @@ builder.Services.AddCors(options =>
   });
 
   // Register the SignalR for realtime comms
-  builder.Services.AddSignalR();
+  // Configure JSON protocol to deserialize enum values by name (e.g. "text", "prescription")
+  // so the frontend can send string enum values instead of integers
+  builder.Services.AddSignalR(options =>
+    {
+      // Increase max message size to support voice/file uploads via SignalR (default is 32KB)
+      options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10MB
+    })
+    .AddJsonProtocol(options =>
+    {
+      options.PayloadSerializerOptions.Converters.Add(
+        new System.Text.Json.Serialization.JsonStringEnumConverter()
+      );
+    });
   builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, BackendAPI.Source.Helpers.Extensions.UserIdProvider>();
 
   // Register Services
@@ -414,10 +444,6 @@ builder.Services.AddCors(options =>
       options.ViewLocationFormats.Add("/Source/Views/{0}.cshtml");
     });
 
-  builder.Logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);
-  builder.Logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Debug);
-
-  
   AppDomain.CurrentDomain.ProcessExit += (s, e) => Log.CloseAndFlush();
 
 }

@@ -2,7 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using BackendAPI.Source.Views;
 
 public record MessageDto(
-  Guid MessageId, 
+  Guid MessageId,
+  Guid ConversationId,   // needed by frontend to route real-time messages to the correct chat room
   Guid? SenderId, 
   string? MessageText, 
   List<FileDto>? Files,

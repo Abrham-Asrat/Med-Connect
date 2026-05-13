@@ -23,7 +23,10 @@ public class ProfileDtoBase : IProfileDto
 
 public class BlogProfileDto : ProfileDtoBase;
 
-public class ConversationProfileDto : ProfileDtoBase;
+public class ConversationProfileDto : ProfileDtoBase
+{
+  public string Role { get; set; } = string.Empty;
+}
 
 public record ProfileDto
 {

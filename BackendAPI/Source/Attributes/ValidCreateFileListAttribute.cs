@@ -7,15 +7,19 @@ using BackendAPI.Source.Models.Enums;
 /// </summary>
 public class ValidCreateFileListAttribute : ValidationAttribute
 {
+  // Default max file size: 5MB — aligned with FileModel.FileData [MaxLength(5MB)]
   int maxFileSize;
   string[]? allowedExtensions;
 
-  public ValidCreateFileListAttribute() { }
+  public ValidCreateFileListAttribute()
+  {
+    this.maxFileSize = 5 * 1024 * 1024; // 5MB default
+  }
 
-  /// <param name="maxFileSize">if not provided limit will be 10,485,760(10MB)</param>
+  /// <param name="maxFileSize">if not provided limit will be 5,242,880 (5MB)</param>
   /// <param name="allowedExtensions">if not provided all files will be allowed</param>
   public ValidCreateFileListAttribute(
-    int maxFileSize = 10_485_760,
+    int maxFileSize = 5 * 1024 * 1024,
     string[]? allowedExtensions = null
   )
   {
@@ -34,9 +38,19 @@ public class ValidCreateFileListAttribute : ValidationAttribute
         if (file == null)
           return new ValidationResult("File cannot be a type of null.");
 
-        int fileSize = FileHelper.ToByteStream(file.FileDataBase64).Count();
-        if (fileSize > maxFileSize)
-          return new ValidationResult("File size should be at most 10Mb.");
+        // Guard against invalid base64 before attempting conversion
+        byte[] fileBytes;
+        try
+        {
+          fileBytes = FileHelper.ToByteStream(file.FileDataBase64);
+        }
+        catch (FormatException)
+        {
+          return new ValidationResult("File data is not valid base64.");
+        }
+
+        if (fileBytes.Length > maxFileSize)
+          return new ValidationResult($"File size must be at most {maxFileSize / (1024 * 1024)}MB.");
 
         bool isSupportedMime = Mime.IsSupportedMimeValue(file.MimeType);
         if (!isSupportedMime)

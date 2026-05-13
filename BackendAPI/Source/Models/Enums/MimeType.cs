@@ -10,6 +10,7 @@ namespace BackendAPI.Source.Models.Enums
         Tiff,
         Mp4,
         Webm,
+        AudioWebm,
         Avi,
         Mpeg,
         Mkv,
@@ -34,6 +35,7 @@ namespace BackendAPI.Source.Models.Enums
             { MimeDefaults.Tiff, "image/tiff" },
              { MimeDefaults.Mp4, "video/mp4" },
            { MimeDefaults.Webm, "video/webm" },
+           { MimeDefaults.AudioWebm, "audio/webm" },
            { MimeDefaults.Avi, "video/x-msvideo" },
             { MimeDefaults.Mpeg, "video/mpeg" },
            { MimeDefaults.Mkv, "video/x-matroska" },
@@ -76,12 +78,15 @@ namespace BackendAPI.Source.Models.Enums
         /// </returns>
         public static bool IsSupportedMimeValue(string mimeValue)
         {
-            return ReverseMimes.ContainsKey(mimeValue);
+            // Strip codec parameters (e.g. "audio/webm;codecs=opus" → "audio/webm") before lookup
+            var baseMime = mimeValue.Split(';')[0].Trim();
+            return ReverseMimes.ContainsKey(baseMime);
         }
 
         public static MimeDefaults GetReverseMime(string mimeValue)
         {
-            return ReverseMimes[mimeValue];
+            var baseMime = mimeValue.Split(';')[0].Trim();
+            return ReverseMimes[baseMime];
         }
     }
 

@@ -5,6 +5,12 @@ namespace BackendAPI.Source.Service.ReviewService;
 public interface IReviewService
 {
   /// <summary>
+  /// Creates a review using UserId values — resolves DoctorId and PatientId internally.
+  /// Used by the chat component after a consultation closes.
+  /// </summary>
+  Task<ReviewDto> CreateReviewByUserIdAsync(CreateReviewByUserIdDto dto);
+
+  /// <summary>
   /// Creates a new review
   /// </summary>
   /// <param name="createReviewDto">Review data</param>

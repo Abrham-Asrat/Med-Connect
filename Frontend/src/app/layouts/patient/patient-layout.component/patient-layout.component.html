@@ -49,6 +49,10 @@
         class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center">
         <i class="bi bi-calendar-check me-2"></i><span class="nav-text">My Appointments</span>
       </a>
+      <a routerLink="/patient/chat" routerLinkActive="bg-warning text-dark"
+        class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center">
+        <i class="bi bi-chat-dots me-2"></i><span class="nav-text">Messages</span>
+      </a>
       <a routerLink="/patient/medical-records" routerLinkActive="bg-warning text-dark"
         class="nav-link text-white rounded mb-1 px-3 d-flex align-items-center">
         <i class="bi bi-file-medical me-2"></i><span class="nav-text">Medical Records</span>
@@ -91,11 +95,13 @@
           <!-- Chat / Messages Icon -->
           <a routerLink="/patient/chat" class="btn btn-link position-relative p-0 text-decoration-none">
             <i class="bi bi-chat-dots fs-5 text-primary"></i>
+            @if (unreadMessages() > 0) {
             <span
               class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light"
               style="font-size: 0.55rem; padding: 0.25rem 0.4rem;">
-              3
+              {{ unreadMessages() > 99 ? '99+' : unreadMessages() }}
             </span>
+            }
           </a>
           <!-- Settings Icon -->
           <a routerLink="/patient/settings" class="btn btn-link p-0 text-primary" title="Settings">
@@ -150,6 +156,9 @@
       <a routerLink="/patient/appointments" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
         <i class="bi bi-calendar-check me-2"></i>My Appointments
       </a>
+      <a routerLink="/patient/chat" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
+        <i class="bi bi-chat-dots me-2"></i>Messages
+      </a>
       <a routerLink="/patient/medical-records" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
         <i class="bi bi-file-medical me-2"></i>Medical Records
       </a>
@@ -160,12 +169,8 @@
       <a routerLink="/patient/payments" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
         <i class="bi bi-wallet2 me-2"></i>Payments
       </a>
-      <a routerLink="/patient/notifications" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
-        <i class="bi bi-bell me-2"></i>Notifications
-      </a>
-      <a routerLink="/patient/about" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
-        <i class="bi bi-info-circle me-2"></i>About Us
-      </a>
+
+    
       <a routerLink="/patient/contact" (click)="toggleSidebar()" class="nav-link text-white rounded mb-1 px-3">
         <i class="bi bi-headset me-2"></i>Contact Support
       </a>

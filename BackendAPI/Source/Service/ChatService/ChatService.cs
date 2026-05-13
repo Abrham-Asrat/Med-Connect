@@ -33,8 +33,6 @@ public class ChatService(
           var p1 = participantIds[0];
           var p2 = participantIds[1];
 
-
-
           var doctor = await appContext.Doctors.FirstOrDefaultAsync(d => d.UserId == p1 || d.UserId == p2);
           var patient = await appContext.Patients.FirstOrDefaultAsync(p => p.UserId == p1 || p.UserId == p2);
 
@@ -53,14 +51,47 @@ public class ChatService(
       }
       // -------------------------------------
 
+      // Check if a conversation between these exact participants already exists
+      // to avoid creating duplicate conversations
+      if (createConversationDto.Participants.Count == 2)
+      {
+          var participantIds = createConversationDto.Participants.ToList();
+          var existingConversationId = await appContext.ConversationMemberships
+              .Where(cm => cm.UserId == participantIds[0])
+              .Select(cm => cm.ConversationId)
+              .Intersect(
+                  appContext.ConversationMemberships
+                      .Where(cm => cm.UserId == participantIds[1])
+                      .Select(cm => cm.ConversationId)
+              )
+              .FirstOrDefaultAsync();
+
+          if (existingConversationId != Guid.Empty)
+          {
+              // Return the existing conversation instead of creating a duplicate
+              var existingParticipants = await GetConversationParticipantsAsync(existingConversationId);
+              var existingConversation = await appContext.Conversations.FindAsync(existingConversationId);
+              return existingConversation!.ToConversationDto(existingParticipants);
+          }
+      }
+
       var conversationId = Guid.NewGuid();
       var conversation = await appContext.Conversations.AddAsync(
         new Conversation() { ConversationId = conversationId }
       );
 
+      // ✅ Save memberships for all participants — this is what was missing
+      await CreateConversationMembershipsRangeAsync(
+          createConversationDto.Participants.ToList(),
+          conversationId
+      );
+
       await appContext.SaveChangesAsync();
+
+      // Reload with participants populated so ToConversationDto has full data
       var participants = await GetConversationParticipantsAsync(conversationId);
-      return conversation.Entity.ToConversationDto(participants);
+      var savedConversation = await appContext.Conversations.FindAsync(conversationId);
+      return savedConversation!.ToConversationDto(participants);
     }
     catch (System.Exception ex)
     {
@@ -76,14 +107,11 @@ public class ChatService(
   {
     try
     {
-      ConversationMembershipModel[] conversationMemberships = new ConversationMembershipModel[
-        participants.Count
-      ];
-      for (var i = 0; i < participants.Count; i++)
+      var conversationMemberships = participants.Select(userId => new ConversationMembershipModel
       {
-        conversationMemberships[i].UserId = participants[i];
-        conversationMemberships[i].ConversationId = conversationId;
-      }
+        UserId = userId,
+        ConversationId = conversationId
+      }).ToList();
 
       await appContext.ConversationMemberships.AddRangeAsync(conversationMemberships);
       await appContext.SaveChangesAsync();
@@ -99,33 +127,33 @@ public class ChatService(
   {
     try
     {
-      // var conversation = await appContext
-      //   .Conversations.Where(c => c.ConversationId == conversationId)
-      //   .Include(c => c.Messages)
-      //   .ThenInclude(m => m.Files) // Load the associated files
-      //   .Include(c => c.Messages)
-      //   .ThenInclude(m => m.Sender) // Load the sender
-      //   .Include(c => c.Messages)
-      //   .ThenInclude(m => m.Receiver) // Load the receiver
-      //   .FirstOrDefaultAsync();
-
-      var conversation = await appContext
-        .ConversationMemberships.Where(cm => cm.ConversationId == conversationId)
-        .Include(cm => cm.Conversation)
-        .ThenInclude(c => c!.Messages)
-        .ThenInclude(m => m.Files)
-        .Include(cm => cm.Conversation)
-        .ThenInclude(c => c!.Messages)
-        .ThenInclude(m => m.Sender)
-        .Select(cm => cm.Conversation)
+      var conversation = await appContext.Conversations
+        .Where(c => c.ConversationId == conversationId)
+        .Include(c => c.Messages)
+          .ThenInclude(m => m.Sender)
         .FirstOrDefaultAsync();
 
-      if (conversation == default)
-      {
+      if (conversation == null)
         throw new KeyNotFoundException("Conversation with the given id doesn't exist.");
-      }
 
-      return conversation.Messages.Select(m => m.ToMessageDto(m.Files)).ToList();
+      // Load file associations separately — Message.Files is a direct nav that has no
+      // MessageId FK on FileModel; files are linked via MessageFileAssociation join table
+      var messageIds = conversation.Messages.Select(m => m.MessageId).ToList();
+      var filesByMessage = await appContext.MessageFileAssociations
+        .Where(fa => messageIds.Contains(fa.MessageId))
+        .Include(fa => fa.File)
+        .GroupBy(fa => fa.MessageId)
+        .ToDictionaryAsync(
+          g => g.Key,
+          g => g.Where(fa => fa.File != null).Select(fa => fa.File!).ToList()
+        );
+
+      return conversation.Messages
+        .OrderBy(m => m.CreatedAt)
+        .Select(m => m.ToMessageDto(
+          filesByMessage.TryGetValue(m.MessageId, out var files) ? files : []
+        ))
+        .ToList();
     }
     catch (System.Exception ex)
     {
@@ -141,25 +169,40 @@ public class ChatService(
       if (!await userService.UserExistsAsync(userId))
         throw new KeyNotFoundException("User with that userid is not found!");
 
-      var kvps = await appContext
-        .ConversationMemberships.Where(cm => cm.UserId == userId)
-        .Include(cm => cm.Conversation)
-        .Include(cm => cm.User)
-        .GroupBy(g => g.ConversationId)
-        .ToDictionaryAsync(
-          g => g.Key,
-          g =>
-            g.Where(cm => cm.User != null)
-              .Select(cm => cm.User!.ToConversationProfileDto())
-              .ToList()
-        );
+      // Step 1: find all conversationIds this user belongs to
+      var conversationIds = await appContext.ConversationMemberships
+        .Where(cm => cm.UserId == userId)
+        .Select(cm => cm.ConversationId)
+        .ToListAsync();
 
-      var result = kvps.Select(e =>
-        (IConversationDto)
-          new ConversationDtoBase { ConversationId = e.Key, Participants = e.Value.ToList() }
-      );
+      if (!conversationIds.Any())
+        return [];
 
-      return result.ToList();
+      // Step 2: for each conversation load ALL members + the conversation itself
+      // (so the frontend can find the "other" participant)
+      var conversations = await appContext.Conversations
+        .Where(c => conversationIds.Contains(c.ConversationId))
+        .Include(c => c.ConversationMemberships)
+          .ThenInclude(cm => cm.User)
+        .ToListAsync();
+
+      var result = conversations.Select(c =>
+      {
+        var allParticipants = c.ConversationMemberships
+          .Where(cm => cm.User != null)
+          .Select(cm => cm.User!.ToConversationProfileDto())
+          .ToList();
+
+        return (IConversationDto) new ConversationDtoBase
+        {
+          ConversationId = c.ConversationId,
+          Participants = allParticipants,
+          LastMessageAt = c.LastMessageAt,
+          Status = c.Status.ToString().ToLower()
+        };
+      }).ToList();
+
+      return result;
     }
     catch (System.Exception ex)
     {
@@ -173,26 +216,54 @@ public class ChatService(
     using var transaction = await appContext.Database.BeginTransactionAsync();
     try
     {
-      // var conversationId = await GetConversationIdOrCreate(
-      //   createMessageDto.SenderId,
-      //   createMessageDto.ReceiverId
-      // );
-
       var conversationId = createMessageDto.ConversationId;
+      Guid messageId = Guid.NewGuid();
 
-      Guid messageId = Guid.NewGuid(); // Create a messageID to share to fileService to establish associations
+      // Build and save the Message first so the FK exists before file associations are inserted
+      var message = createMessageDto.ToMessage(conversationId);
+      message.MessageId = messageId;
 
+      // Resolve role-specific IDs for prescription FK constraints.
+      // PrescriptionModel.DoctorId → DoctorModel.DoctorId (not UserId)
+      // PrescriptionModel.PatientId → PatientModel.PatientId (not UserId)
+      if (message.PrescriptionDetails != null)
+      {
+        var senderDoctor = await appContext.Doctors
+          .FirstOrDefaultAsync(d => d.UserId == createMessageDto.SenderId);
+        if (senderDoctor == null)
+          throw new InvalidOperationException("Only doctors can issue prescriptions.");
+
+        var targetPatient = createMessageDto.TargetUserId.HasValue
+          ? await appContext.Patients.FirstOrDefaultAsync(p => p.UserId == createMessageDto.TargetUserId.Value)
+          : null;
+        if (targetPatient == null)
+          throw new InvalidOperationException("A valid patient target is required for prescriptions.");
+
+        message.PrescriptionDetails.MessageId = messageId;
+        message.PrescriptionDetails.DoctorId = senderDoctor.DoctorId;
+        message.PrescriptionDetails.PatientId = targetPatient.PatientId;
+      }
+
+      var result = await appContext.Messages.AddAsync(message);
+
+      // Update the conversation's LastMessageAt so the sidebar shows the correct time
+      var conversation = await appContext.Conversations.FindAsync(conversationId);
+      if (conversation != null)
+      {
+        conversation.LastMessageAt = DateTime.UtcNow;
+        appContext.Conversations.Update(conversation);
+      }
+
+      // Save the Message row BEFORE creating file associations —
+      // MessageFileAssociation has a FK on Messages.MessageId
+      await appContext.SaveChangesAsync();
+
+      // Now that the Message exists in the DB, create files and their associations
       List<FileModel> files = [];
       foreach (var file in createMessageDto.Files ?? [])
       {
-        files.Add(await fileService.CreateFileAsync(file, messageId, DiscriminatorTypes.Message)); // Discriminator set to Message!
+        files.Add(await fileService.CreateFileAsync(file, messageId, DiscriminatorTypes.Message));
       }
-
-      var message = createMessageDto.ToMessage(conversationId);
-      message.MessageId = messageId; // associate the messageId with the newly created message
-
-      var result = await appContext.Messages.AddAsync(message);
-      await appContext.SaveChangesAsync();
 
       await transaction.CommitAsync();
 
@@ -200,7 +271,7 @@ public class ChatService(
     }
     catch (Exception ex)
     {
-      await transaction.RollbackAsync(); // Revert incase of errors
+      await transaction.RollbackAsync();
       logger.LogError($"{ex}: An error occured trying to create a message.");
       throw;
     }
@@ -387,6 +458,41 @@ public class ChatService(
     catch (System.Exception ex)
     {
       logger.LogError(ex, "Error attempting to block conversation {id}", conversationId);
+      throw;
+    }
+  }
+
+  public async Task UpdateConversationStatusAsync(Guid conversationId, Guid requestUserId, Models.Enums.AppointmentStatus newStatus)
+  {
+    try
+    {
+      var membership = await appContext.ConversationMemberships
+        .FirstOrDefaultAsync(cm => cm.ConversationId == conversationId && cm.UserId == requestUserId);
+
+      if (membership == null)
+        throw new UnauthorizedAccessException("You are not part of this conversation.");
+
+      var conversation = await appContext.Conversations.FindAsync(conversationId);
+      if (conversation == null)
+        throw new KeyNotFoundException("Conversation not found.");
+
+      // Guard: only allow valid forward transitions
+      // active → follow_up (doctor marks resolved)
+      // follow_up → closed (patient accepts)
+      bool validTransition =
+        (conversation.Status == Models.Enums.AppointmentStatus.active   && newStatus == Models.Enums.AppointmentStatus.follow_up) ||
+        (conversation.Status == Models.Enums.AppointmentStatus.follow_up && newStatus == Models.Enums.AppointmentStatus.closed);
+
+      if (!validTransition)
+        throw new InvalidOperationException($"Cannot transition conversation from '{conversation.Status}' to '{newStatus}'.");
+
+      conversation.Status = newStatus;
+      appContext.Conversations.Update(conversation);
+      await appContext.SaveChangesAsync();
+    }
+    catch (System.Exception ex)
+    {
+      logger.LogError(ex, "Error updating conversation status {id}", conversationId);
       throw;
     }
   }

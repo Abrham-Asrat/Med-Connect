@@ -26,9 +26,7 @@ namespace BackendAPI.Source.Service
         DoctorSpecialtyService doctorSpecialtyService,
         SpecialtyService specialtyService,
         PatientService patientService,
-        AdminService adminService,
-        BackendAPI.Source.Services.EmailService emailService,
-        BackendAPI.Source.Services.RenderingService renderingService
+        AdminService adminService
     )
 
     {
@@ -405,12 +403,12 @@ namespace BackendAPI.Source.Service
                 if (user == null)
                     return new ServiceResponse<ProfileDto>(false, 404, null, "User not found");
 
-                // Save file using FileService
+                // Save file record using FileService
                 var file = await fileService.CreateFileAsync(createFileDto);
 
-                // Update user profile picture path/base64
-                // Here we're using base64 for simplicity as seen in EntityExtensions.ToProfileDto
-                user.ProfilePicture = createFileDto.FileDataBase64;
+                // Store as a full data URI so any consumer can use it directly as an <img src>
+                // without needing to know the MIME type separately
+                user.ProfilePicture = $"data:{createFileDto.MimeType};base64,{createFileDto.FileDataBase64}";
 
                 await appContext.SaveChangesAsync();
 

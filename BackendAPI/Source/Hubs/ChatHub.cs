@@ -77,14 +77,19 @@ namespace BackendAPI.Source.Hubs
     }
 
     /// <summary>
-    /// Sends a message to a user specified by the receiverId
+    /// Sends a message to all participants in the specified conversation.
     /// </summary>
-    /// <param name="conversationId"></param>
-    /// <param name="messageText"></param>
-    /// <param name="files"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
-    /// <exception cref="FormatException"></exception>
+    /// <param name="conversationId">The conversation to post the message into.</param>
+    /// <param name="messageText">Optional text body of the message.</param>
+    /// <param name="files">Optional list of file attachments (images, voice, etc.).</param>
+    /// <param name="type">The message type (text, voice, image, prescription, …).</param>
+    /// <param name="audioUrl">Optional pre-signed URL for a voice note.</param>
+    /// <param name="audioDuration">Human-readable duration string for a voice note, e.g. "01:23".</param>
+    /// <param name="prescriptionDetails">Structured prescription payload; only valid when type is prescription.</param>
+    /// <param name="targetUserId">The patient's UserId — required when issuing a prescription so the FK can be resolved.</param>
+    /// <returns>A completed task once the message has been persisted and broadcast.</returns>
+    /// <exception cref="ArgumentException">Thrown when neither text nor files are provided.</exception>
+    /// <exception cref="HubException">Thrown when the caller is not authenticated or the user ID is malformed.</exception>
     public async Task SendMessage(
       [Guid] Guid conversationId,
       string? messageText = null,
@@ -98,7 +103,11 @@ namespace BackendAPI.Source.Hubs
     {
       try
       {
-        if (string.IsNullOrWhiteSpace(_senderId))
+        // Hub instances are created fresh per invocation — read UserIdentifier directly
+        // from Context rather than relying on the _senderId field set in OnConnectedAsync.
+        var senderId = Context.UserIdentifier;
+
+        if (string.IsNullOrWhiteSpace(senderId))
         {
           _logger.LogWarning("SendMessage attempt without user ID");
           throw new HubException("User is not authenticated");
@@ -109,9 +118,9 @@ namespace BackendAPI.Source.Hubs
           throw new ArgumentException("Either message text or files must be provided.");
         }
 
-        if (!Guid.TryParse(_senderId, out Guid senderGuid))
+        if (!Guid.TryParse(senderId, out Guid senderGuid))
         {
-          _logger.LogWarning("Invalid user ID format: {UserId}", _senderId);
+          _logger.LogWarning("Invalid user ID format: {UserId}", senderId);
           throw new HubException("Invalid user ID format — ensure you are logged in with a valid account");
         }
 

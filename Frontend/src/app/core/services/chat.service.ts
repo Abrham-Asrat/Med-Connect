@@ -46,21 +46,54 @@ export class ChatService {
     return this.http.post(`${this.apiUrl}/conversations/${conversationId}/block`, { userId });
   }
 
+  updateConversationStatus(conversationId: string, userId: string, status: 'follow_up' | 'closed'): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/conversations/${conversationId}/status`, { userId, status });
+  }
+
   // ====== SIGNALR IMPLEMENTATION ====== //
 
   startConnection(): Promise<void> {
-    const token = this.authService.getToken() || localStorage.getItem('token') || '';
+    // If already connected, reuse the existing connection
+    if (
+      this.hubConnection &&
+      this.hubConnection.state === signalR.HubConnectionState.Connected
+    ) {
+      return Promise.resolve();
+    }
 
-    // We map our base api url to the hub url. Example: http://localhost:5000/api -> http://localhost:5000/hub/chat
+    // If connecting, wait for it rather than creating a duplicate
+    if (
+      this.hubConnection &&
+      this.hubConnection.state === signalR.HubConnectionState.Connecting
+    ) {
+      return new Promise((resolve, reject) => {
+        const check = setInterval(() => {
+          if (!this.hubConnection) { clearInterval(check); reject('Connection lost'); return; }
+          if (this.hubConnection.state === signalR.HubConnectionState.Connected) { clearInterval(check); resolve(); }
+          if (this.hubConnection.state === signalR.HubConnectionState.Disconnected) { clearInterval(check); reject('Connection failed'); }
+        }, 100);
+      });
+    }
+
+    // If still tearing down, wait for it to fully stop before rebuilding
+    if (
+      this.hubConnection &&
+      this.hubConnection.state === signalR.HubConnectionState.Disconnecting
+    ) {
+      return this.hubConnection.stop().then(() => this.startConnection());
+    }
+
+    // Use a factory so the token is read fresh at connection/reconnection time
     const hubUrl = this.apiUrl.replace('/api', '') + '/chathub';
 
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
-        accessTokenFactory: () => token
+        accessTokenFactory: () => this.authService.getToken() || localStorage.getItem('token') || ''
       })
       .withAutomaticReconnect()
       .build();
 
+    // The hub broadcasts a MessageDto object as a single argument
     this.hubConnection.on('ReceiveMessage', (data: any) => {
       this.messageReceivedSource.next(data);
     });
@@ -71,14 +104,28 @@ export class ChatService {
   }
 
   stopConnection(): void {
-    if (this.hubConnection) {
+    if (
+      this.hubConnection &&
+      this.hubConnection.state !== signalR.HubConnectionState.Disconnected &&
+      this.hubConnection.state !== signalR.HubConnectionState.Disconnecting
+    ) {
       this.hubConnection.stop();
     }
   }
 
+  // Maps frontend type strings to the C# MessageType enum integer values
+  private readonly messageTypeMap: Record<string, number> = {
+    text: 0,
+    voice: 1,
+    system: 2,
+    review_prompt: 3,
+    prescription: 4,
+    image: 5
+  };
+
   sendMessageToHub(
     conversationId: string,
-    messageText: string,
+    messageText: string | null,
     files: any[] = [],
     type: string = 'text',
     audioUrl: string | null = null,
@@ -89,13 +136,20 @@ export class ChatService {
     if (!this.hubConnection || this.hubConnection.state !== signalR.HubConnectionState.Connected) {
       return Promise.reject('Hub connection is not active.');
     }
+
+    // C# enum must be sent as an integer — SignalR JSON cannot deserialize a string into an enum
+    const typeValue: number = this.messageTypeMap[type] ?? 0;
+
+    // Pass null instead of empty array so the C# nullable List<CreateFileDto>? binds correctly
+    const filesPayload = files && files.length > 0 ? files : null;
+
     // Matches the C# method signature: SendMessage(Guid conversationId, string? messageText, List<CreateFileDto>? files, MessageType type, string? audioUrl, string? audioDuration, CreatePrescriptionDto? prescriptionDetails, Guid? targetUserId)
     return this.hubConnection.invoke(
       'SendMessage',
       conversationId,
       messageText,
-      files,
-      type,
+      filesPayload,
+      typeValue,
       audioUrl,
       audioDuration,
       prescriptionDetails,

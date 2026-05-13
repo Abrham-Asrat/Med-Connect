@@ -66,11 +66,14 @@ namespace BackendAPI.Source.Helpers.Extensions
      
        public static FileModel ToFileModel (this CreateFileDto fileDto)
         {
+            // Strip codec parameters (e.g. "audio/webm;codecs=opus" → "audio/webm")
+            // so the stored MIME type is a clean, valid media type string
+            var mimeType = fileDto.MimeType?.Split(';')[0].Trim() ?? fileDto.MimeType;
             return new FileModel()
             {
                 FileName = fileDto.FileName,
                 FileData = FileHelper.ToByteStream(fileDto.FileDataBase64),
-                MimeType = fileDto.MimeType
+                MimeType = mimeType!
             };
         }
        

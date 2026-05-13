@@ -16,7 +16,7 @@ public record EditFileDto(Guid FileId, string? MimeType, string? FileDataBase64,
 // Return to the Client
 public record FileDto(
   Guid FileId,
-  MimeDefaults MimeType,
+  string MimeType,       // MIME string e.g. "audio/webm", not the enum integer
   string FileDataBase64,
   string? FileName,
   int fileSize

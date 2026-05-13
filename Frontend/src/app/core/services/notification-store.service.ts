@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { SignalRNotification } from './signalr.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../auth/auth.service';
 
 export interface StoredNotification extends SignalRNotification {
   id: string;
@@ -11,6 +12,7 @@ export interface StoredNotification extends SignalRNotification {
 @Injectable({ providedIn: 'root' })
 export class NotificationStoreService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private apiUrl = environment.apiUrl;
 
   // Store all notifications in a signal
@@ -18,6 +20,9 @@ export class NotificationStoreService {
 
   // Load initial notifications from Database
   loadInitialNotifications(): void {
+    // Skip if not authenticated — avoids a 401 on layout init before the token is ready
+    if (!this.authService.getToken()) return;
+
     this.http.get(`${this.apiUrl}/Notification/me`).subscribe({
       next: (response: any) => {
         const data = response?.data || [];
@@ -39,7 +44,12 @@ export class NotificationStoreService {
         });
         this.notifications.set(parsedNotifs);
       },
-      error: err => console.error('Failed to load notifications', err)
+      error: err => {
+        // 401 is expected when the component renders before auth is ready — suppress it
+        if (err?.status !== 401) {
+          console.error('Failed to load notifications', err);
+        }
+      }
     });
   }
 

@@ -9,7 +9,7 @@ import { DoctorService } from '../../../../core/services/doctor.service';
 @Component({
   selector: 'app-book-appointment',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],  // RouterLink added for template routerLink directives
   templateUrl: './book-appointment.component.html',
   styleUrls: ['./book-appointment.component.scss']
 })
@@ -20,6 +20,15 @@ export class BookAppointmentComponent implements OnInit {
 
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  // Session storage keys used to survive the Chapa full-page redirect
+  private static readonly SK_STEP        = 'bk_step';
+  private static readonly SK_DOCTOR_ID   = 'bk_doctorId';
+  private static readonly SK_DOCTOR_UID  = 'bk_doctorUserId';  // doctor's UserModel.UserId for chat
+  private static readonly SK_DOCTOR_NAME = 'bk_doctorName';
+  private static readonly SK_DATE        = 'bk_date';
+  private static readonly SK_TIME        = 'bk_time';
+  private static readonly SK_TYPE        = 'bk_type';
 
   step = signal(1);
   appointmentType = signal<'Virtual' | 'InPerson'>('Virtual');
@@ -33,6 +42,7 @@ export class BookAppointmentComponent implements OnInit {
   // Dynamic from route
   patientId = localStorage.getItem('patientId') || localStorage.getItem('userId') || '';
   doctorId = signal<string | null>(null);
+  doctorUserId = signal<string | null>(null);  // UserModel.UserId — needed for chat
   doctorName = signal<string>('Selected Doctor');
 
   dates = signal<{ date: string; day: string; dayNum: number; month: string }[]>([]);
@@ -46,6 +56,22 @@ export class BookAppointmentComponent implements OnInit {
   private allEveningSlots = ['17:00', '17:30', '18:00', '18:30'];
 
   ngOnInit(): void {
+    // ── Restore state after Chapa redirect ──────────────────────────────────
+    const savedStep = sessionStorage.getItem(BookAppointmentComponent.SK_STEP);
+    if (savedStep === '5') {
+      // Payment completed — restore success screen
+      this.doctorId.set(sessionStorage.getItem(BookAppointmentComponent.SK_DOCTOR_ID));
+      this.doctorUserId.set(sessionStorage.getItem(BookAppointmentComponent.SK_DOCTOR_UID));
+      this.doctorName.set(sessionStorage.getItem(BookAppointmentComponent.SK_DOCTOR_NAME) || 'Your Doctor');
+      this.selectedDate.set(sessionStorage.getItem(BookAppointmentComponent.SK_DATE) || '');
+      this.selectedTime.set(sessionStorage.getItem(BookAppointmentComponent.SK_TIME) || '');
+      this.appointmentType.set((sessionStorage.getItem(BookAppointmentComponent.SK_TYPE) as 'Virtual' | 'InPerson') || 'Virtual');
+      this.step.set(5);
+      this.clearSession();
+      return;
+    }
+
+    // ── Normal init from doctor search/profile ───────────────────────────────
     const id = this.route.snapshot.queryParamMap.get('doctorId');
     if (!id) {
       this.router.navigate(['/patient/doctors']);
@@ -56,12 +82,37 @@ export class BookAppointmentComponent implements OnInit {
     this.loadSchedules(id);
   }
 
+  private saveSession(): void {
+    sessionStorage.setItem(BookAppointmentComponent.SK_STEP,        '5');
+    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_ID,   this.doctorId() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_UID,  this.doctorUserId() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_NAME, this.doctorName());
+    sessionStorage.setItem(BookAppointmentComponent.SK_DATE,        this.selectedDate());
+    sessionStorage.setItem(BookAppointmentComponent.SK_TIME,        this.selectedTime());
+    sessionStorage.setItem(BookAppointmentComponent.SK_TYPE,        this.appointmentType());
+  }
+
+  private clearSession(): void {
+    [
+      BookAppointmentComponent.SK_STEP,
+      BookAppointmentComponent.SK_DOCTOR_ID,
+      BookAppointmentComponent.SK_DOCTOR_UID,
+      BookAppointmentComponent.SK_DOCTOR_NAME,
+      BookAppointmentComponent.SK_DATE,
+      BookAppointmentComponent.SK_TIME,
+      BookAppointmentComponent.SK_TYPE,
+    ].forEach(k => sessionStorage.removeItem(k));
+  }
+
   loadDoctorDetails(id: string): void {
     this.doctorService.getDoctorById(id).subscribe({
       next: (res: any) => {
         const doctor = res?.data || res;
-        if (doctor && (doctor.doctorId || doctor.userId || doctor.id)) {
+        if (doctor) {
           this.doctorName.set(`Dr. ${doctor.firstName} ${doctor.lastName}`);
+          // Capture the UserModel.UserId — this is what the chat system uses
+          const uid = doctor.userId || doctor.UserId;
+          if (uid) this.doctorUserId.set(uid);
         }
       }
     });
@@ -206,6 +257,12 @@ export class BookAppointmentComponent implements OnInit {
           // Store the successfully requested appointment data
           this.successData.set(response.data);
 
+          // Capture the doctor's UserModel.UserId from the response for chat routing
+          const doctorUserIdFromResponse = response.data?.doctor?.userId || response.data?.doctor?.UserId;
+          if (doctorUserIdFromResponse) {
+            this.doctorUserId.set(doctorUserIdFromResponse);
+          }
+
           // Now safely trigger the Chapa Checkout logic through the Payment Gateway!
           this.initiateCheckoutFlow(response.data);
         } else {
@@ -243,7 +300,9 @@ export class BookAppointmentComponent implements OnInit {
         const checkoutUrl = res?.data?.checkoutUrl || res?.data?.data?.checkout_url;
 
         if (checkoutUrl) {
-          // If the link exists, aggressively redirect the user out to the payment gateway!
+          // Save all state to sessionStorage BEFORE the full-page redirect
+          // so we can restore the success screen when Chapa redirects back
+          this.saveSession();
           window.location.href = checkoutUrl;
         } else {
           // Fallback to success step if checkout url parsing failed (or is mocked)
@@ -253,7 +312,7 @@ export class BookAppointmentComponent implements OnInit {
       error: (err: any) => {
         this.isLoading.set(false);
         console.error("Payment Gateway Error:", err);
-        // Since appointment booked but payment failed to redirect, just show success with a warning
+        // Appointment was booked but payment redirect failed — show success anyway
         this.step.set(5);
       }
     });

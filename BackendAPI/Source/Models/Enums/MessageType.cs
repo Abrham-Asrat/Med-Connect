@@ -6,6 +6,7 @@ namespace BackendAPI.Source.Models.Enums
         voice,
         system,
         review_prompt,
-        prescription
+        prescription,
+        image
     }
 }

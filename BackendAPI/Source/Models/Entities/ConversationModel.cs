@@ -26,6 +26,13 @@ namespace BackendAPI.Source.Models.Entities
   /// </summary>
   public DateTime? LastMessageAt { get; set; }
 
+  /// <summary>
+  /// UTC timestamp after which the conversation is automatically closed
+  /// (set to AppointmentDate + 7 days when the conversation is created).
+  /// A null value means no auto-close is scheduled.
+  /// </summary>
+  public DateTime? AutoCloseAt { get; set; }
+
   public virtual ICollection<Message> Messages { get; set; } = new HashSet<Message>();
   public virtual ICollection<ConversationMembershipModel> ConversationMemberships { get; set; } =
     new HashSet<ConversationMembershipModel>();

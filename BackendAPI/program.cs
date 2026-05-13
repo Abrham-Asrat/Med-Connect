@@ -364,6 +364,7 @@ builder.Services.AddCors(options =>
   builder.Services.AddScoped<IChatService, ChatService>();
   builder.Services.AddScoped<NotificationService>();
   builder.Services.AddHttpClient<AiService>();
+  builder.Services.AddHostedService<ConversationAutoCloseService>();
 
 
   // Register Global Exception Filter

@@ -26,6 +26,7 @@ export const DOCTOR_ROUTES: Routes = [
       },
 
       { path: 'contact', loadComponent: () => import('../../support/pages/contact-us/contact-us.component').then(m => m.ContactUsComponent) },
+      { path: 'notifications', loadComponent: () => import('../../notifications/pages/notifications/notifications.component').then(m => m.NotificationsComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
 
     ]

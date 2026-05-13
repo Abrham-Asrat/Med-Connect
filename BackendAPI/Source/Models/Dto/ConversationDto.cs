@@ -24,4 +24,11 @@ public class CreateConversationDto
   [Required]
   [GuidCollection]
   public required ICollection<Guid> Participants = [];
+
+  /// <summary>
+  /// Optional: link this conversation to a specific appointment.
+  /// When provided, the chat service will send a welcome system message
+  /// to the doctor and schedule auto-close 7 days after the appointment date.
+  /// </summary>
+  public Guid? AppointmentId { get; set; }
 }

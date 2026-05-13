@@ -183,9 +183,8 @@ public class AppointmentController(
         editAppointmentDto,
         appointmentId
       );
-      if (!response.Success)
-        throw new Exception(response.Message);
 
+      // Return the service response directly — don't throw, so 400s reach the client properly
       return StatusCode(response.StatusCode, response);
     }
     catch (Exception ex)

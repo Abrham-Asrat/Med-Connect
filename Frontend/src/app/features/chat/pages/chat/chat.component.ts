@@ -277,10 +277,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     // Capture ?startChatWith once and clear from URL immediately
     const startChatWith = this.route.snapshot.queryParamMap.get('startChatWith');
+    const appointmentId  = this.route.snapshot.queryParamMap.get('appointmentId');
     if (startChatWith) {
       this.pendingStartChatWith = startChatWith;
+      if (appointmentId) this.pendingAppointmentId = appointmentId;
       this.router.navigate([], {
-        queryParams: { startChatWith: null },
+        queryParams: { startChatWith: null, appointmentId: null },
         queryParamsHandling: 'merge',
         replaceUrl: true
       });
@@ -419,6 +421,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Captured once in ngOnInit so repeated loadConversations calls don't re-trigger it
   private pendingStartChatWith: string | null = null;
+  private pendingAppointmentId: string | null = null;
 
   loadConversations(autoSelectUserId?: string): void {
     if (!this.userId) return;
@@ -492,13 +495,33 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     // Consume it so it doesn't fire again on subsequent loadConversations calls
     this.pendingStartChatWith = null;
+    const appointmentId = this.pendingAppointmentId;
+    this.pendingAppointmentId = null;
 
     const existing = mappedConvs ? mappedConvs.find(c => c.otherUserId === targetUserId) : null;
     if (existing) {
-      this.selectConversation(existing.id);
+      // Existing conversation found — if it's closed and we have a new appointmentId,
+      // call createConversation so the backend reopens it, then select it.
+      if (existing.status === 'closed' && appointmentId) {
+        const payload: any = { participants: [this.userId, targetUserId], appointmentId };
+        this.chatService.createConversation(payload).subscribe({
+          next: () => this.loadConversations(targetUserId),
+          error: (err: any) => {
+            console.error('Reopen conversation error:', err);
+            // Fall back to opening the closed conversation as-is
+            this.selectConversation(existing.id);
+          }
+        });
+      } else {
+        this.selectConversation(existing.id);
+      }
     } else {
-      // No existing conversation — create one
-      this.chatService.createConversation({ participants: [this.userId, targetUserId] }).subscribe({
+      // No existing conversation — create one, passing appointmentId so the backend
+      // can send the welcome system message and set the 7-day auto-close deadline
+      const payload: any = { participants: [this.userId, targetUserId] };
+      if (appointmentId) payload.appointmentId = appointmentId;
+
+      this.chatService.createConversation(payload).subscribe({
         next: () => {
           this.loadConversations(targetUserId);
         },

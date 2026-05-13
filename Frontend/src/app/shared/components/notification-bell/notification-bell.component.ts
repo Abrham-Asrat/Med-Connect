@@ -1,6 +1,6 @@
 import { Component, Input, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { NotificationStoreService, StoredNotification } from '../../../core/services/notification-store.service';
@@ -105,7 +105,7 @@ import { NotificationStoreService, StoredNotification } from '../../../core/serv
           <!-- Footer -->
           <div class="dropdown-divider m-0"></div>
           <div class="text-center py-2">
-            <a routerLink="/patient/notifications" 
+            <a [routerLink]="notificationsRoute" 
                class="text-primary small text-decoration-none" 
                (click)="toggleDropdown()">
               <i class="bi bi-arrow-right me-1"></i>View All Notifications
@@ -132,6 +132,7 @@ import { NotificationStoreService, StoredNotification } from '../../../core/serv
 export class NotificationBellComponent implements OnInit, OnDestroy {
   private signalRService = inject(SignalRService);
   private store = inject(NotificationStoreService);
+  private router = inject(Router);
   private subscription!: Subscription;
 
   @Input() count: number = 0;
@@ -141,6 +142,14 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   // Reactively track latest notifications and unread counts
   latestNotifications = computed(() => this.store.getLatest(10));
   unreadCount = computed(() => this.store.unreadCount());
+
+  // Route to the correct notifications page based on current URL role prefix
+  get notificationsRoute(): string {
+    const url = this.router.url;
+    if (url.startsWith('/doctor')) return '/doctor/notifications';
+    if (url.startsWith('/admin'))  return '/admin/notifications';
+    return '/patient/notifications';
+  }
 
   ngOnInit(): void {
     // Load initial ones from db

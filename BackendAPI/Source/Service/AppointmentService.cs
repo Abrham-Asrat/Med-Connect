@@ -191,12 +191,15 @@ public class AppointmentService(
   public async Task<bool> CheckAppointmentAvailabilityAsync(
     Guid doctorId,
     DateOnly newAppointmentDate,
-    TimeOnly newAppointmentStartTime
+    TimeOnly newAppointmentStartTime,
+    Guid? excludeAppointmentId = null
   )
   {
     try
     {
-      var result = await appContext.Appointments.ToListAsync();
+      var result = await appContext.Appointments
+          .Where(app => excludeAppointmentId == null || app.AppointmentId != excludeAppointmentId)
+          .ToListAsync();
       return !result.Any(app =>
         app.DoctorId == doctorId
         && app.AppointmentDate == newAppointmentDate
@@ -454,24 +457,38 @@ public class AppointmentService(
       bool isAppointmentAvailable = await CheckAppointmentAvailabilityAsync(
         doctorId ?? appointment.DoctorId,
         appointmentDate ?? appointment.AppointmentDate,
-        appointmentTime ?? appointment.AppointmentTime
-      );
-
-      bool isDoctorAvailable = await doctorService.CheckDoctorAvailabilityAsync(
-        doctorId ?? appointment.DoctorId,
-        appointmentDay ?? appointment.AppointmentDate.DayOfWeek,
         appointmentTime ?? appointment.AppointmentTime,
-        appointment.AppointmentTimeSpan
+        excludeAppointmentId: appointmentId   // don't count the appointment being rescheduled as a conflict
       );
 
-      if (!(isAppointmentAvailable && isDoctorAvailable))
+      // Only re-validate doctor availability schedule when the doctor is being changed.
+      // For a simple reschedule (same doctor, new date/time) we trust the patient's choice
+      // and only block on hard slot conflicts with other appointments.
+      bool isDoctorAvailable = true;
+      if (doctorId != null)
       {
-        return new ServiceResponse<AppointmentDto>(
-          false,
-          400,
-          null,
-          "Doctor is not available at that day or time."
-        );
+          isDoctorAvailable = await doctorService.CheckDoctorAvailabilityAsync(
+              doctorId.Value,
+              appointmentDay ?? appointment.AppointmentDate.DayOfWeek,
+              appointmentTime ?? appointment.AppointmentTime,
+              appointment.AppointmentTimeSpan
+          );
+      }
+
+      if (!isAppointmentAvailable)
+      {
+          return new ServiceResponse<AppointmentDto>(
+              false, 400, null,
+              "The doctor already has an appointment at that date and time. Please choose a different slot."
+          );
+      }
+
+      if (!isDoctorAvailable)
+      {
+          return new ServiceResponse<AppointmentDto>(
+              false, 400, null,
+              "The new doctor is not available at that day or time."
+          );
       }
 
       if (appointmentDate != null)

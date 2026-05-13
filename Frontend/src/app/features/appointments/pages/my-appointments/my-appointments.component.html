@@ -70,17 +70,49 @@
           </span>
         </div>
         <div class="col-md-3 text-md-end mt-2 mt-md-0">
+
+          <!-- Scheduled: can still cancel or reschedule -->
           @if (apt.status?.toLowerCase() === 'scheduled' || apt.status?.toLowerCase() === 'pending' ||
-          apt.status?.toLowerCase() === 'confirmed' || apt.status?.toLowerCase() === 'active' ||
-          apt.status?.toLowerCase() === 'follow_up') {
-          <button class="btn btn-outline-primary btn-sm me-1" (click)="openReschedule(apt)">Reschedule</button>
-          <button class="btn btn-outline-danger btn-sm me-1" (click)="openCancel(apt)">Cancel</button>
-          <a [routerLink]="['/patient/chat']" [queryParams]="{ startChatWith: apt.doctor?.userId || apt.doctorId }"
-            class="btn btn-primary btn-sm">Chat <i class="bi bi-chat"></i></a>
+               apt.status?.toLowerCase() === 'confirmed') {
+            <button class="btn btn-outline-primary btn-sm me-1" (click)="openReschedule(apt)">
+              <i class="bi bi-calendar-event me-1"></i>Reschedule
+            </button>
+            <button class="btn btn-outline-danger btn-sm me-1" (click)="openCancel(apt)">
+              <i class="bi bi-x-circle me-1"></i>Cancel
+            </button>
+            <a [routerLink]="['/patient/chat']"
+               [queryParams]="{ startChatWith: apt.doctor?.userId || apt.doctorId }"
+               class="btn btn-primary btn-sm">
+              <i class="bi bi-chat me-1"></i>Chat
+            </a>
           }
+
+          <!-- Active / Follow-up: consultation in progress — chat only, no cancel/reschedule -->
+          @if (apt.status?.toLowerCase() === 'active' || apt.status?.toLowerCase() === 'follow_up') {
+            <a [routerLink]="['/patient/chat']"
+               [queryParams]="{ startChatWith: apt.doctor?.userId || apt.doctorId }"
+               class="btn btn-primary btn-sm">
+              <i class="bi bi-chat-dots-fill me-1"></i>Open Chat
+            </a>
+          }
+
+          <!-- Completed / Closed: leave a review -->
           @if (apt.status?.toLowerCase() === 'completed' || apt.status?.toLowerCase() === 'closed') {
-          <a routerLink="/patient/reviews" class="btn btn-outline-primary btn-sm">Review <i class="bi bi-star"></i></a>
+            <a routerLink="/patient/reviews" class="btn btn-outline-warning btn-sm me-1">
+              <i class="bi bi-star me-1"></i>Review
+            </a>
+            <a routerLink="/patient/doctors" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-arrow-repeat me-1"></i>Re-book
+            </a>
           }
+
+          <!-- Cancelled: only option is to book again -->
+          @if (apt.status?.toLowerCase() === 'cancelled') {
+            <a routerLink="/patient/doctors" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-arrow-repeat me-1"></i>Book Again
+            </a>
+          }
+
         </div>
       </div>
     </div>
@@ -106,7 +138,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="showRescheduleModal.set(false)">Cancel / ሰርዝ</button>
-          <button class="btn btn-primary" (click)="confirmReschedule()" [disabled]="!newDate() || !newTime()">Confirm
+          <button class="btn btn-primary" (click)="confirmReschedule()" [disabled]="!newDate || !newTime">Confirm
             Reschedule / ማስተካከያውን አረጋግጥ</button>
         </div>
       </div>

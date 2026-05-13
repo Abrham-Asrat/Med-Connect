@@ -1,10 +1,11 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
 import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 import { ChatService } from '../../../core/services/chat.service';
+import { NotificationStoreService } from '../../../core/services/notification-store.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -85,7 +86,7 @@ import { Subscription } from 'rxjs';
                 <i class="bi bi-gear fs-5"></i>
               </a>
               <app-theme-toggle></app-theme-toggle>
-              <app-notification-bell [count]="3"></app-notification-bell>
+              <app-notification-bell [count]="unreadNotifications()"></app-notification-bell>
             </div>
           </div>
         </nav>
@@ -144,14 +145,17 @@ import { Subscription } from 'rxjs';
 export class DoctorLayoutComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private chatService = inject(ChatService);
+  private store = inject(NotificationStoreService);
   private chatSub: Subscription | undefined;
 
   user = this.authService.currentUser;
   sidebarOpen = signal(false);
   desktopSidebarCollapsed = signal(false);
   unreadMessages = signal(0);
+  unreadNotifications = computed(() => this.store.unreadCount());
 
   ngOnInit(): void {
+    this.store.loadInitialNotifications();
     this.chatService.startConnection().then(() => {
       this.chatSub = this.chatService.messageReceived$.subscribe(() => {
         this.unreadMessages.update(n => n + 1);

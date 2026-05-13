@@ -68,17 +68,115 @@ public class ChatService(
 
           if (existingConversationId != Guid.Empty)
           {
-              // Return the existing conversation instead of creating a duplicate
-              var existingParticipants = await GetConversationParticipantsAsync(existingConversationId);
               var existingConversation = await appContext.Conversations.FindAsync(existingConversationId);
+              var existingParticipants = await GetConversationParticipantsAsync(existingConversationId);
+
+              // ── Re-appointment: reopen a closed conversation ─────────────────
+              // If the conversation is closed and the patient is booking a new appointment,
+              // reset it to active with a fresh auto-close deadline and send a new welcome message.
+              bool isReopening = existingConversation!.Status == Models.Enums.AppointmentStatus.closed
+                                 && createConversationDto.AppointmentId.HasValue;
+
+              if (isReopening)
+              {
+                  var newAppointment = await appContext.Appointments
+                      .Include(a => a.Doctor).ThenInclude(d => d.User)
+                      .Include(a => a.Patient).ThenInclude(p => p.User)
+                      .FirstOrDefaultAsync(a => a.AppointmentId == createConversationDto.AppointmentId.Value);
+
+                  if (newAppointment != null)
+                  {
+                      existingConversation.Status      = Models.Enums.AppointmentStatus.active;
+                      existingConversation.AppointmentId = newAppointment.AppointmentId;
+                      existingConversation.AutoCloseAt = newAppointment.AppointmentDate
+                          .ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)
+                          .AddDays(7);
+
+                      appContext.Conversations.Update(existingConversation);
+
+                      // Send a new welcome system message for the re-appointment
+                      var patientUser  = newAppointment.Patient?.User;
+                      var patientName  = patientUser != null
+                          ? $"{patientUser.FirstName} {patientUser.LastName}" : "A patient";
+                      var apptDate     = newAppointment.AppointmentDate.ToString("MMMM d, yyyy");
+                      var apptTime     = newAppointment.AppointmentTime.ToString("hh:mm tt");
+                      var apptType     = newAppointment.AppointmentType.ToString();
+
+                      var reopenMsg = new Message
+                      {
+                          MessageId      = Guid.NewGuid(),
+                          ConversationId = existingConversationId,
+                          SenderId       = Guid.Empty,
+                          MessageText    = $"🔄 {patientName} has booked a new {apptType} appointment with you on {apptDate} at {apptTime}. " +
+                                           $"This consultation has been reopened. Please wait until the appointment day to begin the session. " +
+                                           $"This conversation will automatically close 7 days after the appointment date if not resolved.",
+                          Type           = Models.Enums.MessageType.system
+                      };
+
+                      await appContext.Messages.AddAsync(reopenMsg);
+                      existingConversation.LastMessageAt = reopenMsg.CreatedAt;
+                      await appContext.SaveChangesAsync();
+
+                      logger.LogInformation(
+                          "Conversation {ConvId} reopened for new appointment {AppId}",
+                          existingConversationId, newAppointment.AppointmentId);
+                  }
+              }
+              // ─────────────────────────────────────────────────────────────────
+
               return existingConversation!.ToConversationDto(existingParticipants);
           }
       }
 
       var conversationId = Guid.NewGuid();
-      var conversation = await appContext.Conversations.AddAsync(
-        new Conversation() { ConversationId = conversationId }
-      );
+      var conversation = new Conversation { ConversationId = conversationId };
+
+      // ── Link to appointment and schedule auto-close ──────────────────────
+      Appointment? linkedAppointment = null;
+      if (createConversationDto.AppointmentId.HasValue)
+      {
+          linkedAppointment = await appContext.Appointments
+              .Include(a => a.Doctor).ThenInclude(d => d.User)
+              .Include(a => a.Patient).ThenInclude(p => p.User)
+              .FirstOrDefaultAsync(a => a.AppointmentId == createConversationDto.AppointmentId.Value);
+
+          if (linkedAppointment != null)
+          {
+              conversation.AppointmentId = linkedAppointment.AppointmentId;
+              // Auto-close 7 days after the appointment date
+              conversation.AutoCloseAt = linkedAppointment.AppointmentDate
+                  .ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)
+                  .AddDays(7);
+          }
+      }
+      else if (createConversationDto.Participants.Count == 2)
+      {
+          // Try to find the most recent appointment between these two participants
+          var participantIds = createConversationDto.Participants.ToArray();
+          var doctor = await appContext.Doctors.FirstOrDefaultAsync(d => d.UserId == participantIds[0] || d.UserId == participantIds[1]);
+          var patient = await appContext.Patients.FirstOrDefaultAsync(p => p.UserId == participantIds[0] || p.UserId == participantIds[1]);
+
+          if (doctor != null && patient != null)
+          {
+              linkedAppointment = await appContext.Appointments
+                  .Include(a => a.Doctor).ThenInclude(d => d.User)
+                  .Include(a => a.Patient).ThenInclude(p => p.User)
+                  .Where(a => a.DoctorId == doctor.DoctorId && a.PatientId == patient.PatientId)
+                  .OrderByDescending(a => a.AppointmentDate)
+                  .FirstOrDefaultAsync();
+
+              if (linkedAppointment != null)
+              {
+                  conversation.AppointmentId = linkedAppointment.AppointmentId;
+                  conversation.AutoCloseAt = linkedAppointment.AppointmentDate
+                      .ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)
+                      .AddDays(7);
+              }
+          }
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
+      await appContext.Conversations.AddAsync(conversation);
 
       // ✅ Save memberships for all participants — this is what was missing
       await CreateConversationMembershipsRangeAsync(
@@ -87,6 +185,43 @@ public class ChatService(
       );
 
       await appContext.SaveChangesAsync();
+
+      // ── Send welcome system message to the doctor ────────────────────────
+      if (linkedAppointment != null)
+      {
+          var patientUser = linkedAppointment.Patient?.User;
+          var patientName = patientUser != null
+              ? $"{patientUser.FirstName} {patientUser.LastName}"
+              : "A patient";
+
+          var appointmentDate = linkedAppointment.AppointmentDate.ToString("MMMM d, yyyy");
+          var appointmentTime = linkedAppointment.AppointmentTime.ToString("hh:mm tt");
+          var appointmentType = linkedAppointment.AppointmentType.ToString();
+
+          var welcomeText =
+              $"📅 {patientName} has booked a {appointmentType} appointment with you on {appointmentDate} at {appointmentTime}. " +
+              $"This chat is now open. Please wait until the consultation day to begin the session. " +
+              $"This conversation will automatically close 7 days after the appointment date if not resolved.";
+
+          var welcomeMessage = new Message
+          {
+              MessageId      = Guid.NewGuid(),
+              ConversationId = conversationId,
+              SenderId       = Guid.Empty,  // Guid.Empty = system message (no real sender)
+              MessageText    = welcomeText,
+              Type           = Models.Enums.MessageType.system
+          };
+
+          await appContext.Messages.AddAsync(welcomeMessage);
+          conversation.LastMessageAt = welcomeMessage.CreatedAt;
+          appContext.Conversations.Update(conversation);
+          await appContext.SaveChangesAsync();
+
+          logger.LogInformation(
+              "Welcome system message sent for conversation {ConvId} linked to appointment {AppId}",
+              conversationId, linkedAppointment.AppointmentId);
+      }
+      // ─────────────────────────────────────────────────────────────────────
 
       // Reload with participants populated so ToConversationDto has full data
       var participants = await GetConversationParticipantsAsync(conversationId);

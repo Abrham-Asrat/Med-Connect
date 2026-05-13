@@ -144,11 +144,19 @@ export class ReviewsComponent implements OnInit {
     this.appointmentService.getPatientAppointments(patientId).subscribe({
       next: (response: any) => {
         const apps = response?.data || [];
-        // Extract unique doctors from completed appointments
-        const completed = (Array.isArray(apps) ? apps : []).filter(a => a.status === 'Completed');
+        // Extract unique doctors from closed/completed appointments
+        // Backend uses 'closed' and 'completed' (legacy) as the finished states
+        const finished = (Array.isArray(apps) ? apps : []).filter((a: any) => {
+          const s = (a.status || '').toLowerCase();
+          return s === 'closed' || s === 'completed' || s === 'follow_up';
+        });
         const uniqueDocs = new Map();
-        completed.forEach(a => {
-          if (!uniqueDocs.has(a.doctorId)) uniqueDocs.set(a.doctorId, { doctorId: a.doctorId, doctorName: a.doctorName });
+        finished.forEach((a: any) => {
+          const docId = a.doctorId || a.doctor?.doctorId;
+          const docName = a.doctorName || (a.doctor ? `${a.doctor.firstName} ${a.doctor.lastName}` : 'Unknown Doctor');
+          if (docId && !uniqueDocs.has(docId)) {
+            uniqueDocs.set(docId, { doctorId: docId, doctorName: docName });
+          }
         });
         this.completedDoctors.set(Array.from(uniqueDocs.values()));
       }

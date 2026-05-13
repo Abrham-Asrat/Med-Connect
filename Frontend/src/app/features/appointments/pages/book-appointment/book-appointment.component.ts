@@ -22,13 +22,14 @@ export class BookAppointmentComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   // Session storage keys used to survive the Chapa full-page redirect
-  private static readonly SK_STEP        = 'bk_step';
-  private static readonly SK_DOCTOR_ID   = 'bk_doctorId';
-  private static readonly SK_DOCTOR_UID  = 'bk_doctorUserId';  // doctor's UserModel.UserId for chat
-  private static readonly SK_DOCTOR_NAME = 'bk_doctorName';
-  private static readonly SK_DATE        = 'bk_date';
-  private static readonly SK_TIME        = 'bk_time';
-  private static readonly SK_TYPE        = 'bk_type';
+  private static readonly SK_STEP           = 'bk_step';
+  private static readonly SK_DOCTOR_ID      = 'bk_doctorId';
+  private static readonly SK_DOCTOR_UID     = 'bk_doctorUserId';  // doctor's UserModel.UserId for chat
+  private static readonly SK_DOCTOR_NAME    = 'bk_doctorName';
+  private static readonly SK_DATE           = 'bk_date';
+  private static readonly SK_TIME           = 'bk_time';
+  private static readonly SK_TYPE           = 'bk_type';
+  private static readonly SK_APPOINTMENT_ID = 'bk_appointmentId'; // appointment ID for chat welcome msg
 
   step = signal(1);
   appointmentType = signal<'Virtual' | 'InPerson'>('Virtual');
@@ -44,6 +45,7 @@ export class BookAppointmentComponent implements OnInit {
   doctorId = signal<string | null>(null);
   doctorUserId = signal<string | null>(null);  // UserModel.UserId — needed for chat
   doctorName = signal<string>('Selected Doctor');
+  appointmentId = signal<string | null>(null); // AppointmentId — passed to chat for welcome message
 
   dates = signal<{ date: string; day: string; dayNum: number; month: string }[]>([]);
   morningSlots = signal<string[]>([]);
@@ -66,6 +68,7 @@ export class BookAppointmentComponent implements OnInit {
       this.selectedDate.set(sessionStorage.getItem(BookAppointmentComponent.SK_DATE) || '');
       this.selectedTime.set(sessionStorage.getItem(BookAppointmentComponent.SK_TIME) || '');
       this.appointmentType.set((sessionStorage.getItem(BookAppointmentComponent.SK_TYPE) as 'Virtual' | 'InPerson') || 'Virtual');
+      this.appointmentId.set(sessionStorage.getItem(BookAppointmentComponent.SK_APPOINTMENT_ID));
       this.step.set(5);
       this.clearSession();
       return;
@@ -83,13 +86,14 @@ export class BookAppointmentComponent implements OnInit {
   }
 
   private saveSession(): void {
-    sessionStorage.setItem(BookAppointmentComponent.SK_STEP,        '5');
-    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_ID,   this.doctorId() || '');
-    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_UID,  this.doctorUserId() || '');
-    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_NAME, this.doctorName());
-    sessionStorage.setItem(BookAppointmentComponent.SK_DATE,        this.selectedDate());
-    sessionStorage.setItem(BookAppointmentComponent.SK_TIME,        this.selectedTime());
-    sessionStorage.setItem(BookAppointmentComponent.SK_TYPE,        this.appointmentType());
+    sessionStorage.setItem(BookAppointmentComponent.SK_STEP,           '5');
+    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_ID,      this.doctorId() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_UID,     this.doctorUserId() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_NAME,    this.doctorName());
+    sessionStorage.setItem(BookAppointmentComponent.SK_DATE,           this.selectedDate());
+    sessionStorage.setItem(BookAppointmentComponent.SK_TIME,           this.selectedTime());
+    sessionStorage.setItem(BookAppointmentComponent.SK_TYPE,           this.appointmentType());
+    sessionStorage.setItem(BookAppointmentComponent.SK_APPOINTMENT_ID, this.appointmentId() || '');
   }
 
   private clearSession(): void {
@@ -101,6 +105,7 @@ export class BookAppointmentComponent implements OnInit {
       BookAppointmentComponent.SK_DATE,
       BookAppointmentComponent.SK_TIME,
       BookAppointmentComponent.SK_TYPE,
+      BookAppointmentComponent.SK_APPOINTMENT_ID,
     ].forEach(k => sessionStorage.removeItem(k));
   }
 
@@ -261,6 +266,12 @@ export class BookAppointmentComponent implements OnInit {
           const doctorUserIdFromResponse = response.data?.doctor?.userId || response.data?.doctor?.UserId;
           if (doctorUserIdFromResponse) {
             this.doctorUserId.set(doctorUserIdFromResponse);
+          }
+
+          // Capture the appointmentId so the chat welcome message can reference it
+          const apptId = response.data?.appointmentId || response.data?.AppointmentId;
+          if (apptId) {
+            this.appointmentId.set(apptId);
           }
 
           // Now safely trigger the Chapa Checkout logic through the Payment Gateway!

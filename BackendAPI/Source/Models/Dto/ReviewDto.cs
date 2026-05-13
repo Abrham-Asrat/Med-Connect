@@ -163,6 +163,11 @@ public record CreateReviewByUserIdDto
   [MaxLength(1000)]
   public required string ReviewText { get; set; }
 };
+
+/// <summary>
+/// DTO for filtering/querying reviews with pagination and sorting options.
+/// </summary>
+public record ReviewSearchDto
 {
   public Guid? DoctorId { get; set; }
   public Guid? PatientId { get; set; }

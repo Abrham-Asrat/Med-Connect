@@ -67,10 +67,8 @@ public class EditAppointmentDtoValidator : AbstractValidator<EditAppointmentDto>
         RuleFor(ea => ea.AppointmentTime)
           .NotEmpty()
           .WithMessage("AppointmentTime is required.")
-          .Must(ValidationHelper.BeAValidDateTimeString)
-          .WithMessage("AppointmentTime must be a valid DateTime (HH:mm)")
-          .Must(ValidationHelper.BeNotPastDate)
-          .WithMessage("AppointmentDate must not be in the past.");
+          .Must(ValidationHelper.BeAValidTimeString)
+          .WithMessage("AppointmentTime must be a valid time (HH:mm or HH:mm:ss).");
       }
     );
 

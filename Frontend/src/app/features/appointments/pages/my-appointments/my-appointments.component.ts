@@ -24,8 +24,8 @@ export class MyAppointmentsComponent implements OnInit {
   // Reschedule modal
   showRescheduleModal = signal(false);
   rescheduleAppointment = signal<any>(null);
-  newDate = signal('');
-  newTime = signal('');
+  newDate = '';   // plain string — ngModel can't bind to signals
+  newTime = '';
 
   // Cancel confirmation
   showCancelConfirm = signal(false);
@@ -76,35 +76,40 @@ export class MyAppointmentsComponent implements OnInit {
 
   // ─── Reschedule ──────────────────────────────
   openReschedule(apt: any): void {
+    const s = apt.status?.toLowerCase();
+    if (s !== 'scheduled' && s !== 'pending' && s !== 'confirmed') return;
     this.rescheduleAppointment.set(apt);
-    this.newDate.set(apt.appointmentDate || '');
-    this.newTime.set(apt.appointmentTime || '');
+    this.newDate = apt.appointmentDate || '';
+    this.newTime = apt.appointmentTime || '';
     this.showRescheduleModal.set(true);
   }
 
   confirmReschedule(): void {
     const apt = this.rescheduleAppointment();
-    if (!apt || !this.newDate() || !this.newTime()) return;
+    if (!apt || !this.newDate || !this.newTime) return;
 
     this.appointmentService.updateAppointment(apt.appointmentId, {
-      appointmentDate: this.newDate(),
-      appointmentTime: this.newTime()
+      appointmentDate: this.newDate,
+      appointmentTime: this.newTime
     }).subscribe({
       next: () => {
         this.showRescheduleModal.set(false);
-        this.successMessage.set('Appointment rescheduled!');
+        this.successMessage.set('Appointment rescheduled successfully!');
         this.loadAppointments();
         setTimeout(() => this.successMessage.set(null), 3000);
       },
       error: (error) => {
         console.error('Reschedule error:', error);
-        this.errorMessage.set('Failed to reschedule. Please try again.');
+        const msg = error?.error?.message || error?.error?.title || 'Failed to reschedule. Please try again.';
+        this.errorMessage.set(msg);
       }
     });
   }
 
   // ─── Cancel ──────────────────────────────────
   openCancel(apt: any): void {
+    const s = apt.status?.toLowerCase();
+    if (s !== 'scheduled' && s !== 'pending' && s !== 'confirmed') return;
     this.cancelAppointment.set(apt);
     this.showCancelConfirm.set(true);
   }
@@ -113,7 +118,8 @@ export class MyAppointmentsComponent implements OnInit {
     const apt = this.cancelAppointment();
     if (!apt) return;
 
-    this.appointmentService.deleteAppointment(apt.appointmentId).subscribe({
+    // Patch status to 'cancelled' — preserves history instead of hard-deleting
+    this.appointmentService.updateAppointment(apt.appointmentId, { status: 'cancelled' }).subscribe({
       next: () => {
         this.showCancelConfirm.set(false);
         this.successMessage.set('Appointment cancelled.');

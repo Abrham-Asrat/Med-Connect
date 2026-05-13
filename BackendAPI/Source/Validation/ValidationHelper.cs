@@ -122,6 +122,15 @@ namespace BackendAPI.Source.Validation
     return DateTime.TryParse(date, out _);
   }
 
+  /// <summary>
+  /// Validates a time-only string such as "09:30" or "09:30:00".
+  /// </summary>
+  public static bool BeAValidTimeString(string? time)
+  {
+    if (time == null) return false;
+    return TimeOnly.TryParse(time, out _);
+  }
+
 
  public static bool BeAValidAppointmentType(string? appointmentTypeString)
   {

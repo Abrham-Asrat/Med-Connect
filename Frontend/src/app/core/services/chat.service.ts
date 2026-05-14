@@ -120,7 +120,8 @@ export class ChatService {
     system: 2,
     review_prompt: 3,
     prescription: 4,
-    image: 5
+    image: 5,
+    video_call: 6
   };
 
   sendMessageToHub(

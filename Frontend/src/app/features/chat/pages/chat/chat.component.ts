@@ -8,12 +8,14 @@ import { ReviewService } from '../../../../core/services/review.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 
+declare var JitsiMeetExternalAPI: any;
+
 interface Message {
   id: string;
   sender: 'me' | 'them' | 'system';
   text: string;
   time: string;
-  type: 'text' | 'file' | 'system' | 'voice' | 'review_prompt' | 'image';
+  type: 'text' | 'file' | 'system' | 'voice' | 'review_prompt' | 'image' | 'video_call';
   read: boolean;
   audioUrl?: string;
   audioDuration?: string;
@@ -22,6 +24,7 @@ interface Message {
   imageFileName?: string;
   rating?: number;
   reviewText?: string;
+  jitsiRoom?: string; // Room ID for join button
   prescriptionDetails?: {
     medication: string;
     dosage: string;
@@ -45,6 +48,7 @@ interface Conversation {
   online: boolean;
   status?: 'scheduled' | 'active' | 'follow_up' | 'closed';
   otherUserId?: string;
+  appointmentId?: string;
 }
 
 @Component({
@@ -213,6 +217,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Video Consultation Phase
   isVideoCallActive = signal(false);
+  private jitsiApi: any = null;
+  private currentRoom: string | null = null;
 
   // Image lightbox
   lightboxUrl = signal<string | null>(null);
@@ -251,13 +257,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       if (lower === 'system') return 'system';
       if (lower === 'review_prompt') return 'review_prompt';
       if (lower === 'prescription') return 'text'; // prescription rendered via prescriptionDetails
+      if (lower === 'video_call') return 'video_call';
       return 'text';
     }
-    // Numeric enum: text=0, voice=1, system=2, review_prompt=3, prescription=4
+    // Numeric enum: text=0, voice=1, system=2, review_prompt=3, prescription=4, image=5, video_call=6
     switch (Number(raw)) {
       case 1: return 'voice';
       case 2: return 'system';
       case 3: return 'review_prompt';
+      case 4: return 'text'; // prescription handled separately
+      case 5: return 'image';
+      case 6: return 'video_call';
       default: return 'text';
     }
   }
@@ -277,7 +287,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     // Capture ?startChatWith once and clear from URL immediately
     const startChatWith = this.route.snapshot.queryParamMap.get('startChatWith');
-    const appointmentId  = this.route.snapshot.queryParamMap.get('appointmentId');
+    const appointmentId = this.route.snapshot.queryParamMap.get('appointmentId');
     if (startChatWith) {
       this.pendingStartChatWith = startChatWith;
       if (appointmentId) this.pendingAppointmentId = appointmentId;
@@ -330,7 +340,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           const newMsg: Message = {
             id: data.messageId || data.MessageId || crypto.randomUUID(),
             sender: senderId === this.userId ? 'me' : 'them',
-            text: data.messageText || data.MessageText || '',
+            text: msgType === 'video_call' ? 'Video call started' : (data.messageText || data.MessageText || ''),
             time: new Date(data.createdAt || data.CreatedAt || Date.now())
               .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             type: msgType,
@@ -352,7 +362,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
                 issuedAt: new Date(data.createdAt || data.CreatedAt || Date.now())
                   .toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
               };
-            })()
+            })(),
+            jitsiRoom: msgType === 'video_call' ? (data.messageText || data.MessageText || '') : (data.jitsiRoom || data.JitsiRoom)
           };
           this.messages.update(msgs => [...msgs, newMsg]);
           this.shouldScroll = true;
@@ -463,7 +474,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             unread: 0,
             online: false,
             status: (c.status || c.Status || 'active') as Conversation['status'],
-            otherUserId: uid?.toString()
+            otherUserId: uid?.toString(),
+            appointmentId: c.appointmentId || c.AppointmentId
           };
         });
 
@@ -555,8 +567,86 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.showLeftSidebar.update(v => !v);
   }
 
-  toggleVideoCall(): void {
-    this.isVideoCallActive.update(v => !v);
+  toggleVideoCall(joinRoom?: string): void {
+    const activeId = this.activeConversation();
+    if (!activeId) return;
+
+    if (this.isVideoCallActive()) {
+      this.endVideoCall();
+    } else {
+      this.startVideoCall(joinRoom);
+    }
+  }
+
+  private startVideoCall(joinRoom?: string): void {
+    const activeId = this.activeConversation();
+    if (!activeId) return;
+
+    const conv = this.conversations().find(c => c.id === activeId);
+    // Use existing room ID if joining, otherwise generate one
+    const roomName = joinRoom || `MedConnect-Appt-${conv?.appointmentId || activeId}`;
+    this.currentRoom = roomName;
+
+    this.isVideoCallActive.set(true);
+
+    // If we are STARTING the call (not joining via button), notify the other person
+    if (!joinRoom) {
+      this.chatService.sendMessageToHub(
+        activeId,
+        roomName,
+        [],
+        'video_call',
+        null,
+        null,
+        null,
+        conv?.otherUserId || null
+      ).catch(err => console.error('Failed to send call notification:', err));
+    }
+
+    // Initialize Jitsi after a short delay to ensure the container is rendered
+    setTimeout(() => {
+      const domain = 'meet.jit.si';
+      const user = this.authService.currentUser();
+      const options = {
+        roomName: roomName,
+        width: '100%',
+        height: '100%',
+        parentNode: document.querySelector('#jitsi-container'),
+        userInfo: {
+          email: user?.email,
+          displayName: `${user?.firstName} ${user?.lastName}`
+        },
+        configOverwrite: {
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          prejoinPageEnabled: true
+        },
+        interfaceConfigOverwrite: {
+          TILE_VIEW_MAX_COLUMNS: 2
+        }
+      };
+
+      try {
+        this.jitsiApi = new JitsiMeetExternalAPI(domain, options);
+        this.jitsiApi.addEventListeners({
+          readyToClose: () => this.endVideoCall(),
+          videoConferenceLeft: () => this.endVideoCall()
+        });
+      } catch (e) {
+        console.error('Jitsi failing to load:', e);
+        this.errorMessage.set('Failed to initialize video call. Please try again.');
+        this.isVideoCallActive.set(false);
+      }
+    }, 500);
+  }
+
+  private endVideoCall(): void {
+    if (this.jitsiApi) {
+      this.jitsiApi.dispose();
+      this.jitsiApi = null;
+    }
+    this.isVideoCallActive.set(false);
+    this.currentRoom = null;
   }
 
   submitReview(msg: Message): void {
@@ -603,10 +693,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.messages.update(msgs => msgs.map(m =>
           m.id === msg.id
             ? {
-                ...m,
-                type: 'system' as const,
-                text: `✅ Thank you! Your ${stars} review has been submitted.${reviewText ? ` "${reviewText}"` : ''}`
-              }
+              ...m,
+              type: 'system' as const,
+              text: `✅ Thank you! Your ${stars} review has been submitted.${reviewText ? ` "${reviewText}"` : ''}`
+            }
             : m
         ));
         this.shouldScroll = true;
@@ -702,7 +792,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           return {
             id: m.messageId || m.MessageId,
             sender: (m.senderId || m.SenderId)?.toString() === this.userId ? 'me' : 'them',
-            text: m.messageText || m.MessageText || '',
+            text: msgType === 'video_call' ? 'Video call started' : (m.messageText || m.MessageText || ''),
             time: new Date(m.createdAt || m.CreatedAt || Date.now())
               .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             type: msgType,
@@ -724,7 +814,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
                 issuedAt: new Date(m.createdAt || m.CreatedAt || Date.now())
                   .toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
               };
-            })()
+            })(),
+            jitsiRoom: msgType === 'video_call' ? (m.messageText || m.MessageText || '') : (m.jitsiRoom || m.JitsiRoom)
           };
         });
 
@@ -841,7 +932,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!rx) return;
 
     const doctorName = rx.doctorName || this.resolveDoctorName();
-    const issuedAt   = rx.issuedAt   || msg.time || new Date().toLocaleDateString();
+    const issuedAt = rx.issuedAt || msg.time || new Date().toLocaleDateString();
     const patientName = this.userRole === 'Patient'
       ? (() => { const u = this.authService.currentUser(); return u ? `${u.firstName} ${u.lastName}` : 'Patient'; })()
       : this.activeConv()?.name || 'Patient';

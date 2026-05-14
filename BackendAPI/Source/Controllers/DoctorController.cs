@@ -118,9 +118,10 @@ namespace BackendAPI.Source.Controllers
                     throw new BadHttpRequestException(ErrorMessages.ModelValidationError);
                 }
 
-                var response = await doctorService.GetDoctorAvailabilitiesAsync(doctorId);
-
-                return Ok(response);
+                // Return a flat list of { availableDay, startTime, endTime } objects
+                // so the frontend can directly parse them without dealing with enum-keyed dictionaries.
+                var flatList = await doctorService.GetAvailabilitiesFlatAsync(doctorId);
+                return Ok(new { success = true, data = flatList });
             }
             catch (System.Exception ex)
             {

@@ -70,7 +70,7 @@ public class ConversationAutoCloseService(
             {
                 MessageId      = Guid.NewGuid(),
                 ConversationId = conv.ConversationId,
-                SenderId       = Guid.Empty,
+                SenderId       = null,
                 MessageText    = "⏰ This consultation has been automatically closed 7 days after the appointment date. " +
                                  "If you need further assistance, please book a new appointment.",
                 Type           = MessageType.system

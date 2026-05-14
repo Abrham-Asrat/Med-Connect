@@ -91,7 +91,14 @@ namespace BackendAPI.Source.Models.Dto
        string? DoctorStatus = null,
        List<string>? Languages = null,
        List<UpdateEducationDto>? Educations = null,
-       List<UpdateExperienceDto>? Experiences = null);
+       List<UpdateExperienceDto>? Experiences = null,
+       bool? AcceptsOnline = null,
+       bool? AcceptsInPerson = null,
+       string? ClinicName = null,
+       string? ClinicAddress = null,
+       string? ClinicCity = null,
+       decimal? OnlineAppointmentFee = null,
+       decimal? InPersonAppointmentFee = null);
 
     public record DoctorSchedules(Dictionary<DateOnly, List<DoctorSchedule>> Data);
 

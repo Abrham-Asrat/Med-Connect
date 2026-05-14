@@ -234,7 +234,7 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                var doctor = await appContext.Doctors.Where(d => d.UserId == userId).Include(d => d.User).Include(d => d.DoctorAvailabilities).Include(d => d.DoctorSpecialties).Include(d => d.Educations).Include(d => d.Experiences).SingleOrDefaultAsync();
+                var doctor = await appContext.Doctors.Where(d => d.UserId == userId).Include(d => d.User).Include(d => d.DoctorAvailabilities).Include(d => d.DoctorSpecialties).Include(d => d.Educations).Include(d => d.Experiences).Include(d => d.DoctorPreference).SingleOrDefaultAsync();
 
                 if (doctor == null)
                 {
@@ -263,7 +263,7 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                var doctor = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(d => d.Specialty).Include(d => d.DoctorAvailabilities).Include(d => d.Educations).Include(d => d.Experiences).FirstOrDefaultAsync(d => d.UserId == updateProfileDto.UserId);
+                var doctor = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(d => d.Specialty).Include(d => d.DoctorAvailabilities).Include(d => d.Educations).Include(d => d.Experiences).Include(d => d.DoctorPreference).FirstOrDefaultAsync(d => d.UserId == updateProfileDto.UserId);
 
                 if (doctor == null)
                 {
@@ -291,6 +291,25 @@ namespace BackendAPI.Source.Service
                 doctor.Languages = updateProfileDto.Languages != null ? string.Join(",", updateProfileDto.Languages) : doctor.Languages;
 
                 doctor.DoctorAvailabilities = availabilities != null ? availabilities ?? doctor.DoctorAvailabilities : doctor.DoctorAvailabilities;
+
+                // Update clinic / appointment-type preferences
+                if (doctor.DoctorPreference != null)
+                {
+                    if (updateProfileDto.AcceptsOnline.HasValue)
+                        doctor.DoctorPreference.AcceptsOnline = updateProfileDto.AcceptsOnline.Value;
+                    if (updateProfileDto.AcceptsInPerson.HasValue)
+                        doctor.DoctorPreference.AcceptsInPerson = updateProfileDto.AcceptsInPerson.Value;
+                    if (updateProfileDto.ClinicName != null)
+                        doctor.DoctorPreference.ClinicName = updateProfileDto.ClinicName;
+                    if (updateProfileDto.ClinicAddress != null)
+                        doctor.DoctorPreference.ClinicAddress = updateProfileDto.ClinicAddress;
+                    if (updateProfileDto.ClinicCity != null)
+                        doctor.DoctorPreference.ClinicCity = updateProfileDto.ClinicCity;
+                    if (updateProfileDto.OnlineAppointmentFee.HasValue)
+                        doctor.DoctorPreference.OnlineAppointmentFee = updateProfileDto.OnlineAppointmentFee.Value;
+                    if (updateProfileDto.InPersonAppointmentFee.HasValue)
+                        doctor.DoctorPreference.InPersonAppointmentFee = updateProfileDto.InPersonAppointmentFee.Value;
+                }
 
                 if (updateProfileDto.Educations != null)
                 {
@@ -404,21 +423,23 @@ namespace BackendAPI.Source.Service
         {
             try
             {
+                // AsSplitQuery prevents Cartesian explosion from multiple collection includes.
+                // Educations/Experiences are excluded from the list view — only needed on the profile page.
                 var doctors = await appContext.Doctors
                     .AsNoTracking()
+                    .AsSplitQuery()
                     .Include(d => d.User)
                     .Include(d => d.DoctorAvailabilities)
                     .Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty)
-                    .Include(d => d.Educations)
-                    .Include(d => d.Experiences)
+                    .Include(d => d.DoctorPreference)
                     .ToListAsync();
 
                 var doctorUsers = doctors.Select(d => d.ToDoctorProfileDto(
                     d.User,
                     d.DoctorAvailabilities,
                     d.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds => ds.Specialty!).ToList(),
-                    d.Educations,
-                    d.Experiences
+                    [],   // Educations not needed for list view
+                    []    // Experiences not needed for list view
                 )).ToList();
 
                 return new ServiceResponse<List<DoctorProfileDto>>(true, 200, doctorUsers, "Doctors fetched successfully");
@@ -552,6 +573,7 @@ namespace BackendAPI.Source.Service
         .Include(d => d.Educations)
         .Include(d => d.Experiences)
         .Include(d => d.Reviews)
+        .Include(d => d.DoctorPreference)
         .SingleOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
 
       if (doctor == null)
@@ -579,6 +601,7 @@ namespace BackendAPI.Source.Service
         .Include(d => d.Educations)
         .Include(d => d.Experiences)
         .Include(d => d.DoctorAvailabilities)
+        .Include(d => d.DoctorPreference)
         .SingleOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
 
       if (doctor == null)
@@ -619,11 +642,14 @@ namespace BackendAPI.Source.Service
   {
     try
     {
-      var result = await appContext.DoctorAvailabilities.ToListAsync();
-      return result.Any(da =>
-        da.DoctorId == doctorId
-        && da.AvailableDay == appointmentDay
-        && da.StartTime <= appointmentTime
+      // Filter in SQL — never load the full DoctorAvailabilities table
+      var slots = await appContext.DoctorAvailabilities
+          .Where(da => da.DoctorId == doctorId && da.AvailableDay == appointmentDay)
+          .Select(da => new { da.StartTime, da.EndTime })
+          .ToListAsync();
+
+      return slots.Any(da =>
+        da.StartTime <= appointmentTime
         && appointmentTime.Add(appointmentTimeSpan) <= da.EndTime
       );
     }
@@ -866,26 +892,60 @@ namespace BackendAPI.Source.Service
   }
 
 
+  /// <summary>
+  /// Returns availabilities as a flat list of { AvailableDay (string), StartTime, EndTime }
+  /// so the frontend can parse them directly without dealing with enum-keyed dictionaries.
+  /// </summary>
+  public async Task<List<AvailabilityDto>> GetAvailabilitiesFlatAsync(Guid doctorId)
+  {
+    try
+    {
+      var rows = await appContext.DoctorAvailabilities
+          .Where(da => da.DoctorId == doctorId || da.Doctor.UserId == doctorId)
+          .ToListAsync();
+
+      return rows
+          .Where(da => da.StartTime != da.EndTime) // skip placeholder 10:00-10:00 rows
+          .Select(da => new AvailabilityDto(
+              da.AvailableDay.ToString(),                    // "Monday", "Tuesday" …
+              da.StartTime.ToString("HH:mm"),               // "09:00"
+              da.EndTime.ToString("HH:mm")                  // "17:00"
+          ))
+          .ToList();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to get flat availabilities for doctor {DoctorId}", doctorId);
+      throw;
+    }
+  }
+
   public async Task<ServiceResponse<bool>> UpdateAvailabilitiesAsync(Guid doctorId, List<DoctorAvailabilityDto> availabilities)
   {
     try
     {
-       var doctor = await appContext.Doctors.Include(d => d.DoctorAvailabilities).FirstOrDefaultAsync(d => d.DoctorId == doctorId);
-       if (doctor == null) return new ServiceResponse<bool>(false, 404, false, "Doctor not found");
+       // Accept both DoctorId and UserId
+       var doctor = await appContext.Doctors
+           .FirstOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
 
-       // Clear old availabilities
-       appContext.DoctorAvailabilities.RemoveRange(doctor.DoctorAvailabilities);
+       if (doctor == null)
+           return new ServiceResponse<bool>(false, 404, false, "Doctor not found");
 
-       // Add new ones
+       // Use direct SQL DELETE to avoid EF concurrency-token issues on empty collections
+       await appContext.Database.ExecuteSqlRawAsync(
+           "DELETE FROM DoctorAvailabilities WHERE DoctorId = {0}",
+           doctor.DoctorId);
+
+       // Insert new rows directly — no navigation property, no change-tracker conflict
        foreach (var slot in availabilities)
        {
-           doctor.DoctorAvailabilities.Add(new DoctorAvailabilityModel
+           await appContext.DoctorAvailabilities.AddAsync(new DoctorAvailabilityModel
            {
-               Doctor = doctor,
-               DoctorId = doctorId,
+               DoctorId = doctor.DoctorId,
+               Doctor   = doctor,
                AvailableDay = slot.AvailableDay.ConvertToEnum<DayOfWeek>(),
-               StartTime = TimeOnly.Parse(slot.startTime),
-               EndTime = TimeOnly.Parse(slot.EndTime)
+               StartTime    = TimeOnly.Parse(slot.startTime),
+               EndTime      = TimeOnly.Parse(slot.EndTime)
            });
        }
 
@@ -894,8 +954,8 @@ namespace BackendAPI.Source.Service
     }
     catch (Exception ex)
     {
-       logger.LogError(ex, "Failed to update availabilities");
-       return new ServiceResponse<bool>(false, 500, false, "Error saving schedule");
+       logger.LogError(ex, "Failed to update availabilities for doctor {DoctorId}", doctorId);
+       return new ServiceResponse<bool>(false, 500, false, $"Error saving schedule: {ex.Message}");
     }
   }
 }

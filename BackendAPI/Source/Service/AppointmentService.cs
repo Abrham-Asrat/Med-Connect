@@ -7,6 +7,7 @@ using BackendAPI.Source.Models.Interface;
 using BackendAPI.Source.Models.Responses;
 using BackendAPI.Source.Service;
 using BackendAPI.Source.Service.PaymentService;
+using BackendAPI.Source.Services;
 
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,7 @@ public class AppointmentService(
   DoctorService doctorService,
   PatientService patientService,
   NotificationService notificationService,
+  EmailService emailService,
   ILogger<AppointmentService> logger
 )
 
@@ -72,6 +74,29 @@ public class AppointmentService(
 
       DayOfWeek appointmentDay = appointmentDate
         .DayOfWeek;
+
+      // Validate that the doctor accepts this appointment type
+      var pref = doctor.Data.DoctorPreference;
+      if (appointmentType == AppointmentType.Virtual && pref != null && !pref.AcceptsOnline)
+      {
+        return new ServiceResponse<AppointmentDto>
+        {
+          StatusCode = 400,
+          Success = false,
+          Data = null,
+          Message = "This doctor does not accept virtual/online appointments."
+        };
+      }
+      if (appointmentType == AppointmentType.InPerson && pref != null && !pref.AcceptsInPerson)
+      {
+        return new ServiceResponse<AppointmentDto>
+        {
+          StatusCode = 400,
+          Success = false,
+          Data = null,
+          Message = "This doctor does not accept in-person appointments."
+        };
+      }
 
       // Create the appointment
       Appointment appointmentData = new Appointment
@@ -170,6 +195,13 @@ public class AppointmentService(
           new { appointmentId = appointment.Entity.AppointmentId }
       );
 
+      // Send confirmation email to the patient
+      await SendAppointmentConfirmationEmailAsync(
+          appointment.Entity,
+          doctor.Data,
+          patient.Data
+      );
+
       return response;
     }
     catch (Exception ex)
@@ -197,14 +229,18 @@ public class AppointmentService(
   {
     try
     {
-      var result = await appContext.Appointments
-          .Where(app => excludeAppointmentId == null || app.AppointmentId != excludeAppointmentId)
+      // Filter in SQL — never load the full table into memory
+      var overlapping = await appContext.Appointments
+          .Where(app =>
+              app.DoctorId == doctorId &&
+              app.AppointmentDate == newAppointmentDate &&
+              (excludeAppointmentId == null || app.AppointmentId != excludeAppointmentId))
+          .Select(app => new { app.AppointmentTime, app.AppointmentTimeSpan })
           .ToListAsync();
-      return !result.Any(app =>
-        app.DoctorId == doctorId
-        && app.AppointmentDate == newAppointmentDate
-        && newAppointmentStartTime < app.AppointmentTime.Add(app.AppointmentTimeSpan)
-        && newAppointmentStartTime.Add(app.AppointmentTimeSpan) > app.AppointmentTime
+
+      return !overlapping.Any(app =>
+        newAppointmentStartTime < app.AppointmentTime.Add(app.AppointmentTimeSpan)
+        && newAppointmentStartTime.Add(TimeSpan.FromMinutes(30)) > app.AppointmentTime
       );
     }
     catch (Exception ex)
@@ -223,11 +259,12 @@ public class AppointmentService(
     try
     {
       var result = await appContext
-        .Appointments.Include(a => a.Doctor) // include doctor
-        .ThenInclude(d => d.User) // doctorUser
-        .Include(a => a.Doctor.DoctorSpecialties) // include doctor specialties
-        .Include(a => a.Patient) // include patietn
-        .ThenInclude(p => p.User) // patient user
+        .Appointments.AsSplitQuery()
+        .Include(a => a.Doctor)
+        .ThenInclude(d => d.User)
+        .Include(a => a.Doctor.DoctorSpecialties)
+        .Include(a => a.Patient)
+        .ThenInclude(p => p.User)
         .Select(a =>
           // Map each appointment and convert each entry to appointmentDto
           // with the above included nav models
@@ -342,21 +379,27 @@ public class AppointmentService(
         .Include(ap => ap.Doctor)
         .ThenInclude(d => d.User)
         .Include(ap => ap.Doctor.DoctorSpecialties)
-        .Select(ap =>
+        .Include(ap => ap.Doctor.DoctorPreference)
+        .Include(ap => ap.Patient)
+        .ThenInclude(p => p.User)
+        .ToListAsync();
+
+      var mapped = result.Select(ap =>
           ap.ToAppointmentDto(
             ap.Doctor,
-            ap.Doctor.User,
+            ap.Patient,
+            ap.Doctor.User!,
+            ap.Patient.User!,
             ap.Doctor.DoctorSpecialties.Where(ds => ds.Specialty != null)
               .Select(ds => ds.Specialty!)
               .ToList()
           )
-        )
-        .ToListAsync();
+        ).ToList();
 
       return new ServiceResponse<List<AppointmentDto>>(
         true,
         200,
-        result,
+        mapped,
         "Fetched all patient appointments."
       );
     }
@@ -724,6 +767,141 @@ public class AppointmentService(
     {
       logger.LogError(ex, "Failed to check completed appointment");
       throw;
+    }
+  }
+
+  /// <summary>
+  /// Sends a booking confirmation email to the patient.
+  /// For in-person appointments the clinic address is included.
+  /// Errors are swallowed so a mail failure never blocks the booking response.
+  /// </summary>
+  private async Task SendAppointmentConfirmationEmailAsync(
+    Appointment appointment,
+    DoctorModel doctor,
+    PatientModel patient)
+  {
+    try
+    {
+      var patientEmail = patient.User?.Email;
+      var patientName  = $"{patient.User?.FirstName} {patient.User?.LastName}".Trim();
+
+      if (string.IsNullOrWhiteSpace(patientEmail))
+      {
+        logger.LogWarning("Cannot send confirmation email — patient email is missing for appointment {Id}", appointment.AppointmentId);
+        return;
+      }
+
+      var doctorName   = $"Dr. {doctor.User?.FirstName} {doctor.User?.LastName}".Trim();
+      var appointmentDate = appointment.AppointmentDate.ToString("dddd, MMMM d, yyyy");
+      var appointmentTime = appointment.AppointmentTime.ToString("h:mm tt");
+      var appointmentType = appointment.AppointmentType == AppointmentType.InPerson
+        ? "In-Person / በአካል"
+        : "Virtual / በቪዲዮ";
+
+      // Build clinic section only for in-person appointments
+      var clinicSection = string.Empty;
+      if (appointment.AppointmentType == AppointmentType.InPerson)
+      {
+        var pref = doctor.DoctorPreference;
+        var clinicName    = pref?.ClinicName    ?? "Clinic";
+        var clinicAddress = pref?.ClinicAddress ?? string.Empty;
+        var clinicCity    = pref?.ClinicCity    ?? string.Empty;
+        var fullAddress   = string.Join(", ", new[] { clinicAddress, clinicCity }
+                              .Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        // Build Google Maps URLs
+        var mapQuery      = Uri.EscapeDataString(string.Join(", ",
+                              new[] { clinicName, clinicAddress, clinicCity }
+                              .Where(s => !string.IsNullOrWhiteSpace(s))));
+        var mapsLink      = $"https://www.google.com/maps/search/?api=1&query={mapQuery}";
+        var mapsEmbed     = $"https://maps.google.com/maps?q={mapQuery}&output=embed&z=15";
+
+        clinicSection = $@"
+          <div style='background:#f0f7ff;border-left:4px solid #0d6efd;padding:16px;border-radius:6px;margin-top:16px;'>
+            <h3 style='margin:0 0 8px;color:#0d6efd;font-size:15px;'>
+              📍 Clinic Location / ክሊኒክ አድራሻ
+            </h3>
+            <p style='margin:0;font-weight:600;'>{clinicName}</p>
+            {(string.IsNullOrWhiteSpace(fullAddress) ? "" : $"<p style='margin:4px 0 0;color:#555;'>{fullAddress}</p>")}
+            <div style='margin-top:12px;border-radius:6px;overflow:hidden;border:1px solid #dee2e6;'>
+              <iframe src='{mapsEmbed}' width='100%' height='200'
+                style='border:0;display:block;' loading='lazy'
+                referrerpolicy='no-referrer-when-downgrade'></iframe>
+            </div>
+            <a href='{mapsLink}' target='_blank' rel='noopener noreferrer'
+               style='display:inline-block;margin-top:10px;padding:8px 16px;background:#0d6efd;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;'>
+              🗺️ Open in Google Maps / ጉግል ካርታ ላይ ክፈት
+            </a>
+            <p style='margin:8px 0 0;color:#555;font-size:13px;'>
+              ⏰ Please arrive 10 minutes before your appointment. / ቀጠሮዎ ከ10 ደቂቃ በፊት ይድረሱ።
+            </p>
+          </div>";
+      }
+
+      var subject = $"Appointment Confirmed — {doctorName} on {appointmentDate}";
+
+      var body = $@"
+        <!DOCTYPE html>
+        <html>
+        <body style='font-family:Arial,sans-serif;background:#f8f9fa;margin:0;padding:0;'>
+          <div style='max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);'>
+
+            <!-- Header -->
+            <div style='background:#0d6efd;padding:28px 32px;text-align:center;'>
+              <h1 style='color:#fff;margin:0;font-size:22px;'>✅ Appointment Confirmed!</h1>
+              <p style='color:rgba(255,255,255,.85);margin:6px 0 0;font-size:14px;'>MedConnect — Your Health, Our Priority</p>
+            </div>
+
+            <!-- Body -->
+            <div style='padding:32px;'>
+              <p style='font-size:16px;'>Hello <strong>{patientName}</strong>,</p>
+              <p style='color:#444;'>Your appointment has been successfully booked and payment confirmed. Here are your details:</p>
+
+              <!-- Details card -->
+              <div style='background:#f8f9fa;border-radius:8px;padding:20px;margin:20px 0;'>
+                <table style='width:100%;border-collapse:collapse;font-size:15px;'>
+                  <tr>
+                    <td style='padding:8px 0;color:#888;width:40%;'>Doctor / ሐኪም</td>
+                    <td style='padding:8px 0;font-weight:600;'>{doctorName}</td>
+                  </tr>
+                  <tr>
+                    <td style='padding:8px 0;color:#888;border-top:1px solid #e9ecef;'>Date / ቀን</td>
+                    <td style='padding:8px 0;border-top:1px solid #e9ecef;font-weight:600;'>{appointmentDate}</td>
+                  </tr>
+                  <tr>
+                    <td style='padding:8px 0;color:#888;border-top:1px solid #e9ecef;'>Time / ሰዓት</td>
+                    <td style='padding:8px 0;border-top:1px solid #e9ecef;font-weight:600;'>{appointmentTime}</td>
+                  </tr>
+                  <tr>
+                    <td style='padding:8px 0;color:#888;border-top:1px solid #e9ecef;'>Type / አይነት</td>
+                    <td style='padding:8px 0;border-top:1px solid #e9ecef;font-weight:600;'>{appointmentType}</td>
+                  </tr>
+                </table>
+              </div>
+
+              {clinicSection}
+
+              <p style='color:#555;margin-top:24px;'>
+                If you need to reschedule or cancel, please log in to your MedConnect account. /
+                ቀጠሮዎን ለማስተካከል ወይም ለመሰረዝ ወደ MedConnect መለያዎ ይግቡ።
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <div style='background:#f8f9fa;padding:20px 32px;text-align:center;border-top:1px solid #e9ecef;'>
+              <p style='color:#aaa;font-size:12px;margin:0;'>© {DateTime.UtcNow.Year} MedConnect Inc. — This is an automated message, please do not reply.</p>
+            </div>
+          </div>
+        </body>
+        </html>";
+
+      await emailService.SendEmail(patientEmail, patientName, subject, body);
+      logger.LogInformation("Appointment confirmation email sent to {Email} for appointment {Id}", patientEmail, appointment.AppointmentId);
+    }
+    catch (Exception ex)
+    {
+      // Never let email failure break the booking flow
+      logger.LogError(ex, "Failed to send appointment confirmation email for appointment {Id}", appointment.AppointmentId);
     }
   }
 }

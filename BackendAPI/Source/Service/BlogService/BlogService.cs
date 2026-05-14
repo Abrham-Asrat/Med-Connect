@@ -276,6 +276,29 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
     }
   }
 
+  public async Task DeleteBlogAsync(Guid blogId)
+  {
+    try
+    {
+      var blog = await appContext.Blogs
+          .Include(b => b.BlogTags)
+          .Include(b => b.BlogLikes)
+          .Include(b => b.BlogComments)
+          .FirstOrDefaultAsync(b => b.BlogId == blogId);
+
+      if (blog == null)
+        throw new KeyNotFoundException("Blog not found.");
+
+      appContext.Blogs.Remove(blog);
+      await appContext.SaveChangesAsync();
+    }
+    catch (System.Exception ex)
+    {
+      logger.LogError(ex, "Error deleting blog {BlogId}", blogId);
+      throw;
+    }
+  }
+
   public async Task<BlogCommentDto> CreateBlogCommentAsync(
     CreateBlogCommentDto createBlogCommentDto
   )

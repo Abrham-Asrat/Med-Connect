@@ -27,6 +27,12 @@
             <a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='schedule'"
                 (click)="activeTab.set('schedule')" style="cursor:pointer">Availability & Schedule</a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill px-4" [class.active]="activeTab()==='preferences'"
+                (click)="activeTab.set('preferences')" style="cursor:pointer">
+                <i class="bi bi-building me-1"></i>Clinic & Appointments
+            </a>
+        </li>
     </ul>
 
     <div class="row g-4">
@@ -208,6 +214,141 @@
                         [disabled]="isLoading() || availabilitiesForm.invalid">
                         @if (isLoading()) { Saving... } @else { Save Schedule }
                     </button>
+                </div>
+            </div>
+            }
+
+            <!-- Clinic & Appointment Preferences Section -->
+            @if (activeTab() === 'preferences') {
+            <div class="card section-card">
+                <div class="card-header bg-white">
+                    <h5 class="text-primary mb-0"><i class="bi bi-building me-2"></i>Clinic & Appointment Preferences / ክሊኒክ እና ቀጠሮ ምርጫዎች</h5>
+                </div>
+                <div class="card-body">
+                    <form [formGroup]="preferencesForm">
+
+                        <!-- Appointment Type Toggles -->
+                        <h6 class="text-secondary mb-3">Appointment Types / የቀጠሮ አይነቶች</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <div class="card border rounded-3 p-3 h-100"
+                                    [class.border-primary]="preferencesForm.get('acceptsOnline')?.value">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <i class="bi bi-camera-video text-primary me-2"></i>
+                                            <strong>Virtual / Online</strong>
+                                            <p class="text-muted small mb-0 mt-1">Video consultations via chat</p>
+                                        </div>
+                                        <div class="form-check form-switch ms-3">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                formControlName="acceptsOnline" id="acceptsOnline"
+                                                style="width:2.5rem;height:1.25rem">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card border rounded-3 p-3 h-100"
+                                    [class.border-primary]="preferencesForm.get('acceptsInPerson')?.value">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <i class="bi bi-building text-primary me-2"></i>
+                                            <strong>In-Person / በአካል</strong>
+                                            <p class="text-muted small mb-0 mt-1">Clinic visits at your location</p>
+                                        </div>
+                                        <div class="form-check form-switch ms-3">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                formControlName="acceptsInPerson" id="acceptsInPerson"
+                                                style="width:2.5rem;height:1.25rem">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fees -->
+                        <h6 class="text-secondary mb-3">Consultation Fees / የምክክር ክፍያዎች</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Online Fee (ETB) / የኦንላይን ክፍያ *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">ETB</span>
+                                    <input type="number" class="form-control" formControlName="onlineAppointmentFee"
+                                        min="0" placeholder="e.g. 500">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">In-Person Fee (ETB) / የአካል ክፍያ *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">ETB</span>
+                                    <input type="number" class="form-control" formControlName="inPersonAppointmentFee"
+                                        min="0" placeholder="e.g. 800">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clinic Info (shown when in-person is enabled) -->
+                        @if (preferencesForm.get('acceptsInPerson')?.value) {
+                        <h6 class="text-secondary mb-3"><i class="bi bi-geo-alt me-1"></i>Clinic Location / ክሊኒክ አድራሻ</h6>
+                        <div class="alert alert-info small mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            This information will be shown to patients after they book an in-person appointment. / ይህ መረጃ ታካሚዎች በአካል ቀጠሮ ከያዙ በኋላ ይታያቸዋል።
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Clinic Name / የክሊኒክ ስም</label>
+                            <input type="text" class="form-control" formControlName="clinicName"
+                                placeholder="e.g. Addis Cardiac Center">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Street Address / የጎዳና አድራሻ</label>
+                            <input type="text" class="form-control" formControlName="clinicAddress"
+                                placeholder="e.g. Bole Road, near Edna Mall">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">City / ከተማ</label>
+                            <input type="text" class="form-control" formControlName="clinicCity"
+                                placeholder="e.g. Addis Ababa">
+                        </div>
+
+                        <!-- Live Google Maps preview -->
+                        @if (getClinicMapEmbedUrl()) {
+                        <div class="mb-3">
+                            <label class="form-label d-flex align-items-center gap-2">
+                                <i class="bi bi-map text-primary"></i>
+                                Location Preview / የቦታ ቅድመ-ዕይታ
+                                <small class="text-muted ms-1">(updates as you type)</small>
+                            </label>
+                            <div class="rounded-3 overflow-hidden border shadow-sm" style="height:240px;">
+                                <iframe
+                                    [src]="getClinicMapEmbedUrl()"
+                                    width="100%" height="240"
+                                    style="border:0;display:block;"
+                                    allowfullscreen
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                    title="Clinic location preview">
+                                </iframe>
+                            </div>
+                            <a [href]="getClinicMapsLink()" target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>
+                                Open in Google Maps / ጉግል ካርታ ላይ ክፈት
+                            </a>
+                        </div>
+                        } @else if (preferencesForm.get('clinicAddress')?.value || preferencesForm.get('clinicName')?.value) {
+                        <div class="alert alert-warning small mb-3">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Enter clinic name, address, and city to see the map preview. / ካርታ ቅድመ-ዕይታ ለማየት የክሊኒክ ስም፣ አድራሻ እና ከተማ ያስገቡ።
+                        </div>
+                        }
+                        }
+
+                        <button type="button" class="btn btn-primary rounded-pill px-4 mt-2" (click)="saveProfile()"
+                            [disabled]="isLoading() || preferencesForm.invalid">
+                            @if (isLoading()) { Saving... } @else { <i class="bi bi-check-lg me-1"></i>Save Preferences / ምርጫዎችን አስቀምጥ }
+                        </button>
+                    </form>
                 </div>
             </div>
             }

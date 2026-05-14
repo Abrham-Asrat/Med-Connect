@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ProfileService } from '../../../../core/services/profile.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
     selector: 'app-doctor-settings',
@@ -15,6 +16,7 @@ export class DoctorSettingsComponent implements OnInit {
     private authService = inject(AuthService);
     private profileService = inject(ProfileService);
     private fb = inject(FormBuilder);
+    private sanitizer = inject(DomSanitizer);
 
     user = this.authService.currentUser;
     activeTab = signal('personal');
@@ -49,6 +51,17 @@ export class DoctorSettingsComponent implements OnInit {
         qualifications: ['', Validators.required],
         doctorStatus: ['Active', Validators.required],
         specialties: ['', Validators.required], // Comma separated string for simplicity in UI initially
+    });
+
+    // Clinic / appointment preferences form
+    preferencesForm: FormGroup = this.fb.group({
+        acceptsOnline: [true],
+        acceptsInPerson: [true],
+        clinicName: [''],
+        clinicAddress: [''],
+        clinicCity: [''],
+        onlineAppointmentFee: [500, [Validators.required, Validators.min(0)]],
+        inPersonAppointmentFee: [800, [Validators.required, Validators.min(0)]],
     });
 
     // Availabilities block
@@ -93,6 +106,16 @@ export class DoctorSettingsComponent implements OnInit {
                         qualifications: profile.qualifications || '',
                         doctorStatus: profile.doctorStatus || 'Active',
                         specialties: profile.specialties ? profile.specialties.join(', ') : '',
+                    });
+
+                    this.preferencesForm.patchValue({
+                        acceptsOnline: profile.acceptsOnline !== false,
+                        acceptsInPerson: profile.acceptsInPerson !== false,
+                        clinicName: profile.clinicName || '',
+                        clinicAddress: profile.clinicAddress || '',
+                        clinicCity: profile.clinicCity || '',
+                        onlineAppointmentFee: profile.onlineAppointmentFee ?? 500,
+                        inPersonAppointmentFee: profile.inPersonAppointmentFee ?? 800,
                     });
 
                     // Clear and reload availabilities
@@ -177,8 +200,31 @@ export class DoctorSettingsComponent implements OnInit {
         }
     }
 
+    /** Returns a sanitized Google Maps embed URL built from the current clinic form values. */
+    getClinicMapEmbedUrl(): SafeResourceUrl | null {
+        const f = this.preferencesForm.value;
+        const parts = [f.clinicName, f.clinicAddress, f.clinicCity]
+            .filter((s: string) => s && s.trim());
+        if (!parts.length) return null;
+        const q = encodeURIComponent(parts.join(', '));
+        return this.sanitizer.bypassSecurityTrustResourceUrl(
+            `https://maps.google.com/maps?q=${q}&output=embed&z=15`
+        );
+    }
+
+    /** Returns a Google Maps search link for the current clinic address. */
+    getClinicMapsLink(): string {
+        const f = this.preferencesForm.value;
+        const parts = [f.clinicName, f.clinicAddress, f.clinicCity]
+            .filter((s: string) => s && s.trim());
+        if (!parts.length) return '';
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(', '))}`;
+    }
+
     saveProfile(): void {
-        const form = this.activeTab() === 'personal' ? this.personalForm : this.professionalForm;
+        const form = this.activeTab() === 'personal' ? this.personalForm
+                   : this.activeTab() === 'preferences' ? this.preferencesForm
+                   : this.professionalForm;
         if (form.invalid) {
             this.errorMessage.set('Please fill all required fields correctly.');
             return;
@@ -189,9 +235,11 @@ export class DoctorSettingsComponent implements OnInit {
         this.errorMessage.set(null);
 
         const personalData = this.personalForm.getRawValue();
+        const prefData = this.preferencesForm.value;
         const values = {
             ...personalData,
             ...this.professionalForm.value,
+            ...prefData,
             availabilities: this.availabilitiesForm.getRawValue().availabilities
         };
 

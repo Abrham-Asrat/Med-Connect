@@ -103,12 +103,41 @@
             </ul>
 
             <h6 class="text-primary mt-4">Clinic Information / ክሊኒክ መረጃ</h6>
+            @if (doctor()?.acceptsInPerson && (doctor()?.clinic?.name || doctor()?.clinic?.address)) {
             <div class="bg-light rounded p-3">
               <p class="mb-1"><strong>{{ doctor()?.clinic?.name || 'N/A' }}</strong></p>
-              <p class="mb-1 text-medium">{{ doctor()?.clinic?.address || '' }}</p>
+              <p class="mb-1 text-medium"><i class="bi bi-geo-alt me-1"></i>{{ doctor()?.clinic?.address || '' }}{{ doctor()?.clinic?.city ? ', ' + doctor()?.clinic?.city : '' }}</p>
               <p class="mb-1 text-medium"><i class="bi bi-telephone me-1"></i>{{ doctor()?.clinic?.phone || '' }}</p>
               <p class="mb-0 text-medium"><i class="bi bi-clock me-1"></i>{{ doctor()?.clinic?.hours || '' }}</p>
+
+              <!-- Google Maps embed -->
+              @if (getClinicMapEmbedUrl()) {
+              <div class="mt-3 rounded overflow-hidden border" style="height:220px;">
+                <iframe
+                  [src]="getClinicMapEmbedUrl()"
+                  width="100%" height="220"
+                  style="border:0;display:block;"
+                  allowfullscreen
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                  title="Clinic location map">
+                </iframe>
+              </div>
+              <a [href]="getClinicMapsLink()" target="_blank" rel="noopener noreferrer"
+                 class="btn btn-sm btn-outline-primary mt-2 w-100">
+                <i class="bi bi-map me-1"></i>Open in Google Maps / ጉግል ካርታ ላይ ክፈት
+              </a>
+              }
             </div>
+            } @else if (!doctor()?.acceptsInPerson) {
+            <div class="bg-light rounded p-3 text-muted">
+              <i class="bi bi-info-circle me-2"></i>This doctor does not offer in-person appointments. / ይህ ሀኪም በአካል ቀጠሮ አይሰጥም።
+            </div>
+            } @else {
+            <div class="bg-light rounded p-3 text-muted">
+              <i class="bi bi-info-circle me-2"></i>Clinic information not available. / የክሊኒክ መረጃ አልተገኘም።
+            </div>
+            }
           </div>
         </div>
         }
@@ -222,14 +251,23 @@
         <div class="card booking-card shadow">
           <div class="card-body">
             <h6 class="text-primary mb-3">Book Appointment / ቀጠሮ ያዙ</h6>
+            @if (doctor()?.acceptsOnline !== false) {
             <div class="d-flex justify-content-between mb-2">
               <span class="text-medium">Online Consultation / የኦንላይን ምክክር</span>
-              <strong class="text-primary">{{ doctor()?.onlineFee || 500 }} ETB</strong>
+              <strong class="text-primary">{{ doctor()?.onlineFee || doctor()?.onlineAppointmentFee || 500 }} ETB</strong>
             </div>
+            }
+            @if (doctor()?.acceptsInPerson !== false) {
             <div class="d-flex justify-content-between mb-3">
               <span class="text-medium">In-Person Visit / በአካል ጉብኝት</span>
-              <strong class="text-primary">{{ doctor()?.inPersonFee || 800 }} ETB</strong>
+              <strong class="text-primary">{{ doctor()?.inPersonFee || doctor()?.inPersonAppointmentFee || 800 }} ETB</strong>
             </div>
+            }
+            @if (doctor()?.acceptsOnline === false && doctor()?.acceptsInPerson === false) {
+            <div class="alert alert-warning small mb-3">
+              <i class="bi bi-exclamation-triangle me-1"></i>Not accepting appointments / ቀጠሮ አይቀበልም
+            </div>
+            }
             <hr>
             <button class="btn btn-primary w-100 mt-3 fw-bold btn-book" [routerLink]="['/patient/book-appointment']"
               [queryParams]="{ doctorId: doctor()?.doctorId || doctor()?.id }">

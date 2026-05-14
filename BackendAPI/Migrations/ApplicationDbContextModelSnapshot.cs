@@ -337,6 +337,23 @@ namespace BackendAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("AcceptsInPerson")
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("AcceptsOnline")
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("ClinicAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClinicCity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClinicName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("InPersonAppointmentFee")
                         .HasColumnType("decimal(18,2)");
 
@@ -511,7 +528,7 @@ namespace BackendAPI.Migrations
                     b.Property<string>("MessageText")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("SenderId")
+                    b.Property<Guid?>("SenderId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Type")

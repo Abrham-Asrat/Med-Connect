@@ -94,22 +94,46 @@ public class ChatService(
 
                       appContext.Conversations.Update(existingConversation);
 
-                      // Send a new welcome system message for the re-appointment
                       var patientUser  = newAppointment.Patient?.User;
                       var patientName  = patientUser != null
                           ? $"{patientUser.FirstName} {patientUser.LastName}" : "A patient";
                       var apptDate     = newAppointment.AppointmentDate.ToString("MMMM d, yyyy");
                       var apptTime     = newAppointment.AppointmentTime.ToString("hh:mm tt");
-                      var apptType     = newAppointment.AppointmentType.ToString();
+                      var isInPersonReopen = newAppointment.AppointmentType == Models.Enums.AppointmentType.InPerson;
+
+                      string reopenText;
+                      if (isInPersonReopen)
+                      {
+                          var pref2 = await appContext.DoctorPreferences
+                              .FirstOrDefaultAsync(p => p.DoctorId == newAppointment.DoctorId);
+                          var loc = string.Join(", ", new[] { pref2?.ClinicName, pref2?.ClinicAddress, pref2?.ClinicCity }
+                              .Where(s => !string.IsNullOrWhiteSpace(s)));
+                          var mapsLink2 = string.IsNullOrWhiteSpace(loc) ? null
+                              : $"https://www.google.com/maps/search/?api=1&query={Uri.EscapeDataString(loc)}";
+
+                          reopenText =
+                              $"🔄 {patientName} has booked a new in-person appointment on {apptDate} at {apptTime}. " +
+                              $"This consultation has been reopened.\n\n" +
+                              (string.IsNullOrWhiteSpace(loc)
+                                  ? "📍 Clinic location not set yet."
+                                  : $"📍 Clinic: {loc}") +
+                              (mapsLink2 != null ? $"\n🗺️ Directions: {mapsLink2}" : "") +
+                              $"\n\n⏰ Please arrive 10 minutes early. You can chat here before your visit.";
+                      }
+                      else
+                      {
+                          reopenText =
+                              $"🔄 {patientName} has booked a new virtual appointment on {apptDate} at {apptTime}. " +
+                              $"This consultation has been reopened. You can start chatting right away. " +
+                              $"This conversation will automatically close 7 days after the appointment date if not resolved.";
+                      }
 
                       var reopenMsg = new Message
                       {
                           MessageId      = Guid.NewGuid(),
                           ConversationId = existingConversationId,
-                          SenderId       = Guid.Empty,
-                          MessageText    = $"🔄 {patientName} has booked a new {apptType} appointment with you on {apptDate} at {apptTime}. " +
-                                           $"This consultation has been reopened. Please wait until the appointment day to begin the session. " +
-                                           $"This conversation will automatically close 7 days after the appointment date if not resolved.",
+                          SenderId = null,
+                          MessageText    = reopenText,
                           Type           = Models.Enums.MessageType.system
                       };
 
@@ -186,7 +210,7 @@ public class ChatService(
 
       await appContext.SaveChangesAsync();
 
-      // ── Send welcome system message to the doctor ────────────────────────
+      // ── Send welcome system message ──────────────────────────────────────
       if (linkedAppointment != null)
       {
           var patientUser = linkedAppointment.Patient?.User;
@@ -196,18 +220,54 @@ public class ChatService(
 
           var appointmentDate = linkedAppointment.AppointmentDate.ToString("MMMM d, yyyy");
           var appointmentTime = linkedAppointment.AppointmentTime.ToString("hh:mm tt");
-          var appointmentType = linkedAppointment.AppointmentType.ToString();
+          var isInPerson = linkedAppointment.AppointmentType == Models.Enums.AppointmentType.InPerson;
 
-          var welcomeText =
-              $"📅 {patientName} has booked a {appointmentType} appointment with you on {appointmentDate} at {appointmentTime}. " +
-              $"This chat is now open. Please wait until the consultation day to begin the session. " +
-              $"This conversation will automatically close 7 days after the appointment date if not resolved.";
+          string welcomeText;
+
+          if (isInPerson)
+          {
+              // Load clinic info from DoctorPreference
+              var doctorPref = await appContext.DoctorPreferences
+                  .FirstOrDefaultAsync(p => p.DoctorId == linkedAppointment.DoctorId);
+
+              var clinicName    = doctorPref?.ClinicName;
+              var clinicAddress = doctorPref?.ClinicAddress;
+              var clinicCity    = doctorPref?.ClinicCity;
+
+              var locationParts = new[] { clinicName, clinicAddress, clinicCity }
+                  .Where(s => !string.IsNullOrWhiteSpace(s));
+              var locationLine = string.Join(", ", locationParts);
+
+              var mapsQuery = Uri.EscapeDataString(locationLine);
+              var mapsLink  = string.IsNullOrWhiteSpace(locationLine)
+                  ? null
+                  : $"https://www.google.com/maps/search/?api=1&query={mapsQuery}";
+
+              welcomeText =
+                  $"🏥 Your in-person appointment with Dr. {linkedAppointment.Doctor?.User?.FirstName} {linkedAppointment.Doctor?.User?.LastName} " +
+                  $"is confirmed for {appointmentDate} at {appointmentTime}.\n\n" +
+                  (string.IsNullOrWhiteSpace(locationLine)
+                      ? "📍 Clinic location has not been set by the doctor yet. Please check back later."
+                      : $"📍 Clinic Location: {locationLine}") +
+                  (mapsLink != null ? $"\n🗺️ Directions: {mapsLink}" : "") +
+                  $"\n\n⏰ Please arrive 10 minutes before your appointment time." +
+                  $"\n\nYou can use this chat to ask questions before your visit. " +
+                  $"This conversation will automatically close 7 days after the appointment date.";
+          }
+          else
+          {
+              welcomeText =
+                  $"🎥 Your virtual appointment with Dr. {linkedAppointment.Doctor?.User?.FirstName} {linkedAppointment.Doctor?.User?.LastName} " +
+                  $"is confirmed for {appointmentDate} at {appointmentTime}.\n\n" +
+                  $"💬 You can use this chat to communicate with your doctor before and during the consultation.\n\n" +
+                  $"This conversation will automatically close 7 days after the appointment date if not resolved.";
+          }
 
           var welcomeMessage = new Message
           {
               MessageId      = Guid.NewGuid(),
               ConversationId = conversationId,
-              SenderId       = Guid.Empty,  // Guid.Empty = system message (no real sender)
+              SenderId = null,
               MessageText    = welcomeText,
               Type           = Models.Enums.MessageType.system
           };
@@ -218,8 +278,8 @@ public class ChatService(
           await appContext.SaveChangesAsync();
 
           logger.LogInformation(
-              "Welcome system message sent for conversation {ConvId} linked to appointment {AppId}",
-              conversationId, linkedAppointment.AppointmentId);
+              "Welcome system message sent for {Type} conversation {ConvId} linked to appointment {AppId}",
+              isInPerson ? "in-person" : "virtual", conversationId, linkedAppointment.AppointmentId);
       }
       // ─────────────────────────────────────────────────────────────────────
 

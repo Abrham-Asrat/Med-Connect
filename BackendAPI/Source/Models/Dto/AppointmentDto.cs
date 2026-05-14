@@ -68,5 +68,10 @@ public record AppointmentDto
   public required TimeOnly AppointmentTime { get; init; }
   public required AppointmentType AppointmentType { get; init; }
   public AppointmentStatus Status { get; init; }
+
+  // Clinic info — populated for InPerson appointments
+  public string? ClinicName { get; init; }
+  public string? ClinicAddress { get; init; }
+  public string? ClinicCity { get; init; }
 }
 

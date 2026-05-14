@@ -19,6 +19,8 @@ public interface IBlogService
 
   void DeleteAllBlogs();
 
+  Task DeleteBlogAsync(Guid blogId);
+
   Task<ICollection<Tag>> CreateTagsAsync(IList<string> tags);
 
   Task<ICollection<BlogTag>> CreateBlogTagAssocAsync(Guid blogId, ICollection<Tag> tags);

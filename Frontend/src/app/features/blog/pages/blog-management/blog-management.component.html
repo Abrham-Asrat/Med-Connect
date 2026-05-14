@@ -1,123 +1,263 @@
 <div class="container-fluid p-4">
-  
+
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="text-primary mb-0"><i class="bi bi-pencil-square me-2"></i>My Blog</h4>
-    @if (!showEditor()) { <button class="btn btn-primary" (click)="openEditor()"><i class="bi bi-plus me-1"></i> New Post</button> }
+    <h4 class="text-primary mb-0"><i class="bi bi-pencil-square me-2"></i>My Blog / የእኔ ብሎግ</h4>
+    @if (!showEditor()) {
+    <button class="btn btn-primary rounded-pill px-4" (click)="openEditor()">
+      <i class="bi bi-plus me-1"></i> New Post / አዲስ ጽሑፍ
+    </button>
+    }
   </div>
 
-  @if (successMessage()) { <div class="alert alert-success"><i class="bi bi-check-circle-fill me-2"></i>{{ successMessage() }}</div> }
-  @if (errorMessage()) { <div class="alert alert-danger">{{ errorMessage() }}</div> }
+  @if (successMessage()) {
+  <div class="alert alert-success d-flex align-items-center gap-2">
+    <i class="bi bi-check-circle-fill"></i> {{ successMessage() }}
+  </div>
+  }
+  @if (errorMessage()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ errorMessage() }}
+  </div>
+  }
 
   <!-- Stats -->
   <div class="row g-3 mb-4">
-    <div class="col-4"><div class="card text-center p-3" style="border-left:4px solid #078930"><h4 class="text-primary mb-0">{{ blogs().length }}</h4><small class="text-medium">Total</small></div></div>
-    <div class="col-4"><div class="card text-center p-3" style="border-left:4px solid #078930"><h4 class="text-primary mb-0">{{ publishedCount() }}</h4><small class="text-medium">Published</small></div></div>
-    <div class="col-4"><div class="card text-center p-3" style="border-left:4px solid #FCD116"><h4 class="text-warning-dark mb-0">{{ draftCount() }}</h4><small class="text-medium">Drafts</small></div></div>
+    <div class="col-4">
+      <div class="card text-center p-3" style="border-left:4px solid #078930">
+        <h4 class="text-primary mb-0">{{ blogs().length }}</h4>
+        <small class="text-muted">Total Posts</small>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="card text-center p-3" style="border-left:4px solid #078930">
+        <h4 class="text-primary mb-0">{{ totalLikes() }}</h4>
+        <small class="text-muted">Total Likes</small>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="card text-center p-3" style="border-left:4px solid #0dcaf0">
+        <h4 class="text-info mb-0">{{ totalComments() }}</h4>
+        <small class="text-muted">Total Comments</small>
+      </div>
+    </div>
   </div>
 
-  <!-- Editor -->
+  <!-- ── Editor ── -->
   @if (showEditor()) {
-    <div class="card mb-4 border-primary">
-      <div class="card-header bg-white d-flex justify-content-between">
-        <h6 class="text-primary mb-0">{{ editMode() ? 'Edit Post' : 'New Post' }}</h6>
-        <button class="btn btn-link text-danger p-0" (click)="closeEditor()"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <div class="card-body">
-        <div class="mb-3"><label class="form-label">Title * (5-100 chars)</label><input type="text" class="form-control" [(ngModel)]="title" placeholder="Enter post title..."></div>
-        <div class="row mb-3">
-          <div class="col-md-6"><label class="form-label">Category</label><select class="form-select" [(ngModel)]="category">@for(c of categories; track c){<option [value]="c">{{c}}</option>}</select></div>
-          <div class="col-md-6"><label class="form-label">Tags (comma separated)</label><input type="text" class="form-control" [(ngModel)]="tags" placeholder="heart, health, tips"></div>
-        </div>
-        
-        <!-- Image Upload -->
-        <div class="mb-3">
-          <label class="form-label">Featured Image</label>
-          <div class="upload-zone p-4 text-center bg-light" (click)="imgInput.click()">
-            <input #imgInput type="file" accept="image/*" (change)="onImageSelected($event)" hidden>
-            @if (!imagePreview()) {
-              <i class="bi bi-image text-primary fs-3"></i><p class="text-medium mt-2 mb-0">Click to add image</p><small class="text-medium">JPG, PNG (optional)</small>
-            } @else {
-              <img [src]="imagePreview()" class="image-preview mb-2">
-              <br><button type="button" class="btn btn-outline-danger btn-sm" (click)="removeImage(); $event.stopPropagation()">Remove</button>
-            }
-          </div>
-        </div>
+  <div class="card mb-4 border-primary shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <h6 class="text-primary mb-0">
+        <i class="bi bi-pencil me-2"></i>{{ editMode() ? 'Edit Post / ጽሑፍ አርትዕ' : 'New Post / አዲስ ጽሑፍ' }}
+      </h6>
+      <button class="btn btn-link text-danger p-0" (click)="closeEditor()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="card-body">
 
-        <div class="mb-3">
-          <label class="form-label">Content * (100-10000 chars)</label>
-          <textarea class="form-control" [(ngModel)]="content" rows="10" placeholder="Write your blog post..."></textarea>
-          <small [class.text-danger]="content().length>0 && content().length<100" [class.text-primary]="content().length>=100">{{ content().length }} chars @if(content().length>0&&content().length<100){(need {{100-content().length}} more)}</small>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Title * <small class="text-muted">(5–100 chars)</small></label>
+        <input type="text" class="form-control" [(ngModel)]="title" placeholder="Enter post title...">
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Category / ምድብ</label>
+          <select class="form-select" [(ngModel)]="category">
+            @for (c of categories; track c) { <option [value]="c">{{ c }}</option> }
+          </select>
         </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-primary" (click)="saveBlog()" [disabled]="isLoading()">@if(isLoading()){Saving...}@else{{{editMode()?'Update':'Publish'}}}</button>
-          <button class="btn btn-outline-secondary" (click)="closeEditor()">Cancel</button>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Tags <small class="text-muted">(comma separated)</small></label>
+          <input type="text" class="form-control" [(ngModel)]="tags" placeholder="heart, health, tips">
         </div>
+      </div>
+
+      <!-- Image Upload -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Featured Image <small class="text-muted">(optional)</small></label>
+        <div class="upload-zone p-4 text-center bg-light" (click)="imgInput.click()">
+          <input #imgInput type="file" accept="image/*" (change)="onImageSelected($event)" hidden>
+          @if (!imagePreview()) {
+          <i class="bi bi-image text-primary fs-3"></i>
+          <p class="text-muted mt-2 mb-0">Click to add image</p>
+          <small class="text-muted">JPG, PNG (optional)</small>
+          } @else {
+          <img [src]="imagePreview()" class="image-preview mb-2" alt="Preview">
+          <br>
+          <button type="button" class="btn btn-outline-danger btn-sm mt-1"
+            (click)="removeImage(); $event.stopPropagation()">
+            <i class="bi bi-trash me-1"></i>Remove
+          </button>
+          }
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          Content * <small class="text-muted">(100–10,000 chars)</small>
+        </label>
+        <textarea class="form-control" [(ngModel)]="content" rows="10"
+          placeholder="Write your blog post..."></textarea>
+        <small [class.text-danger]="content.length > 0 && content.length < 100"
+          [class.text-success]="content.length >= 100">
+          {{ content.length }} chars
+          @if (content.length > 0 && content.length < 100) {
+          — need {{ 100 - content.length }} more
+          }
+        </small>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary rounded-pill px-4" (click)="saveBlog()" [disabled]="isLoading()">
+          @if (isLoading()) { <span class="spinner-border spinner-border-sm me-1"></span>Saving... }
+          @else { <i class="bi bi-send me-1"></i>{{ editMode() ? 'Update' : 'Publish' }} }
+        </button>
+        <button class="btn btn-outline-secondary rounded-pill px-4" (click)="closeEditor()">Cancel</button>
       </div>
     </div>
+  </div>
   }
 
-  <!-- Blog List -->
-  @if (isLoading() && !showEditor()) { <div class="text-center py-5"><div class="spinner-border text-primary"></div></div> }
+  <!-- ── Blog List ── -->
+  @if (isLoading() && !showEditor()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="text-muted mt-2">Loading your posts...</p>
+  </div>
+  }
 
   @for (blog of blogs(); track blog.blogId || blog.id) {
-    <div class="blog-card card mb-3" [class]="getStatusClass(blog.status)">
-      @if (blog.imageUrl || imagePreview()) {
-        <img [src]="blog.imageUrl || imagePreview()" class="blog-image" alt="Blog image">
-      }
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start">
-          <div class="flex-grow-1">
-            <h5 class="mb-1">{{ blog.title }}</h5>
-            <small class="text-medium">{{ blog.createdAt || blog.publishedAt | date }} · {{ blog.category || 'General' }} · {{ blog.viewCount || 0 }} views</small>
-            @if (blog.tags?.length) { <div class="mt-1">@for(t of blog.tags; track t){<span class="badge bg-light text-dark me-1">{{t}}</span>}</div> }
-            <p class="text-medium mt-2 mb-0">{{ (blog.content || '').substring(0, 200) }}...</p>
-          </div>
-          <div class="text-end flex-shrink-0 ms-3">
-            <span class="badge" [class.bg-primary-light]="blog.status==='Published'" [class.text-primary]="blog.status==='Published'" [class.bg-warning-light]="blog.status!=='Published'" [class.text-warning-dark]="blog.status!=='Published'">{{ blog.status || 'Draft' }}</span>
-            <br><button class="btn btn-outline-primary btn-sm mt-1" (click)="openEditor(blog)"><i class="bi bi-pencil"></i></button>
-          </div>
-        </div>
-
-        <!-- Like & Comment Buttons -->
-        <div class="d-flex gap-2 mt-3">
-          <button class="btn btn-outline-primary btn-sm" (click)="likeBlog(blog.blogId || blog.id, $event)">
-            <i class="bi bi-hand-thumbs-up me-1"></i> Like ({{ blog.likeCount || 0 }})
-          </button>
-          <button class="btn btn-outline-secondary btn-sm" (click)="toggleComments(blog.blogId || blog.id, $event)">
-            <i class="bi bi-chat me-1"></i> Comments ({{ blog.commentCount || 0 }})
-          </button>
-        </div>
-
-        <!-- Comments Section -->
-        @if (showComments() && selectedBlogId() === (blog.blogId || blog.id)) {
-          <div class="comment-section mt-3 p-3 rounded">
-            <h6 class="text-primary small mb-2"><i class="bi bi-chat-dots me-1"></i>Comments ({{ comments().length }})</h6>
-            @for (c of comments(); track c.commentId || c.id) {
-              <div class="d-flex gap-2 mb-2">
-                <div class="rounded-circle bg-primary-light text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px;height:28px;font-size:12px;font-weight:700">{{ (c.senderName || 'U').charAt(0) }}</div>
-                <div>
-                  <strong style="font-size:13px">{{ c.senderName || 'User' }}</strong>
-                  <p class="mb-0 text-medium" style="font-size:13px">{{ c.commentText }}</p>
-                  <small class="text-medium">{{ c.createdAt | date:'short' }}</small>
-                </div>
-              </div>
+  <div class="blog-card card mb-3 shadow-sm">
+    @if (blog.imageUrl) {
+    <img [src]="blog.imageUrl" class="blog-image" alt="Blog image">
+    }
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start gap-3">
+        <div class="flex-grow-1">
+          <h5 class="mb-1">{{ blog.title }}</h5>
+          <small class="text-muted">
+            {{ blog.createdAt | date:'mediumDate' }}
+            @if (blog.tags?.length) { · }
+            @for (t of (blog.tags || []); track t) {
+            <span class="badge bg-light text-dark me-1">{{ t }}</span>
             }
-            @if (comments().length === 0) { <p class="text-medium small mb-2">No comments yet</p> }
-            <div class="input-group mt-2">
-              <input type="text" class="form-control form-control-sm" [(ngModel)]="newComment" placeholder="Write a comment..." (keyup.enter)="addComment(blog.blogId || blog.id)">
-              <button class="btn btn-primary btn-sm" (click)="addComment(blog.blogId || blog.id)"><i class="bi bi-send"></i></button>
-            </div>
-          </div>
-        }
+          </small>
+          <p class="text-muted mt-2 mb-0 small">{{ (blog.content || '').substring(0, 180) }}...</p>
+        </div>
+        <div class="d-flex flex-column gap-1 flex-shrink-0">
+          <button class="btn btn-outline-primary btn-sm rounded-pill" (click)="openEditor(blog)">
+            <i class="bi bi-pencil me-1"></i>Edit
+          </button>
+          <button class="btn btn-outline-danger btn-sm rounded-pill"
+            (click)="deleteBlog(blog.blogId || blog.id, $event)">
+            <i class="bi bi-trash me-1"></i>Delete
+          </button>
+        </div>
       </div>
+
+      <!-- Like & Comment Buttons -->
+      <div class="d-flex gap-2 mt-3 pt-2 border-top">
+        <button class="btn btn-sm rounded-pill px-3"
+          [class.btn-primary]="blog.isLiked"
+          [class.btn-outline-primary]="!blog.isLiked"
+          (click)="likeBlog(blog.blogId || blog.id, $event)">
+          <i class="bi" [class.bi-hand-thumbs-up-fill]="blog.isLiked"
+            [class.bi-hand-thumbs-up]="!blog.isLiked"></i>
+          {{ blog.likeCount || 0 }} Like{{ blog.likeCount !== 1 ? 's' : '' }}
+        </button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+          (click)="toggleComments(blog.blogId || blog.id, $event)">
+          <i class="bi bi-chat me-1"></i>
+          {{ blog.commentCount || 0 }} Comment{{ blog.commentCount !== 1 ? 's' : '' }}
+        </button>
+      </div>
+
+      <!-- Comments Section -->
+      @if (showComments() && selectedBlogId() === (blog.blogId || blog.id)) {
+      <div class="comment-section mt-3 p-3 rounded-3">
+        <h6 class="text-primary small mb-3">
+          <i class="bi bi-chat-dots me-1"></i>Comments ({{ comments().length }})
+        </h6>
+
+        @for (c of comments(); track c.blogCommentId) {
+        <div class="d-flex gap-2 mb-3">
+          <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center
+               justify-content-center flex-shrink-0 fw-bold"
+            style="width:32px;height:32px;font-size:13px">
+            {{ (c.sender?.firstName || 'U').charAt(0).toUpperCase() }}
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center">
+              <strong style="font-size:13px">{{ getAuthorName(c) }}</strong>
+              <div class="d-flex gap-1">
+                <button class="btn btn-link btn-sm p-0 text-primary"
+                  (click)="startEditComment(c)" title="Edit">
+                  <i class="bi bi-pencil" style="font-size:0.75rem"></i>
+                </button>
+                <button class="btn btn-link btn-sm p-0 text-danger"
+                  (click)="deleteComment(c.blogCommentId, blog.blogId || blog.id)" title="Delete">
+                  <i class="bi bi-trash" style="font-size:0.75rem"></i>
+                </button>
+              </div>
+            </div>
+
+            @if (editingCommentId() === c.blogCommentId) {
+            <div class="input-group input-group-sm mt-1">
+              <input type="text" class="form-control" [(ngModel)]="editCommentText"
+                (keyup.enter)="saveEditComment(c)">
+              <button class="btn btn-success btn-sm" (click)="saveEditComment(c)">
+                <i class="bi bi-check-lg"></i>
+              </button>
+              <button class="btn btn-secondary btn-sm" (click)="cancelEditComment()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+            } @else {
+            <p class="mb-0 text-muted" style="font-size:13px">{{ c.commentText }}</p>
+            <small class="text-muted" style="font-size:11px">{{ c.createdAt | date:'short' }}</small>
+            }
+
+            <!-- Replies -->
+            @if (c.replies?.length) {
+            <div class="ms-3 mt-2 border-start ps-2">
+              @for (r of c.replies; track r.blogCommentId) {
+              <div class="mb-1 small">
+                <strong class="text-secondary" style="font-size:0.7rem">{{ getAuthorName(r) }}</strong>
+                <p class="mb-0 text-muted" style="font-size:0.75rem">{{ r.commentText }}</p>
+              </div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+        }
+
+        @if (comments().length === 0) {
+        <p class="text-muted small mb-2">No comments yet / አስተያየት የለም</p>
+        }
+
+        <!-- Add comment -->
+        <div class="input-group mt-2">
+          <input type="text" class="form-control form-control-sm" [(ngModel)]="newComment"
+            placeholder="Write a comment... / አስተያየት ይጻፉ..."
+            (keyup.enter)="addComment(blog.blogId || blog.id)">
+          <button class="btn btn-primary btn-sm" (click)="addComment(blog.blogId || blog.id)">
+            <i class="bi bi-send"></i>
+          </button>
+        </div>
+      </div>
+      }
     </div>
+  </div>
   }
 
   @if (blogs().length === 0 && !isLoading()) {
-    <div class="text-center py-5">
-      <i class="bi bi-pencil-square text-primary" style="font-size:48px;opacity:0.3"></i>
-      <p class="text-medium mt-3">No posts yet. Write your first blog!</p>
-      <button class="btn btn-primary" (click)="openEditor()">Create Post</button>
-    </div>
+  <div class="text-center py-5">
+    <i class="bi bi-pencil-square text-primary" style="font-size:48px;opacity:0.3"></i>
+    <p class="text-muted mt-3">No posts yet. Write your first blog! / ጽሑፍ የለም። የመጀመሪያ ብሎጎን ይጻፉ!</p>
+    <button class="btn btn-primary rounded-pill px-4" (click)="openEditor()">
+      <i class="bi bi-plus me-1"></i>Create Post
+    </button>
+  </div>
   }
+
 </div>

@@ -79,6 +79,19 @@ public record DoctorProfileDto : ProfileDto
   public required bool IsVerified { get; init; }
   public required List<EducationDto> Educations { get; init; }
   public required List<ExperienceDto> Experiences { get; init; }
+
+  // Appointment type availability
+  public bool AcceptsOnline { get; init; } = true;
+  public bool AcceptsInPerson { get; init; } = true;
+
+  // Clinic info (for in-person appointments)
+  public string? ClinicName { get; init; }
+  public string? ClinicAddress { get; init; }
+  public string? ClinicCity { get; init; }
+
+  // Fees
+  public decimal OnlineAppointmentFee { get; init; }
+  public decimal InPersonAppointmentFee { get; init; }
 };
 
 /// <summary>

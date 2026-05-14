@@ -1,17 +1,18 @@
 <div class="container-fluid p-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div>
       <h3 class="text-primary fw-bold mb-1"><i class="bi bi-clock-history me-3"></i>Shift & Schedule / የሥራ ሰዓት</h3>
-      <p class="text-muted small">Manage your availability, appointments, and time-off requests.</p>
+      <p class="text-muted small mb-0">Manage your availability, appointments, and time-off requests.</p>
     </div>
     <div class="d-flex align-items-center gap-3 bg-white p-3 rounded-4 shadow-sm">
       <div class="d-flex flex-column text-end">
         <span class="small fw-bold">Accepting Appointments</span>
-        <small class="text-success" [class.text-danger]="!acceptingAppointments()">{{ acceptingAppointments() ? 'Active
-          & Visible' : 'Currently Paused' }}</small>
+        <small [class.text-success]="acceptingAppointments()" [class.text-danger]="!acceptingAppointments()">
+          {{ acceptingAppointments() ? 'Active & Visible' : 'Currently Paused' }}
+        </small>
       </div>
-      <div class="form-check form-switch fs-4">
-        <input class="form-check-input mb-0" type="checkbox" [checked]="acceptingAppointments()"
+      <div class="form-check form-switch fs-4 mb-0">
+        <input class="form-check-input" type="checkbox" [checked]="acceptingAppointments()"
           (change)="toggleAppointments()">
       </div>
     </div>
@@ -21,6 +22,12 @@
   <div class="alert alert-success d-flex align-items-center gap-3 rounded-4 border-0 shadow-sm animate-fade-in">
     <div class="bg-success text-white rounded-circle p-2 d-flex"><i class="bi bi-check-lg"></i></div>
     <span class="fw-bold">{{ successMessage() }}</span>
+  </div>
+  }
+  @if (errorMessage()) {
+  <div class="alert alert-danger d-flex align-items-center gap-3 rounded-4 border-0 shadow-sm animate-fade-in">
+    <div class="bg-danger text-white rounded-circle p-2 d-flex"><i class="bi bi-exclamation-lg"></i></div>
+    <span class="fw-bold">{{ errorMessage() }}</span>
   </div>
   }
 
@@ -49,7 +56,7 @@
   <!-- Tab Content -->
   <div class="tab-content animate-fade-in">
 
-    <!-- Appointments Tab -->
+    <!-- ── Appointments Tab ── -->
     @if (activeTab() === 'appointments') {
     <div class="row g-4">
       <div class="col-lg-12">
@@ -71,7 +78,7 @@
                     <th class="ps-4">Patient Name</th>
                     <th>Date</th>
                     <th>Time Slot</th>
-                    <th>Booking Type</th>
+                    <th>Type</th>
                     <th>Status</th>
                     <th class="text-end pe-4">Actions</th>
                   </tr>
@@ -81,20 +88,32 @@
                   <tr>
                     <td class="ps-4">
                       <div class="d-flex align-items-center gap-3">
-                        <div
-                          class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center"
-                          style="width: 35px; height: 35px;">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center"
+                          style="width:35px;height:35px;">
                           <i class="bi bi-person"></i>
                         </div>
-                        <span class="fw-bold">{{ apt.patientName || 'Patient' }}</span>
+                        <span class="fw-bold">
+                          {{ apt.patient?.firstName || apt.patient?.user?.firstName || apt.patientName || 'Patient' }}
+                          {{ apt.patient?.lastName || apt.patient?.user?.lastName || '' }}
+                        </span>
                       </div>
                     </td>
                     <td>{{ apt.appointmentDate | date:'mediumDate' }}</td>
                     <td><span class="badge bg-light text-dark fw-bold">{{ apt.appointmentTime }}</span></td>
-                    <td>Consultation</td>
                     <td>
-                      <span class="status-badge" [class.status-badge-confirmed]="apt.status==='Scheduled'">{{ apt.status
-                        }}</span>
+                      <span class="badge" [class.bg-primary]="apt.appointmentType==='Virtual'"
+                        [class.bg-warning]="apt.appointmentType==='InPerson'" [class.text-dark]="apt.appointmentType==='InPerson'">
+                        {{ apt.appointmentType === 'Virtual' ? '🎥 Virtual' : '🏥 In-Person' }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge"
+                        [class.bg-success]="apt.status==='scheduled'"
+                        [class.bg-info]="apt.status==='active'"
+                        [class.bg-secondary]="apt.status==='completed' || apt.status==='closed'"
+                        [class.bg-danger]="apt.status==='cancelled'">
+                        {{ apt.status }}
+                      </span>
                     </td>
                     <td class="text-end pe-4">
                       <button class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2">Video Call</button>
@@ -106,7 +125,7 @@
                   <tr>
                     <td colspan="6" class="text-center py-5">
                       <i class="bi bi-calendar2-x display-4 text-muted opacity-25"></i>
-                      <p class="text-muted mt-3">No upcoming appointments found for this period.</p>
+                      <p class="text-muted mt-3">No upcoming appointments found.</p>
                     </td>
                   </tr>
                   }
@@ -119,63 +138,104 @@
     </div>
     }
 
-    <!-- Availability Tab -->
+    <!-- ── Availability Tab ── -->
     @if (activeTab() === 'availability') {
     <div class="row g-4">
       <div class="col-lg-8">
         <div class="card border-0 shadow-sm rounded-4">
           <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0">Weekly Recurring Hours</h5>
-            <button class="btn btn-primary rounded-pill px-4" (click)="saveSchedule()">
-              <i class="bi bi-save me-2"></i> Save Changes
+            <h5 class="fw-bold mb-0">Weekly Recurring Hours / ሳምንታዊ ሰዓታት</h5>
+            <button class="btn btn-primary rounded-pill px-4" (click)="saveSchedule()" [disabled]="isSaving()">
+              @if (isSaving()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>Saving...
+              } @else {
+              <i class="bi bi-save me-2"></i>Save Changes
+              }
             </button>
           </div>
           <div class="card-body">
-            <div class="alert alert-info border-0 rounded-4 bg-primary bg-opacity-10 text-primary">
-              <i class="bi bi-info-circle-fill me-2"></i> These hours repeat every week. Patients will be able to book
-              you during these slots.
+
+            @if (isLoading()) {
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary"></div>
+              <p class="text-muted mt-2 small">Loading your schedule...</p>
+            </div>
+            } @else {
+
+            <div class="alert alert-info border-0 rounded-4 bg-primary bg-opacity-10 text-primary mb-4">
+              <i class="bi bi-info-circle-fill me-2"></i>
+              These hours repeat every week. Toggle a day on/off, add time slots, then click <strong>Save Changes</strong>.
+              Weekends (Sat/Sun) are off by default — enable them only if you work those days.
             </div>
 
-            <div class="schedule-grid mt-4">
+            <!-- Weekday legend -->
+            <div class="d-flex gap-3 mb-3 small">
+              <span><span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:#078930"></span>Weekday</span>
+              <span><span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:#f59e0b"></span>Weekend (off by default)</span>
+            </div>
+
+            <div class="schedule-grid">
               @for (day of days(); track day.name) {
-              <div class="day-row p-3 rounded-4 mb-3 border bg-white shadow-sm transition-all"
-                [class.disabled-row]="!day.enabled">
-                <div class="row align-items-center">
+              <div class="day-row p-3 rounded-4 mb-3 border bg-white shadow-sm"
+                [class.disabled-row]="!day.enabled"
+                [class.weekend-row]="day.isWeekend">
+
+                <div class="row align-items-center g-2">
+
+                  <!-- Day toggle + name -->
                   <div class="col-md-3">
-                    <div class="form-check form-switch d-flex align-items-center gap-3">
-                      <input class="form-check-input" type="checkbox" [checked]="day.enabled"
-                        (change)="toggleDay(day.name)">
-                      <span class="fw-bold fs-5">{{ day.name }}</span>
+                    <div class="form-check form-switch d-flex align-items-center gap-2 mb-0">
+                      <input class="form-check-input" type="checkbox" [id]="'toggle-'+day.name"
+                        [checked]="day.enabled" (change)="toggleDay(day.name)"
+                        style="width:2.5rem;height:1.25rem;cursor:pointer">
+                      <label [for]="'toggle-'+day.name" class="fw-bold fs-6 mb-0" style="cursor:pointer">
+                        {{ day.name }}
+                        @if (day.isWeekend) {
+                        <span class="badge bg-warning text-dark ms-1" style="font-size:0.6rem;">Weekend</span>
+                        }
+                      </label>
                     </div>
                   </div>
+
+                  <!-- Slots + add input -->
                   <div class="col-md-7">
+                    @if (!day.enabled) {
+                    <span class="text-muted small fst-italic">Day off / ዕረፍት</span>
+                    } @else {
                     <div class="d-flex flex-wrap gap-2 align-items-center">
                       @for (slot of day.slots; track $index) {
                       <div class="glass-slot px-3 py-1 rounded-pill d-flex align-items-center gap-2">
+                        <i class="bi bi-clock text-primary" style="font-size:0.75rem"></i>
                         <span class="small fw-bold">{{ slot }}</span>
-                        <i class="bi bi-x-circle-fill text-danger opacity-50" style="cursor:pointer"
+                        <i class="bi bi-x-circle-fill text-danger" style="cursor:pointer;font-size:0.85rem"
                           (click)="removeTimeSlot(day.name, $index)"></i>
                       </div>
                       }
 
-                      @if (day.enabled) {
-                      <div class="d-flex gap-2 align-items-center ms-2 p-2 bg-light rounded-3 shadow-sm border">
+                      <!-- Add slot inline -->
+                      <div class="d-flex gap-1 align-items-center p-2 bg-light rounded-3 border">
                         <input type="time" #startTime class="form-control form-control-sm border-0 bg-transparent"
-                          style="width: 85px" value="09:00">
-                        <span class="small text-muted">to</span>
+                          style="width:85px" value="09:00">
+                        <span class="small text-muted">–</span>
                         <input type="time" #endTime class="form-control form-control-sm border-0 bg-transparent"
-                          style="width: 85px" value="17:00">
-                        <button class="btn btn-sm btn-primary rounded-circle p-1 d-flex"
-                          (click)="addTimeSlot(day.name, startTime.value, endTime.value)">
-                          <i class="bi bi-plus fs-5"></i>
+                          style="width:85px" value="17:00">
+                        <button class="btn btn-sm btn-primary rounded-circle p-1 d-flex align-items-center justify-content-center"
+                          style="width:28px;height:28px"
+                          (click)="addTimeSlot(day.name, startTime.value, endTime.value)"
+                          title="Add slot">
+                          <i class="bi bi-plus fs-6"></i>
                         </button>
                       </div>
-                      }
                     </div>
+                    }
                   </div>
+
+                  <!-- Slot count -->
                   <div class="col-md-2 text-end">
                     @if (day.enabled) {
-                    <small class="text-muted">{{ day.slots.length }} slots</small>
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">
+                      {{ day.slots.length }} slot{{ day.slots.length !== 1 ? 's' : '' }}
+                    </span>
                     }
                   </div>
 
@@ -183,53 +243,70 @@
               </div>
               }
             </div>
+            }
+
           </div>
         </div>
       </div>
+
+      <!-- Stats sidebar -->
       <div class="col-lg-4">
-        <div class="card border-0 shadow-sm rounded-4 bg-primary text-white p-4">
-          <h5 class="fw-bold mb-3">Schedule Statistics</h5>
+        <div class="card border-0 shadow-sm rounded-4 bg-primary text-white p-4 mb-3">
+          <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart-fill me-2"></i>Schedule Summary</h5>
           <div class="d-flex justify-content-between mb-2">
-            <span>Weekly Work Days</span>
-            <strong>{{ days().filter(d=>d.enabled).length }} Days</strong>
+            <span>Active Work Days</span>
+            <strong>{{ enabledDaysCount }} / 7</strong>
           </div>
           <div class="d-flex justify-content-between mb-2">
-            <span>Total Available Slots</span>
-            <strong>{{ appointments().length * 2 }} Slots</strong>
+            <span>Total Time Slots</span>
+            <strong>{{ totalSlots }}</strong>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Weekends Open</span>
+            <strong>{{ days()[5].enabled || days()[6].enabled ? 'Yes' : 'No' }}</strong>
           </div>
           <hr class="opacity-25">
-          <p class="small opacity-75">Your schedule is currently optimized. Most patients prefer morning slots (08:00 -
-            11:00 AM).</p>
+          <p class="small opacity-75 mb-0">
+            <i class="bi bi-lightbulb me-1"></i>
+            Most patients prefer morning slots (08:00–11:00). Add at least one slot per active day.
+          </p>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 p-3">
+          <h6 class="fw-bold mb-2 text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Weekend Note</h6>
+          <p class="small text-muted mb-0">
+            Saturday and Sunday are <strong>closed by default</strong>. Enable them only if you see patients on weekends.
+            Patients will only see days you have enabled with at least one time slot.
+          </p>
         </div>
       </div>
     </div>
     }
 
-    <!-- Time Off Tab -->
+    <!-- ── Time Off Tab ── -->
     @if (activeTab() === 'timeoff') {
     <div class="row g-4">
       <div class="col-md-6">
         <div class="card border-0 shadow-sm rounded-4 h-100">
           <div class="card-header bg-white py-3 border-0">
-            <h5 class="fw-bold mb-0">Block Special Dates</h5>
+            <h5 class="fw-bold mb-0">Block Special Dates / ቀናት ዝጋ</h5>
           </div>
           <div class="card-body">
-            <p class="text-muted small">Select a date range to block yourself as "Away". Existing appointments will need
-              to be rescheduled manually.</p>
-
+            <p class="text-muted small">Select a date range to mark yourself as away. Patients won't be able to book
+              during this period.</p>
             <div class="row g-3">
               <div class="col-6">
-                <label class="form-label fw-bold small">Away From</label>
+                <label class="form-label fw-bold small">Away From / ከ</label>
                 <input type="date" class="form-control rounded-3" [(ngModel)]="awayFrom">
               </div>
               <div class="col-6">
-                <label class="form-label fw-bold small">Away Until</label>
+                <label class="form-label fw-bold small">Away Until / እስከ</label>
                 <input type="date" class="form-control rounded-3" [(ngModel)]="awayTo">
               </div>
-              <div class="col-12 mt-4">
+              <div class="col-12 mt-2">
                 <button class="btn btn-warning w-100 py-3 rounded-3 fw-bold shadow-sm" (click)="blockDates()"
-                  [disabled]="!awayFrom() || !awayTo()">
-                  <i class="bi bi-shield-lock-fill me-2"></i> CONFIRM BLOCK DATES
+                  [disabled]="!awayFrom || !awayTo">
+                  <i class="bi bi-shield-lock-fill me-2"></i>Confirm Block Dates / ቀናት ዝጋ
                 </button>
               </div>
             </div>
@@ -239,13 +316,11 @@
       <div class="col-md-6">
         <div class="card border-0 shadow-sm rounded-4 h-100">
           <div class="card-header bg-white py-3 border-0">
-            <h5 class="fw-bold mb-0">Recent Block History</h5>
+            <h5 class="fw-bold mb-0">Block History</h5>
           </div>
-          <div class="card-body">
-            <div class="text-center py-5 opacity-50">
-              <i class="bi bi-archive display-4"></i>
-              <p class="mt-3">No active or future blocks scheduled.</p>
-            </div>
+          <div class="card-body text-center py-5 opacity-50">
+            <i class="bi bi-archive display-4"></i>
+            <p class="mt-3">No active or future blocks scheduled.</p>
           </div>
         </div>
       </div>

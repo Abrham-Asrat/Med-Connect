@@ -161,4 +161,11 @@ export class MyAppointmentsComponent implements OnInit {
       default: return 'bi-info-circle';
     }
   }
+
+  getMapsLink(apt: any): string {
+    const parts = [apt.clinicName, apt.clinicAddress, apt.clinicCity]
+      .filter((s: string) => s && s.trim());
+    if (!parts.length) return '';
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts.join(', '))}`;
+  }
 }

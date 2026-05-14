@@ -1,0 +1,27 @@
+MigrationId                                                                                                                                           
+------------------------------------------------------------------------------------------------------------------------------------------------------
+20260504202747_InitialCreate                                                                                                                          
+20260505101947_AddDoctorLanguages                                                                                                                     
+20260505155437_AddBlogCommentParentId                                                                                                                 
+20260507221728_UpdateTelemedicineSchema                                                                                                               
+20260513164259_AddConversationAutoClose                                                                                                               
+20260514000000_AddDoctorPreferenceClinicFields                                                                                                        
+
+(6 rows affected)
+COLUMN_NAME                                                                                                                      IS_NULLABLE DATA_TYPE                                                                                                                       
+-------------------------------------------------------------------------------------------------------------------------------- ----------- --------------------------------------------------------------------------------------------------------------------------------
+SenderId                                                                                                                         NO          uniqueidentifier                                                                                                                
+
+(1 rows affected)
+COLUMN_NAME                                                                                                                      IS_NULLABLE
+-------------------------------------------------------------------------------------------------------------------------------- -----------
+DoctorId                                                                                                                         NO         
+OnlineAppointmentFee                                                                                                             NO         
+InPersonAppointmentFee                                                                                                           NO         
+AcceptsOnline                                                                                                                    NO         
+AcceptsInPerson                                                                                                                  NO         
+ClinicName                                                                                                                       YES        
+ClinicAddress                                                                                                                    YES        
+ClinicCity                                                                                                                       YES        
+
+(8 rows affected)

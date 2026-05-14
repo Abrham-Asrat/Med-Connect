@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../../../../core/services/appointment.service';
 import { PaymentService } from '../../../../core/services/payment.service';
 import { DoctorService } from '../../../../core/services/doctor.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-book-appointment',
@@ -17,6 +18,7 @@ export class BookAppointmentComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
   private paymentService = inject(PaymentService);
   private doctorService = inject(DoctorService);
+  private sanitizer = inject(DomSanitizer);
 
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -30,6 +32,9 @@ export class BookAppointmentComponent implements OnInit {
   private static readonly SK_TIME           = 'bk_time';
   private static readonly SK_TYPE           = 'bk_type';
   private static readonly SK_APPOINTMENT_ID = 'bk_appointmentId'; // appointment ID for chat welcome msg
+  private static readonly SK_CLINIC_NAME    = 'bk_clinicName';
+  private static readonly SK_CLINIC_ADDRESS = 'bk_clinicAddress';
+  private static readonly SK_CLINIC_CITY    = 'bk_clinicCity';
 
   step = signal(1);
   appointmentType = signal<'Virtual' | 'InPerson'>('Virtual');
@@ -46,6 +51,15 @@ export class BookAppointmentComponent implements OnInit {
   doctorUserId = signal<string | null>(null);  // UserModel.UserId — needed for chat
   doctorName = signal<string>('Selected Doctor');
   appointmentId = signal<string | null>(null); // AppointmentId — passed to chat for welcome message
+
+  // Doctor appointment preferences
+  acceptsOnline = signal<boolean>(true);
+  acceptsInPerson = signal<boolean>(true);
+  clinicName = signal<string | null>(null);
+  clinicAddress = signal<string | null>(null);
+  clinicCity = signal<string | null>(null);
+  onlineFee = signal<number>(500);
+  inPersonFee = signal<number>(800);
 
   dates = signal<{ date: string; day: string; dayNum: number; month: string }[]>([]);
   morningSlots = signal<string[]>([]);
@@ -69,6 +83,9 @@ export class BookAppointmentComponent implements OnInit {
       this.selectedTime.set(sessionStorage.getItem(BookAppointmentComponent.SK_TIME) || '');
       this.appointmentType.set((sessionStorage.getItem(BookAppointmentComponent.SK_TYPE) as 'Virtual' | 'InPerson') || 'Virtual');
       this.appointmentId.set(sessionStorage.getItem(BookAppointmentComponent.SK_APPOINTMENT_ID));
+      this.clinicName.set(sessionStorage.getItem(BookAppointmentComponent.SK_CLINIC_NAME) || null);
+      this.clinicAddress.set(sessionStorage.getItem(BookAppointmentComponent.SK_CLINIC_ADDRESS) || null);
+      this.clinicCity.set(sessionStorage.getItem(BookAppointmentComponent.SK_CLINIC_CITY) || null);
       this.step.set(5);
       this.clearSession();
       return;
@@ -94,6 +111,9 @@ export class BookAppointmentComponent implements OnInit {
     sessionStorage.setItem(BookAppointmentComponent.SK_TIME,           this.selectedTime());
     sessionStorage.setItem(BookAppointmentComponent.SK_TYPE,           this.appointmentType());
     sessionStorage.setItem(BookAppointmentComponent.SK_APPOINTMENT_ID, this.appointmentId() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_CLINIC_NAME,    this.clinicName() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_CLINIC_ADDRESS, this.clinicAddress() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_CLINIC_CITY,    this.clinicCity() || '');
   }
 
   private clearSession(): void {
@@ -106,6 +126,9 @@ export class BookAppointmentComponent implements OnInit {
       BookAppointmentComponent.SK_TIME,
       BookAppointmentComponent.SK_TYPE,
       BookAppointmentComponent.SK_APPOINTMENT_ID,
+      BookAppointmentComponent.SK_CLINIC_NAME,
+      BookAppointmentComponent.SK_CLINIC_ADDRESS,
+      BookAppointmentComponent.SK_CLINIC_CITY,
     ].forEach(k => sessionStorage.removeItem(k));
   }
 
@@ -118,6 +141,22 @@ export class BookAppointmentComponent implements OnInit {
           // Capture the UserModel.UserId — this is what the chat system uses
           const uid = doctor.userId || doctor.UserId;
           if (uid) this.doctorUserId.set(uid);
+
+          // Load appointment type preferences
+          this.acceptsOnline.set(doctor.acceptsOnline !== false);
+          this.acceptsInPerson.set(doctor.acceptsInPerson !== false);
+          this.clinicName.set(doctor.clinicName || null);
+          this.clinicAddress.set(doctor.clinicAddress || null);
+          this.clinicCity.set(doctor.clinicCity || null);
+          this.onlineFee.set(doctor.onlineAppointmentFee || doctor.onlineFee || 500);
+          this.inPersonFee.set(doctor.inPersonAppointmentFee || doctor.inPersonFee || 800);
+
+          // If doctor only accepts one type, auto-select it and skip step 1
+          if (!this.acceptsInPerson() && this.acceptsOnline()) {
+            this.appointmentType.set('Virtual');
+          } else if (!this.acceptsOnline() && this.acceptsInPerson()) {
+            this.appointmentType.set('InPerson');
+          }
         }
       }
     });
@@ -291,8 +330,12 @@ export class BookAppointmentComponent implements OnInit {
 
   // Uses the connected Payment Backend to fire up the Chapa gateway
   initiateCheckoutFlow(appointmentData: any): void {
+    const fee = this.appointmentType() === 'Virtual'
+      ? this.onlineFee()
+      : this.inPersonFee();
+
     const chargePayload = {
-      amount: "500.00",
+      amount: fee.toFixed(2),
       currency: "ETB",
       phoneNumber: "0900000000", // Fallback, would normally use logged-in patient's phone
       paymentProvider: "1",      // Matches enum value e.g 'Chapa'
@@ -331,5 +374,22 @@ export class BookAppointmentComponent implements OnInit {
 
   goToDashboard(): void {
     this.router.navigate(['/patient/dashboard']);
+  }
+
+  /** Returns a sanitized Google Maps embed URL for the clinic. */
+  getClinicMapEmbedUrl(): SafeResourceUrl | null {
+    const parts = [this.clinicName(), this.clinicAddress(), this.clinicCity()]
+      .filter(Boolean).join(', ');
+    if (!parts) return null;
+    const url = `https://maps.google.com/maps?q=${encodeURIComponent(parts)}&output=embed&z=15`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  /** Returns a Google Maps search link for the clinic. */
+  getClinicMapsLink(): string {
+    const parts = [this.clinicName(), this.clinicAddress(), this.clinicCity()]
+      .filter(Boolean).join(', ');
+    if (!parts) return '';
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts)}`;
   }
 }

@@ -13,6 +13,21 @@ export class BlogService {
     return this.http.get(`${this.apiUrl}/blogs/all`);
   }
 
+  // GET /api/blogs/author/{authorId}
+  getBlogsByAuthor(authorId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/blogs/author/${authorId}`);
+  }
+
+  // GET /api/blogs/trending
+  getTrendingBlogs(count = 5): Observable<any> {
+    return this.http.get(`${this.apiUrl}/blogs/trending?count=${count}`);
+  }
+
+  // DELETE /api/blogs/{blogId}
+  deleteBlog(blogId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/blogs/${blogId}`);
+  }
+
   // GET /api/blogs/{blogId}
   getBlogById(blogId: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/blogs/${blogId}`);

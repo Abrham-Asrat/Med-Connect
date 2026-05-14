@@ -56,9 +56,9 @@ namespace BackendAPI.Source.Helpers.Extensions
         ICollection<DoctorAvailabilityModel> availabilities,
         ICollection<SpecialtyModel> specialties, ICollection<EducationModel> educations, ICollection<ExperienceModel> experiences)
         {
+            var pref = doctor.DoctorPreference;
             return new DoctorProfileDto
             {
-                // for user common 
                 UserId = user.UserId,
                 FirstName = user.FirstName,
                 Email = user.Email,
@@ -69,9 +69,6 @@ namespace BackendAPI.Source.Helpers.Extensions
                 DateOfBirth = user.DateOfBirth,
                 Address = user.Address ?? "",
                 Role = user.Role,
-
-
-                // For Doctor specified 
                 DoctorId = doctor.DoctorId,
                 Specialties = specialties.Select(s => s.ToSpecialtyDto()).ToList(),
                 Availabilities = availabilities.Select(a => a.ToAvailabilityDto()).ToList(),
@@ -81,18 +78,24 @@ namespace BackendAPI.Source.Helpers.Extensions
                 Biography = doctor.Biography,
                 Languages = (doctor.Languages ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                 DoctorStatus = doctor.DoctorStatus,
-                IsVerified = doctor.IsVerified
-
+                IsVerified = doctor.IsVerified,
+                AcceptsOnline    = pref?.AcceptsOnline    ?? true,
+                AcceptsInPerson  = pref?.AcceptsInPerson  ?? true,
+                ClinicName       = pref?.ClinicName,
+                ClinicAddress    = pref?.ClinicAddress,
+                ClinicCity       = pref?.ClinicCity,
+                OnlineAppointmentFee   = pref?.OnlineAppointmentFee   ?? 0,
+                InPersonAppointmentFee = pref?.InPersonAppointmentFee ?? 0
             };
         }
 
-        public static DoctorProfileDto ToDoctorProfileDto(this  UserModel user , DoctorModel doctor,
+        public static DoctorProfileDto ToDoctorProfileDto(this UserModel user, DoctorModel doctor,
         ICollection<DoctorAvailabilityModel> availabilities,
         ICollection<SpecialtyModel> specialties, ICollection<EducationModel> educations, ICollection<ExperienceModel> experiences)
         {
+            var pref = doctor.DoctorPreference;
             return new DoctorProfileDto
             {
-                // for user common 
                 UserId = user.UserId,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
@@ -103,9 +106,6 @@ namespace BackendAPI.Source.Helpers.Extensions
                 DateOfBirth = user.DateOfBirth,
                 Address = user.Address ?? "",
                 Role = user.Role,
-
-
-                // For Doctor specified 
                 DoctorId = doctor.DoctorId,
                 Specialties = specialties.Select(s => s.ToSpecialtyDto()).ToList(),
                 Availabilities = availabilities.Select(a => a.ToAvailabilityDto()).ToList(),
@@ -115,8 +115,14 @@ namespace BackendAPI.Source.Helpers.Extensions
                 Biography = doctor.Biography,
                 Languages = (doctor.Languages ?? "").Split(",", StringSplitOptions.RemoveEmptyEntries).ToList(),
                 DoctorStatus = doctor.DoctorStatus,
-                IsVerified = doctor.IsVerified
-
+                IsVerified = doctor.IsVerified,
+                AcceptsOnline    = pref?.AcceptsOnline    ?? true,
+                AcceptsInPerson  = pref?.AcceptsInPerson  ?? true,
+                ClinicName       = pref?.ClinicName,
+                ClinicAddress    = pref?.ClinicAddress,
+                ClinicCity       = pref?.ClinicCity,
+                OnlineAppointmentFee   = pref?.OnlineAppointmentFee   ?? 0,
+                InPersonAppointmentFee = pref?.InPersonAppointmentFee ?? 0
             };
         }
 
@@ -303,6 +309,8 @@ namespace BackendAPI.Source.Helpers.Extensions
     ICollection<SpecialtyModel> specialties
   )
   {
+    var pref = doctor.DoctorPreference;
+    var isInPerson = appointment.AppointmentType == AppointmentType.InPerson;
     return new AppointmentDto
     {
       AppointmentId = appointment.AppointmentId,
@@ -311,9 +319,11 @@ namespace BackendAPI.Source.Helpers.Extensions
       AppointmentDate = appointment.AppointmentDate,
       AppointmentTime = appointment.AppointmentTime,
       AppointmentType = appointment.AppointmentType,
-      Status = appointment.Status
+      Status = appointment.Status,
+      ClinicName    = isInPerson ? pref?.ClinicName    : null,
+      ClinicAddress = isInPerson ? pref?.ClinicAddress : null,
+      ClinicCity    = isInPerson ? pref?.ClinicCity    : null,
     };
-
   }
 
   public static AppointmentDto ToAppointmentDto(

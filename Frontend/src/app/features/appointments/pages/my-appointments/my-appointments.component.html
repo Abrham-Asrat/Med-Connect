@@ -63,6 +63,23 @@
         <div class="col-md-3">
           <small class="text-medium"><i class="bi bi-calendar me-1"></i>{{ apt.appointmentDate }}</small><br>
           <small class="text-medium"><i class="bi bi-clock me-1"></i>{{ apt.appointmentTime }}</small>
+          @if (apt.appointmentType === 'InPerson' && (apt.clinicName || apt.clinicAddress)) {
+          <div class="mt-1">
+            <small class="text-primary fw-semibold d-block">
+              <i class="bi bi-building me-1"></i>{{ apt.clinicName || 'Clinic' }}
+            </small>
+            @if (apt.clinicAddress) {
+            <small class="text-muted d-block">
+              <i class="bi bi-geo-alt me-1"></i>{{ apt.clinicAddress }}{{ apt.clinicCity ? ', ' + apt.clinicCity : '' }}
+            </small>
+            }
+            <a [href]="getMapsLink(apt)" target="_blank" rel="noopener noreferrer"
+               class="btn btn-link btn-sm p-0 text-primary" style="font-size:0.75rem"
+               (click)="$event.stopPropagation()">
+              <i class="bi bi-map me-1"></i>Directions / አቅጣጫ
+            </a>
+          </div>
+          }
         </div>
         <div class="col-md-2">
           <span class="badge rounded-pill px-3 py-2" [ngClass]="getStatusClass(apt.status)">

@@ -54,13 +54,13 @@ export class SettingsComponent implements OnInit {
   showNewPassword = signal(false);
   showConfirmPassword = signal(false);
 
-  // Notification prefs
+  // Notification prefs — persisted in localStorage
   notifications = signal([
-    { label: 'Appointment reminders / የቀጠሮ ማሳሰቢያዎች', enabled: true },
-    { label: 'New messages / አዳዲስ መልዕክቶች', enabled: true },
-    { label: 'Payment receipts / የክፍያ ደረሰኞች', enabled: true },
-    { label: 'Review requests / የግምገማ ጥያቄዎች', enabled: true },
-    { label: 'Marketing emails / የማስተዋወቂያ ኢሜይሎች', enabled: false },
+    { key: 'appointment_reminders', label: 'Appointment reminders / የቀጠሮ ማሳሰቢያዎች', enabled: true },
+    { key: 'new_messages',          label: 'New messages / አዳዲስ መልዕክቶች',           enabled: true },
+    { key: 'payment_receipts',      label: 'Payment receipts / የክፍያ ደረሰኞች',        enabled: true },
+    { key: 'review_requests',       label: 'Review requests / የግምገማ ጥያቄዎች',       enabled: true },
+    { key: 'marketing_emails',      label: 'Marketing emails / የማስተዋወቂያ ኢሜይሎች',  enabled: false },
   ]);
 
   // Help Center FAQs
@@ -95,6 +95,28 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProfile();
+    this.loadNotificationPrefs();
+  }
+
+  loadNotificationPrefs(): void {
+    try {
+      const saved = localStorage.getItem('notificationPrefs');
+      if (saved) {
+        const prefs: Record<string, boolean> = JSON.parse(saved);
+        this.notifications.update(n => n.map(item => ({
+          ...item,
+          enabled: prefs[item.key] !== undefined ? prefs[item.key] : item.enabled
+        })));
+      }
+    } catch { /* ignore */ }
+  }
+
+  saveNotificationPrefs(): void {
+    const prefs: Record<string, boolean> = {};
+    this.notifications().forEach(n => { prefs[n.key] = n.enabled; });
+    localStorage.setItem('notificationPrefs', JSON.stringify(prefs));
+    this.successMessage.set('Notification preferences saved!');
+    setTimeout(() => this.successMessage.set(null), 3000);
   }
 
   loadProfile(): void {

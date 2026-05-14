@@ -8,12 +8,21 @@ public class DoctorPreference
   public required Guid DoctorId { get; set; }
   public virtual DoctorModel? Doctor { get; set; }
 
-  // [Range(0, 1)] // Default is 0 being 0% discount, 1 being 100% discount (free)
-  // public decimal Discount { get; set; } = 0;
-
-  // public TimeSpan DiscountTimeSpan { get; set; } = TimeSpan.Zero;
-  // public DateTime? DiscountEndDate { get; set; }
-
   public required decimal OnlineAppointmentFee { get; set; }
   public required decimal InPersonAppointmentFee { get; set; }
+
+  /// <summary>Whether the doctor accepts virtual/online appointments.</summary>
+  public bool AcceptsOnline { get; set; } = true;
+
+  /// <summary>Whether the doctor accepts in-person clinic appointments.</summary>
+  public bool AcceptsInPerson { get; set; } = true;
+
+  /// <summary>Name of the clinic or hospital where the doctor sees patients in person.</summary>
+  public string? ClinicName { get; set; }
+
+  /// <summary>Street address of the clinic.</summary>
+  public string? ClinicAddress { get; set; }
+
+  /// <summary>City where the clinic is located.</summary>
+  public string? ClinicCity { get; set; }
 }

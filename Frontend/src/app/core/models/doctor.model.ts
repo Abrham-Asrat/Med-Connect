@@ -10,7 +10,18 @@ export interface Doctor {
   reviewCount: number;
   onlineFee: number;
   inPersonFee: number;
+  onlineAppointmentFee?: number;
+  inPersonAppointmentFee?: number;
   status: 'Pending' | 'Approved' | 'Rejected';
   profilePhoto?: string;
   languages: string[];
+
+  // Appointment type availability
+  acceptsOnline: boolean;
+  acceptsInPerson: boolean;
+
+  // Clinic info (for in-person appointments)
+  clinicName?: string;
+  clinicAddress?: string;
+  clinicCity?: string;
 }

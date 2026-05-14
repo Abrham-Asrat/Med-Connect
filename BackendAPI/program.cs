@@ -81,7 +81,16 @@ var builder = WebApplication.CreateBuilder(args);
         throw new InvalidOperationException("DB_CONNECTION environment variable is not set.");
       }
       Log.Information($"This is the conn str: {connectionString}");
-      options.UseSqlServer(connectionString);
+      options.UseSqlServer(connectionString, sqlOptions =>
+      {
+          // Use split queries globally to prevent Cartesian explosion
+          // when multiple collection navigations are included.
+          sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+      });
+      // Suppress the pending-model-changes warning so MigrateAsync() can run
+      // even when the snapshot is slightly out of sync with the compiled model.
+      options.ConfigureWarnings(w =>
+        w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
     }
   );
 
@@ -451,6 +460,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 {
+  // Auto-apply any pending EF Core migrations on startup
+  using (var scope = app.Services.CreateScope())
+  {
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+  }
+
   // app.UseExceptionHandler("/error"); // Exception handling endpoint
 
 

@@ -35,20 +35,35 @@
         @if (step() === 1) {
         <h5 class="text-primary mb-4 text-center">Select Appointment Type / የቀጠሮ አይነት ይምረጡ</h5>
         <div class="row g-3">
-          <div class="col-6">
+          @if (acceptsOnline()) {
+          <div [class]="acceptsInPerson() ? 'col-6' : 'col-12'">
             <div class="type-card h-100" (click)="selectType('Virtual')">
               <i class="bi bi-camera-video text-primary" style="font-size:40px"></i>
               <h6 class="mt-2">Virtual / በቪዲዮ</h6>
               <small class="text-medium">Video consultation / የቪዲዮ ምክክር</small>
             </div>
           </div>
-          <div class="col-6">
+          }
+          @if (acceptsInPerson()) {
+          <div [class]="acceptsOnline() ? 'col-6' : 'col-12'">
             <div class="type-card h-100" (click)="selectType('InPerson')">
               <i class="bi bi-building text-primary" style="font-size:40px"></i>
               <h6 class="mt-2">In-Person / በአካል</h6>
               <small class="text-medium">Visit the clinic / ክሊኒኩን ይጎብኙ</small>
+              @if (clinicName()) {
+              <small class="d-block text-muted mt-1"><i class="bi bi-geo-alt me-1"></i>{{ clinicName() }}</small>
+              }
             </div>
           </div>
+          }
+          @if (!acceptsOnline() && !acceptsInPerson()) {
+          <div class="col-12">
+            <div class="alert alert-warning text-center">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              This doctor is not currently accepting appointments. / ይህ ሀኪም በአሁኑ ጊዜ ቀጠሮ አይቀበልም።
+            </div>
+          </div>
+          }
         </div>
         }
 
@@ -97,9 +112,32 @@
         <h5 class="text-primary mb-4">Confirm Details / ዝርዝሮች ያረጋግጡ</h5>
         <div class="bg-light rounded-3 p-4">
           <p><strong>Doctor / ሐኪም:</strong> {{ doctorName() }}</p>
-          <p><strong>Type / አይነት:</strong> {{ appointmentType() }}</p>
+          <p><strong>Type / አይነት:</strong> {{ appointmentType() === 'Virtual' ? 'Virtual / በቪዲዮ' : 'In-Person / በአካል' }}</p>
           <p><strong>Date / ቀን:</strong> {{ selectedDate() }}</p>
           <p><strong>Time / ሰዓት:</strong> {{ selectedTime() }}</p>
+          @if (appointmentType() === 'InPerson' && (clinicName() || clinicAddress())) {
+          <hr>
+          <p class="mb-1"><strong><i class="bi bi-geo-alt-fill text-primary me-1"></i>Clinic Location / ክሊኒክ አድራሻ</strong></p>
+          @if (clinicName()) { <p class="mb-1 ms-3">{{ clinicName() }}</p> }
+          @if (clinicAddress()) { <p class="mb-1 ms-3 text-muted">{{ clinicAddress() }}{{ clinicCity() ? ', ' + clinicCity() : '' }}</p> }
+          @if (getClinicMapEmbedUrl()) {
+          <div class="mt-2 rounded overflow-hidden border" style="height:160px;">
+            <iframe [src]="getClinicMapEmbedUrl()" width="100%" height="160"
+              style="border:0;display:block;" loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade" title="Clinic map"></iframe>
+          </div>
+          <a [href]="getClinicMapsLink()" target="_blank" rel="noopener noreferrer"
+             class="btn btn-sm btn-outline-primary mt-2 w-100">
+            <i class="bi bi-map me-1"></i>Open in Google Maps / ጉግል ካርታ ላይ ክፈት
+          </a>
+          }
+          }
+          <hr>
+          <p class="mb-0"><strong>Fee / ክፍያ:</strong>
+            <span class="text-primary fw-bold ms-1">
+              {{ appointmentType() === 'Virtual' ? onlineFee() : inPersonFee() }} ETB
+            </span>
+          </p>
         </div>
 
         <div class="d-flex justify-content-between mt-4">
@@ -111,7 +149,9 @@
         <!-- STEP 4: Payment -->
         @if (step() === 4) {
         <h5 class="text-primary mb-4">Payment / ክፍያ</h5>
-        <p class="text-medium">Appointment fee / የቀጠሮ ክፍያ: <strong>500 ETB</strong></p>
+        <p class="text-medium">Appointment fee / የቀጠሮ ክፍያ:
+          <strong>{{ appointmentType() === 'Virtual' ? onlineFee() : inPersonFee() }} ETB</strong>
+        </p>
         <div class="d-flex justify-content-between mt-4">
           <button class="btn btn-outline-secondary" (click)="step.set(3)">Back / ወደኋላ</button>
           <button class="btn btn-primary" (click)="bookAppointment()" [disabled]="isLoading()">
@@ -136,20 +176,49 @@
                 selectedDate() }}</span></div>
             <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Time:</span> <span>{{
                 selectedTime() }}</span></div>
-            <div class="d-flex justify-content-between small"><span class="text-muted">Type:</span> <span>{{
-                appointmentType() }}</span></div>
+            <div class="d-flex justify-content-between small"><span class="text-muted">Type:</span>
+              <span>{{ appointmentType() === 'Virtual' ? 'Virtual / በቪዲዮ' : 'In-Person / በአካል' }}</span>
+            </div>
           </div>
+
+          @if (appointmentType() === 'InPerson' && (clinicName() || clinicAddress())) {
+          <div class="alert alert-info text-start mb-4">
+            <h6 class="mb-2"><i class="bi bi-geo-alt-fill me-2"></i>Clinic Location / ክሊኒክ አድራሻ</h6>
+            @if (clinicName()) { <p class="mb-1 fw-semibold">{{ clinicName() }}</p> }
+            @if (clinicAddress()) {
+            <p class="mb-0 text-muted">
+              <i class="bi bi-pin-map me-1"></i>{{ clinicAddress() }}{{ clinicCity() ? ', ' + clinicCity() : '' }}
+            </p>
+            }
+            @if (getClinicMapEmbedUrl()) {
+            <div class="mt-3 rounded overflow-hidden border" style="height:180px;">
+              <iframe [src]="getClinicMapEmbedUrl()" width="100%" height="180"
+                style="border:0;display:block;" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade" title="Clinic location map"></iframe>
+            </div>
+            <a [href]="getClinicMapsLink()" target="_blank" rel="noopener noreferrer"
+               class="btn btn-sm btn-outline-primary mt-2 w-100">
+              <i class="bi bi-map me-1"></i>Open in Google Maps / ጉግል ካርታ ላይ ክፈት
+            </a>
+            }
+            <small class="text-muted d-block mt-2">
+              <i class="bi bi-info-circle me-1"></i>Please arrive 10 minutes before your appointment. / ቀጠሮዎ ከ10 ደቂቃ በፊት ይድረሱ።
+            </small>
+          </div>
+          }
 
           <div class="d-flex flex-column gap-2">
             <button class="btn btn-primary w-100 rounded-pill py-3 fw-bold" (click)="goToDashboard()">Back to
               Dashboard</button>
-            @if (appointmentType() === 'Virtual') {
             <a [routerLink]="['/patient/chat']"
                [queryParams]="{ startChatWith: doctorUserId() || doctorId(), appointmentId: appointmentId() }"
                class="btn btn-outline-primary w-100 rounded-pill py-3 fw-bold">
-              <i class="bi bi-chat-dots-fill me-2"></i> Go to Chat Room
+              @if (appointmentType() === 'Virtual') {
+              <i class="bi bi-chat-dots-fill me-2"></i> Go to Chat Room / ወደ ቻት ክፍል
+              } @else {
+              <i class="bi bi-chat-dots me-2"></i> Message Doctor / ሀኪሙን ያናግሩ
+              }
             </a>
-            }
           </div>
 
         </div>

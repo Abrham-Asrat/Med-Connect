@@ -4,6 +4,7 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
 import { DoctorService } from '../../../../core/services/doctor.service';
 import { ReviewService } from '../../../../core/services/review.service';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-doctor-profile',
@@ -16,6 +17,7 @@ export class DoctorProfileComponent implements OnInit {
   private doctorService = inject(DoctorService);
   private reviewService = inject(ReviewService);
   private route = inject(ActivatedRoute);
+  private sanitizer = inject(DomSanitizer);
 
   doctor = signal<any>(null);
   reviews = signal<any[]>([]);
@@ -45,20 +47,38 @@ export class DoctorProfileComponent implements OnInit {
 
   loadDoctor(doctorId: string): void {
     this.isLoading.set(true);
-
-    // Dispatched to mock directly for telemedicine frontend workflow demonstration
-    setTimeout(() => {
-      const mockDoc = this.getMockDoctor();
-      // Emulate dynamic behavior if looking up specific IDs
-      if (doctorId === '00000000-0000-0000-0000-000000000002') {
-        mockDoc.firstName = 'Abrham';
-        mockDoc.lastName = 'Asrat';
-        mockDoc.specialties = ['Cardiology'];
+    this.doctorService.getDoctorById(doctorId).subscribe({
+      next: (res: any) => {
+        const doctor = res?.data || res;
+        if (doctor) {
+          // Normalize fields from backend DoctorProfileDto
+          const normalized = {
+            ...doctor,
+            onlineFee: doctor.onlineAppointmentFee ?? doctor.onlineFee ?? 500,
+            inPersonFee: doctor.inPersonAppointmentFee ?? doctor.inPersonFee ?? 800,
+            acceptsOnline: doctor.acceptsOnline !== false,
+            acceptsInPerson: doctor.acceptsInPerson !== false,
+            clinic: {
+              name: doctor.clinicName || null,
+              address: doctor.clinicAddress || null,
+              city: doctor.clinicCity || null,
+            },
+            specialties: Array.isArray(doctor.specialties)
+              ? doctor.specialties.map((s: any) => typeof s === 'string' ? s : s.name || s.specialtyName || '')
+              : [],
+          };
+          this.doctor.set(normalized);
+        }
+        this.isLoading.set(false);
+        this.loadReviews(doctorId);
+      },
+      error: () => {
+        // Fallback to mock if API fails
+        this.doctor.set(this.getMockDoctor());
+        this.isLoading.set(false);
+        this.loadReviews(doctorId);
       }
-      this.doctor.set(mockDoc);
-      this.isLoading.set(false);
-      this.loadReviews(doctorId);
-    }, 500);
+    });
   }
 
   loadReviews(doctorId: string): void {
@@ -186,5 +206,24 @@ export class DoctorProfileComponent implements OnInit {
     if (!this.ratingStats()) return 0;
     const total = this.ratingStats().totalReviews || 1;
     return (this.getRatingCount(star) / total) * 100;
+  }
+
+  /** Builds a Google Maps embed src from clinic address fields. */
+  getClinicMapEmbedUrl(): SafeResourceUrl | null {
+    const d = this.doctor();
+    const parts = [d?.clinic?.name, d?.clinic?.address, d?.clinic?.city]
+      .filter(Boolean).join(', ');
+    if (!parts) return null;
+    const url = `https://maps.google.com/maps?q=${encodeURIComponent(parts)}&output=embed&z=15`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  /** Builds a Google Maps search link that opens in a new tab. */
+  getClinicMapsLink(): string {
+    const d = this.doctor();
+    const parts = [d?.clinic?.name, d?.clinic?.address, d?.clinic?.city]
+      .filter(Boolean).join(', ');
+    if (!parts) return '';
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(parts)}`;
   }
 }

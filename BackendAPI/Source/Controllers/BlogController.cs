@@ -139,6 +139,48 @@ public class BlogController : ControllerBase
   }
 
   /// <summary>
+  /// Get all blogs by a specific author (doctor)
+  /// </summary>
+  [HttpGet("author/{authorId}")]
+  [AllowAnonymous]
+  public async Task<IActionResult> GetBlogsByAuthor([FromRoute] [Required] [Guid] Guid authorId)
+  {
+    try
+    {
+      var result = await _blogService.GetAllBlogsAsync();
+      var filtered = result.Where(b => b.AuthorId == authorId).ToList();
+      return Ok(new ApiResponse<List<BlogDto>>(true, "Author blogs retrieved", filtered));
+    }
+    catch (System.Exception ex)
+    {
+      _logger.LogError(ex, "Error getting blogs by author.");
+      throw;
+    }
+  }
+
+  /// <summary>
+  /// Delete a single blog by id
+  /// </summary>
+  [HttpDelete("{blogId}")]
+  public async Task<IActionResult> DeleteBlog([FromRoute] [Required] [Guid] Guid blogId)
+  {
+    try
+    {
+      await _blogService.DeleteBlogAsync(blogId);
+      return Ok(new ApiResponse<object>(true, "Blog deleted successfully", null));
+    }
+    catch (KeyNotFoundException)
+    {
+      return NotFound(new ApiResponse<object>(false, "Blog not found", null));
+    }
+    catch (System.Exception ex)
+    {
+      _logger.LogError(ex, "Error deleting blog.");
+      throw;
+    }
+  }
+
+  /// <summary>
   /// Delete all blogs (Only for Testing Purpose)
   /// </summary>
   /// <returns></returns>

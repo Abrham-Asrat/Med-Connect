@@ -18,7 +18,7 @@ public class Message : BaseEntity
 
   public virtual ICollection<FileModel>? Files { get; set; } = new HashSet<FileModel>();
 
-  public Guid SenderId { get; set; }
+  public Guid? SenderId { get; set; }   // null = system message
   public virtual UserModel? Sender { get; set; }
 
   public Guid ConversationId { get; set; }

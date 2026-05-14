@@ -219,6 +219,7 @@ public class AppointmentService(
   /// <param name="doctorId">The ID of the doctor whose appointment availability is being checked.</param>
   /// <param name="newAppointmentDate"></param>
   /// <param name="newAppointmentStartTime"></param>
+  /// <param name="excludeAppointmentId">Optional ID of an appointment to ignore when checking conflicts (used for rescheduling).</param>
   /// <returns>True if the appointment slot is available (i.e. no appointment exists for that doctor, date, and time); otherwise, false.</returns>
   public async Task<bool> CheckAppointmentAvailabilityAsync(
     Guid doctorId,

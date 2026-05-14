@@ -82,7 +82,7 @@ public class ChatService(
                   var newAppointment = await appContext.Appointments
                       .Include(a => a.Doctor).ThenInclude(d => d.User)
                       .Include(a => a.Patient).ThenInclude(p => p.User)
-                      .FirstOrDefaultAsync(a => a.AppointmentId == createConversationDto.AppointmentId.Value);
+                      .FirstOrDefaultAsync(a => a.AppointmentId == createConversationDto.AppointmentId!.Value);
 
                   if (newAppointment != null)
                   {

@@ -139,9 +139,14 @@ namespace BackendAPI.Source.Hubs
 
         // Get all participants in the conversation and broadcast to each
         var participants = await _chatService.GetConversationParticipantsAsync(conversationId);
+        _logger.LogInformation("[SignalR Debug] Broadcasting message to {Count} participants in conversation {ConvId}", 
+            participants.Count, conversationId);
+
         foreach (var participant in participants)
         {
-          await Clients.User(participant.UserId.ToString())
+          var targetId = participant.UserId.ToString();
+          _logger.LogInformation("[SignalR Debug] Sending to User Identifier: {TargetId}", targetId);
+          await Clients.User(targetId)
             .SendAsync(ChatEvents.ReceiveMessage.ToString(), createdMessage);
         }
       }

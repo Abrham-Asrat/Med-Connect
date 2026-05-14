@@ -8,25 +8,38 @@ public class UserIdProvider : IUserIdProvider
     public string? GetUserId(HubConnectionContext connection)
     {
         var principal = connection.User;
-        if (principal == null) return null;
+        if (principal == null) 
+        {
+            Serilog.Log.Warning("[SignalR Debug] Principal is null for connection {ConnectionId}", connection.ConnectionId);
+            return null;
+        }
 
         // 1. Our custom "UserId" claim — injected by OnTokenValidated in Program.cs
-        //    This is the DB UserModel.UserId (a proper GUID)
         var dbUserId = principal.FindFirst("UserId")?.Value;
         if (!string.IsNullOrEmpty(dbUserId) && Guid.TryParse(dbUserId, out _))
+        {
+            Serilog.Log.Information("[SignalR Debug] Resolved UserId from claim: {UserId}", dbUserId);
             return dbUserId;
+        }
 
-        // 2. NameIdentifier — could be a GUID (if sub was already a GUID) or Auth0 string
+        // 2. NameIdentifier
         var nameId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!string.IsNullOrEmpty(nameId) && Guid.TryParse(nameId, out _))
+        {
+            Serilog.Log.Information("[SignalR Debug] Resolved UserId from NameIdentifier: {UserId}", nameId);
             return nameId;
+        }
 
         // 3. "sub" claim directly
         var sub = principal.FindFirst("sub")?.Value;
         if (!string.IsNullOrEmpty(sub) && Guid.TryParse(sub, out _))
+        {
+            Serilog.Log.Information("[SignalR Debug] Resolved UserId from sub: {UserId}", sub);
             return sub;
+        }
 
-        // Cannot resolve a DB GUID — connection will be aborted by OnConnectedAsync
+        Serilog.Log.Warning("[SignalR Debug] Could not resolve a GUID UserId for connection {ConnectionId}. Sub: {Sub}", 
+            connection.ConnectionId, sub ?? "null");
         return null;
     }
 }

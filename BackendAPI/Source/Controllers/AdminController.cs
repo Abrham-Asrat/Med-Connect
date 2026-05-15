@@ -317,47 +317,53 @@ namespace BackendAPI.Source.Controllers
         {
             try
             {
-                var payments = await appContext.Payments
-                    .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Doctor)
-                    .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Patient)
-                    .ThenInclude(pa => pa.User)
-                    .Where(p => p.PaymentStatus == PaymentStatus.Success)
-                    .ToListAsync();
+                var paymentsQuery = appContext.Payments
+                    .Include(p => p.Sender)
+                    .Include(p => p.Receiver)
+                    .Where(p => p.PaymentStatus == PaymentStatus.Success);
                 
-                var totalRevenue = payments.Sum(p => p.Amount);
-                var thisMonthRevenue = payments.Where(p => p.PaymentDate.Month == DateTime.UtcNow.Month && p.PaymentDate.Year == DateTime.UtcNow.Year).Sum(p => p.Amount);
+                var totalRevenue = await paymentsQuery.SumAsync(p => p.Amount);
+                
+                var now = DateTime.UtcNow;
+                var thisMonthRevenue = await paymentsQuery
+                    .Where(p => p.CreatedAt.Month == now.Month && p.CreatedAt.Year == now.Year)
+                    .SumAsync(p => p.Amount);
+                
+                var payments = await paymentsQuery.ToListAsync();
                 
                 var monthlyRevenue = payments
-                    .GroupBy(p => new { p.PaymentDate.Year, p.PaymentDate.Month })
+                    .GroupBy(p => new { p.CreatedAt.Year, p.CreatedAt.Month })
                     .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
                     .Select(g => new { 
-                        month = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM"), 
+                        month = new DateTime((int)g.Key.Year, (int)g.Key.Month, 1).ToString("MMM"), 
                         amount = g.Sum(p => p.Amount) 
                     })
                     .TakeLast(10)
                     .ToList();
                     
-                var specialtyRevenue = payments
-                    .Where(p => p.Appointment?.Doctor != null)
-                    .Join(appContext.DoctorSpecialties.Include(ds => ds.Specialty), 
-                          p => p.Appointment!.DoctorId, 
-                          ds => ds.DoctorId, 
-                          (p, ds) => new { p.Amount, SpecialtyName = ds.Specialty.Name })
+                var specialtyRevenueDb = await appContext.Payments
+                    .Where(p => p.PaymentStatus == PaymentStatus.Success && p.ReceiverId != null)
+                    .Join(appContext.Doctors, 
+                          p => p.ReceiverId, 
+                          d => d.UserId, 
+                          (p, d) => new { p.Amount, d.DoctorId })
+                    .Join(appContext.DoctorSpecialties.Include(ds => ds.Specialty),
+                          pd => pd.DoctorId,
+                          ds => ds.DoctorId,
+                          (pd, ds) => new { pd.Amount, SpecialtyName = ds.Specialty!.SpecialtyName })
                     .GroupBy(x => x.SpecialtyName)
                     .Select(g => new { specialty = g.Key, amount = g.Sum(x => x.Amount) })
-                    .ToList();
+                    .ToListAsync();
 
                 var recentTxns = payments
-                    .OrderByDescending(p => p.PaymentDate)
+                    .OrderByDescending(p => p.CreatedAt)
                     .Take(10)
                     .Select(p => new {
-                        id = p.TxRef,
-                        doctor = p.Appointment?.Doctor?.User?.FirstName != null ? $"Dr. {p.Appointment.Doctor.User.FirstName} {p.Appointment.Doctor.User.LastName}" : "Unknown",
-                        patient = p.Appointment?.Patient?.User?.FirstName != null ? $"{p.Appointment.Patient.User.FirstName} {p.Appointment.Patient.User.LastName}" : "Unknown",
+                        id = p.TransactionReference,
+                        doctor = p.Receiver != null ? $"Dr. {p.Receiver.FirstName} {p.Receiver.LastName}" : "Unknown",
+                        patient = p.Sender != null ? $"{p.Sender.FirstName} {p.Sender.LastName}" : "Unknown",
                         amount = p.Amount,
-                        date = p.PaymentDate.ToString("yyyy-MM-dd"),
+                        date = p.CreatedAt.ToString("yyyy-MM-dd"),
                         status = p.PaymentStatus.ToString()
                     }).ToList();
 
@@ -365,7 +371,7 @@ namespace BackendAPI.Source.Controllers
                     totalRevenue,
                     thisMonth = thisMonthRevenue,
                     monthlyRevenue,
-                    revenueBySpecialty = specialtyRevenue,
+                    revenueBySpecialty = specialtyRevenueDb,
                     transactions = recentTxns
                 }));
             }
@@ -396,8 +402,8 @@ namespace BackendAPI.Source.Controllers
                     }).ToListAsync();
 
                 var flaggedReviews = await appContext.Reviews
-                    .Include(r => r.Patient).ThenInclude(p => p.User)
-                    .Include(r => r.Doctor).ThenInclude(d => d.User)
+                    .Include(r => r.Patient).ThenInclude(p => p!.User)
+                    .Include(r => r.Doctor).ThenInclude(d => d!.User)
                     .Where(r => r.IsFlagged)
                     .Select(r => new {
                         id = r.ReviewId.ToString(),

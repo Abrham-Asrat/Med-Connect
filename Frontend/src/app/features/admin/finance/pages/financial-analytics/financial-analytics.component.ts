@@ -45,39 +45,37 @@ export class FinancialAnalyticsComponent implements OnInit {
     this.errorMessage.set(null);
 
     // Get stats from admin endpoint
-    this.adminService.getStats().subscribe({
+    this.adminService.getFinancialAnalytics().subscribe({
       next: (response: any) => {
+        this.isLoading.set(false);
         const data = response?.data || response || {};
         this.totalRevenue.set(data.totalRevenue || 0);
-        this.totalAppointments.set(data.totalAppointments || 0);
-        this.generateMonthlyData();
-        this.loadAppointments();
+        this.thisMonth.set(data.thisMonth || 0);
+        this.monthlyRevenue.set(data.monthlyRevenue || []);
+        this.revenueBySpecialty.set(data.revenueBySpecialty || []);
+        this.transactions.set(data.transactions || []);
+        // Load counts additionally
+        this.loadAppointmentsCounts();
       },
       error: (error: any) => {
         this.isLoading.set(false);
         if (error.status === 403) {
           this.errorMessage.set('Access denied. Admin privileges required.');
         } else {
-          // Use mock data if API fails
-          this.generateMockData();
+          this.errorMessage.set('Failed to load financial data.');
         }
       }
     });
   }
 
-  loadAppointments(): void {
+  loadAppointmentsCounts(): void {
     this.appointmentService.getAllAppointments().subscribe({
       next: (response: any) => {
-        this.isLoading.set(false);
         const data = response?.data || response || [];
         const apps = Array.isArray(data) ? data : [];
+        this.totalAppointments.set(apps.length);
         this.completedAppointments.set(apps.filter((a: any) => a.status === 'Completed').length);
-        this.generateTransactions(apps);
-        this.generateSpecialtyData(apps);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.generateMockData();
+        this.pendingPayouts.set(apps.filter((a: any) => a.status === 'Pending').length * 500); // 500 as static fee representation
       }
     });
   }

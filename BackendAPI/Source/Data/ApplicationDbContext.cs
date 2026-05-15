@@ -31,6 +31,7 @@ namespace BackendAPI.Source.Data
         public DbSet<Blog> Blogs { get; set; } = null!;
         public DbSet<BlogComment> BlogComments { get; set; } = null!;
         public DbSet<BlogLike> BlogLikes { get; set; } = null!;
+        public DbSet<SystemSettings> SystemSettings { get; set; } = null!;
         public DbSet<BlogTag> BlogTags { get; set; } = null!;
         public DbSet<Tag> Tags { get; set; } = null!;
         public DbSet<Conversation> Conversations { get; set; } = null!;

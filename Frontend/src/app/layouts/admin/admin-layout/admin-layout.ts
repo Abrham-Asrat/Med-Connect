@@ -3,12 +3,11 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
-import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, ThemeToggleComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
   template: `
     <div class="d-flex min-vh-100">
       <aside class="sidebar bg-primary d-none d-lg-flex flex-column" [class.sidebar-collapsed]="desktopSidebarCollapsed()">
@@ -64,7 +63,6 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
               <a routerLink="/admin/settings" class="btn btn-link p-0 text-primary" title="Settings">
                 <i class="bi bi-gear fs-5"></i>
               </a>
-              <app-theme-toggle></app-theme-toggle>
               <app-notification-bell [count]="12"></app-notification-bell>
             </div>
           </div>

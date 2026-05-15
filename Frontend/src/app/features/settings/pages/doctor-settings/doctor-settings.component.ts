@@ -4,11 +4,12 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, F
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ProfileService } from '../../../../core/services/profile.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
     selector: 'app-doctor-settings',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ThemeToggleComponent],
     templateUrl: './doctor-settings.component.html',
     styleUrls: ['./doctor-settings.component.scss']
 })
@@ -223,8 +224,8 @@ export class DoctorSettingsComponent implements OnInit {
 
     saveProfile(): void {
         const form = this.activeTab() === 'personal' ? this.personalForm
-                   : this.activeTab() === 'preferences' ? this.preferencesForm
-                   : this.professionalForm;
+            : this.activeTab() === 'preferences' ? this.preferencesForm
+                : this.professionalForm;
         if (form.invalid) {
             this.errorMessage.set('Please fill all required fields correctly.');
             return;

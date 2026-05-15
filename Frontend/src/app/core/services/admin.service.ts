@@ -56,6 +56,24 @@ export class AdminService {
   }
 
   deactivateUser(userId: string): Observable<any> {
-  return this.http.patch(`${this.apiUrl}/admin/users/${userId}/deactivate`, {});
-}
+    return this.http.patch(`${this.apiUrl}/admin/users/${userId}/deactivate`, {});
+  }
+
+  // Finance
+  getFinancialAnalytics(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/admin/finance/analytics`);
+  }
+
+  // Moderation
+  getFlaggedContent(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/admin/moderation/flagged`);
+  }
+
+  dismissFlag(type: string, id: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/admin/moderation/flagged/${type}/${id}/dismiss`, {});
+  }
+
+  removeFlaggedContent(type: string, id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/admin/moderation/flagged/${type}/${id}/remove`);
+  }
 }

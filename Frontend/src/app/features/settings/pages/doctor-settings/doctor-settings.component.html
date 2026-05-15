@@ -1,6 +1,8 @@
 <div class="container-fluid p-4">
-
-    <h4 class="text-primary mb-4"><i class="bi bi-gear me-2"></i>Doctor Settings / ሀኪም ቅንጅቶች</h4>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-primary mb-0"><i class="bi bi-gear me-2"></i>Doctor Settings / ሀኪም ቅንጅቶች</h4>
+        <app-theme-toggle></app-theme-toggle>
+    </div>
 
     @if (successMessage()) {
     <div class="alert alert-success d-flex align-items-center gap-2">
@@ -222,7 +224,8 @@
             @if (activeTab() === 'preferences') {
             <div class="card section-card">
                 <div class="card-header bg-white">
-                    <h5 class="text-primary mb-0"><i class="bi bi-building me-2"></i>Clinic & Appointment Preferences / ክሊኒክ እና ቀጠሮ ምርጫዎች</h5>
+                    <h5 class="text-primary mb-0"><i class="bi bi-building me-2"></i>Clinic & Appointment Preferences /
+                        ክሊኒክ እና ቀጠሮ ምርጫዎች</h5>
                 </div>
                 <div class="card-body">
                     <form [formGroup]="preferencesForm">
@@ -289,10 +292,12 @@
 
                         <!-- Clinic Info (shown when in-person is enabled) -->
                         @if (preferencesForm.get('acceptsInPerson')?.value) {
-                        <h6 class="text-secondary mb-3"><i class="bi bi-geo-alt me-1"></i>Clinic Location / ክሊኒክ አድራሻ</h6>
+                        <h6 class="text-secondary mb-3"><i class="bi bi-geo-alt me-1"></i>Clinic Location / ክሊኒክ አድራሻ
+                        </h6>
                         <div class="alert alert-info small mb-3">
                             <i class="bi bi-info-circle me-1"></i>
-                            This information will be shown to patients after they book an in-person appointment. / ይህ መረጃ ታካሚዎች በአካል ቀጠሮ ከያዙ በኋላ ይታያቸዋል።
+                            This information will be shown to patients after they book an in-person appointment. / ይህ
+                            መረጃ ታካሚዎች በአካል ቀጠሮ ከያዙ በኋላ ይታያቸዋል።
                         </div>
 
                         <div class="mb-3">
@@ -320,33 +325,31 @@
                                 <small class="text-muted ms-1">(updates as you type)</small>
                             </label>
                             <div class="rounded-3 overflow-hidden border shadow-sm" style="height:240px;">
-                                <iframe
-                                    [src]="getClinicMapEmbedUrl()"
-                                    width="100%" height="240"
-                                    style="border:0;display:block;"
-                                    allowfullscreen
-                                    loading="lazy"
-                                    referrerpolicy="no-referrer-when-downgrade"
-                                    title="Clinic location preview">
+                                <iframe [src]="getClinicMapEmbedUrl()" width="100%" height="240"
+                                    style="border:0;display:block;" allowfullscreen loading="lazy"
+                                    referrerpolicy="no-referrer-when-downgrade" title="Clinic location preview">
                                 </iframe>
                             </div>
                             <a [href]="getClinicMapsLink()" target="_blank" rel="noopener noreferrer"
-                               class="btn btn-sm btn-outline-primary mt-2">
+                                class="btn btn-sm btn-outline-primary mt-2">
                                 <i class="bi bi-box-arrow-up-right me-1"></i>
                                 Open in Google Maps / ጉግል ካርታ ላይ ክፈት
                             </a>
                         </div>
-                        } @else if (preferencesForm.get('clinicAddress')?.value || preferencesForm.get('clinicName')?.value) {
+                        } @else if (preferencesForm.get('clinicAddress')?.value ||
+                        preferencesForm.get('clinicName')?.value) {
                         <div class="alert alert-warning small mb-3">
                             <i class="bi bi-exclamation-triangle me-1"></i>
-                            Enter clinic name, address, and city to see the map preview. / ካርታ ቅድመ-ዕይታ ለማየት የክሊኒክ ስም፣ አድራሻ እና ከተማ ያስገቡ።
+                            Enter clinic name, address, and city to see the map preview. / ካርታ ቅድመ-ዕይታ ለማየት የክሊኒክ ስም፣
+                            አድራሻ እና ከተማ ያስገቡ።
                         </div>
                         }
                         }
 
                         <button type="button" class="btn btn-primary rounded-pill px-4 mt-2" (click)="saveProfile()"
                             [disabled]="isLoading() || preferencesForm.invalid">
-                            @if (isLoading()) { Saving... } @else { <i class="bi bi-check-lg me-1"></i>Save Preferences / ምርጫዎችን አስቀምጥ }
+                            @if (isLoading()) { Saving... } @else { <i class="bi bi-check-lg me-1"></i>Save Preferences
+                            / ምርጫዎችን አስቀምጥ }
                         </button>
                     </form>
                 </div>

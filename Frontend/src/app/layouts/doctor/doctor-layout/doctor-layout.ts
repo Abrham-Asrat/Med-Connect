@@ -3,7 +3,6 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
-import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 import { ChatService } from '../../../core/services/chat.service';
 import { NotificationStoreService } from '../../../core/services/notification-store.service';
 import { Subscription } from 'rxjs';
@@ -11,7 +10,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-doctor-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, ThemeToggleComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
   template: `
     <div class="d-flex min-vh-100">
       <!-- Desktop Sidebar -->
@@ -85,7 +84,6 @@ import { Subscription } from 'rxjs';
               <a routerLink="/doctor/settings" class="btn btn-link p-0 text-primary" title="Settings">
                 <i class="bi bi-gear fs-5"></i>
               </a>
-              <app-theme-toggle></app-theme-toggle>
               <app-notification-bell [count]="unreadNotifications()"></app-notification-bell>
             </div>
           </div>

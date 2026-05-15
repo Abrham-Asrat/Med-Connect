@@ -55,7 +55,16 @@ namespace BackendAPI.Source.Models.Entities
 
         public virtual ICollection<Blog> Blogs { get; set; } = new HashSet<Blog>();
         public virtual ICollection<BlogComment> BlogComments { get; set; } = new HashSet<BlogComment>();
-        public virtual ICollection<BlogLike> BlogLikes { get; set; } = new HashSet<BlogLike>(); 
+        public virtual ICollection<BlogLike> BlogLikes { get; set; } = new HashSet<BlogLike>();
 
+        // Admin checks
+        public bool IsActive { get; set; } = true;
+
+        // Notification Preferences
+        public bool PrefAppointmentReminders { get; set; } = true;
+        public bool PrefNewMessages { get; set; } = true;
+        public bool PrefPaymentReceipts { get; set; } = true;
+        public bool PrefReviewRequests { get; set; } = true;
+        public bool PrefMarketingEmails { get; set; } = false;
     }
 }

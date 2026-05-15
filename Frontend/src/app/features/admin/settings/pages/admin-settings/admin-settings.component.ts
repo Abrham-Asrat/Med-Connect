@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../../../../core/auth/auth.service';
 import { ProfileService } from '../../../../../core/services/profile.service';
+import { ThemeToggleComponent } from '../../../../../shared/components/theme-toggle/theme-toggle.component';
 
 
 @Component({
     selector: 'app-admin-settings',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ThemeToggleComponent],
     templateUrl: './admin-settings.component.html',
     styles: [`
     .settings-nav .nav-link {

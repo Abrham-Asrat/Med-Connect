@@ -455,6 +455,39 @@ namespace BackendAPI.Source.Service
 
         }
 
+        // Deactivate User Service
+        public async Task<ServiceResponse> DeactivateUserAsync(Guid userId)
+        {
+            try
+            {
+                var user = await appContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+
+                if (user == null)
+                {
+                    return new ServiceResponse(false, 404, "User not found");
+                }
+
+                user.IsActive = !user.IsActive; // Toggle active status
+
+                if (user.Auth0Id != null)
+                {
+                    // Sync the block status to Auth0
+                    await auth0Service.BlockUserAsync(user.Auth0Id, !user.IsActive);
+                }
+
+                appContext.Users.Update(user);
+                await appContext.SaveChangesAsync();
+
+                var statusMsg = user.IsActive ? "User reactivated successfully" : "User deactivated successfully";
+                return new ServiceResponse(true, 200, statusMsg);
+            }
+            catch (System.Exception ex)
+            {
+                logger.LogError(ex, "Failed to toggle active status for user with ID: {UserId}", userId);
+                throw new Exception("Failed to change user status", ex);
+            }
+        }
+
 
         // Get user profile by user id
         public async Task<ServiceResponse<ProfileDto>> GetUserProfileAsync(Guid userId)

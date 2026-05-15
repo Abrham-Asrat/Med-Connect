@@ -2,6 +2,7 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BlogService } from '../../../../../core/services/blog.service';
+import { AdminService } from '../../../../../core/services/admin.service';
 
 @Component({
   selector: 'app-content-moderation',
@@ -66,10 +67,10 @@ import { BlogService } from '../../../../../core/services/blog.service';
             </div>
 
             <div class="d-flex gap-2">
-              <button class="btn btn-danger btn-sm" (click)="removeContent(item.id)">
+              <button class="btn btn-danger btn-sm" (click)="removeContent(item)">
                 <i class="bi bi-trash me-1"></i>Remove Content
               </button>
-              <button class="btn btn-outline-success btn-sm" (click)="dismissFlag(item.id)">
+              <button class="btn btn-outline-success btn-sm" (click)="dismissFlag(item)">
                 <i class="bi bi-check-lg me-1"></i>Dismiss Flag
               </button>
               @if (item.type === 'blog') {
@@ -93,6 +94,7 @@ import { BlogService } from '../../../../../core/services/blog.service';
   `
 })
 export class ContentModerationComponent implements OnInit {
+  private adminService = inject(AdminService);
   private blogService = inject(BlogService);
 
   isLoading = signal(false);
@@ -105,38 +107,45 @@ export class ContentModerationComponent implements OnInit {
 
   loadFlaggedContent(): void {
     this.isLoading.set(true);
-    // Combine flagged blogs + reviews
-    // For now using mock data — connect to real flag endpoints
-    this.flaggedItems.set([
-      {
-        id: '1', type: 'blog', title: 'Understanding Blood Pressure',
-        authorName: 'Sarah Johnson', content: 'A comprehensive guide to blood pressure...',
-        flaggedBy: 'Patient - Abebe T.', flagReason: 'Misleading information',
-        flaggedAt: new Date().toISOString(), status: 'pending'
+    // Fetch flagged blogs + reviews via AdminService
+    this.adminService.getFlaggedContent().subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        const items = response?.data || response || [];
+        this.flaggedItems.set(items);
+        this.pendingReview.set(items.length);
       },
-      {
-        id: '2', type: 'review', patientName: 'Sara Tadesse', doctorName: 'Dr. Abebe Kebede',
-        rating: 2, text: 'Had to wait too long. Not satisfied.',
-        flaggedBy: 'Dr. Abebe Kebede', flagReason: 'Inappropriate language',
-        flaggedAt: new Date().toISOString(), status: 'pending'
+      error: (e: any) => {
+        this.isLoading.set(false);
+        console.error('Failed to load flagged content', e);
       }
-    ]);
-    this.pendingReview.set(this.flaggedItems().length);
-    this.isLoading.set(false);
+    });
   }
 
-  removeContent(id: string): void {
-    this.flaggedItems.update(items => items.filter(i => i.id !== id));
-    this.successMessage.set('Content removed successfully.');
-    this.resolvedToday.update(v => v + 1);
-    setTimeout(() => this.successMessage.set(null), 3000);
+  removeContent(item: any): void {
+    this.adminService.removeFlaggedContent(item.type, item.id).subscribe({
+      next: () => {
+        this.flaggedItems.update(items => items.filter(i => i.id !== item.id));
+        this.successMessage.set('Content removed successfully.');
+        this.resolvedToday.update(v => v + 1);
+        this.pendingReview.update(v => v - 1);
+        setTimeout(() => this.successMessage.set(null), 3000);
+      },
+      error: (e: any) => console.error('Remove error', e)
+    });
   }
 
-  dismissFlag(id: string): void {
-    this.flaggedItems.update(items => items.filter(i => i.id !== id));
-    this.successMessage.set('Flag dismissed. Content remains visible.');
-    this.resolvedToday.update(v => v + 1);
-    setTimeout(() => this.successMessage.set(null), 3000);
+  dismissFlag(item: any): void {
+    this.adminService.dismissFlag(item.type, item.id).subscribe({
+      next: () => {
+        this.flaggedItems.update(items => items.filter(i => i.id !== item.id));
+        this.successMessage.set('Flag dismissed. Content remains visible.');
+        this.resolvedToday.update(v => v + 1);
+        this.pendingReview.update(v => v - 1);
+        setTimeout(() => this.successMessage.set(null), 3000);
+      },
+      error: (e: any) => console.error('Dismiss error', e)
+    });
   }
 
   viewContent(item: any): void {

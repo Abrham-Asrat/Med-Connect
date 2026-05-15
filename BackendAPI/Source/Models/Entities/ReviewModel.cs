@@ -73,6 +73,12 @@ public class ReviewModel : BaseEntity
   /// </summary>
   public DateTime? RepliedAt { get; set; }
 
+  // Moderation
+  public bool IsFlagged { get; set; } = false;
+  public string? FlagReason { get; set; }
+  public string? FlaggedBy { get; set; }
+  public DateTime? FlaggedAt { get; set; }
+
   // Navigation properties
   /// <summary>
   /// Navigation property to the Doctor being reviewed

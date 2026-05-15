@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ProfileService } from '../../../../core/services/profile.service';
+import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ThemeToggleComponent],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
@@ -57,10 +58,10 @@ export class SettingsComponent implements OnInit {
   // Notification prefs — persisted in localStorage
   notifications = signal([
     { key: 'appointment_reminders', label: 'Appointment reminders / የቀጠሮ ማሳሰቢያዎች', enabled: true },
-    { key: 'new_messages',          label: 'New messages / አዳዲስ መልዕክቶች',           enabled: true },
-    { key: 'payment_receipts',      label: 'Payment receipts / የክፍያ ደረሰኞች',        enabled: true },
-    { key: 'review_requests',       label: 'Review requests / የግምገማ ጥያቄዎች',       enabled: true },
-    { key: 'marketing_emails',      label: 'Marketing emails / የማስተዋወቂያ ኢሜይሎች',  enabled: false },
+    { key: 'new_messages', label: 'New messages / አዳዲስ መልዕክቶች', enabled: true },
+    { key: 'payment_receipts', label: 'Payment receipts / የክፍያ ደረሰኞች', enabled: true },
+    { key: 'review_requests', label: 'Review requests / የግምገማ ጥያቄዎች', enabled: true },
+    { key: 'marketing_emails', label: 'Marketing emails / የማስተዋወቂያ ኢሜይሎች', enabled: false },
   ]);
 
   // Help Center FAQs

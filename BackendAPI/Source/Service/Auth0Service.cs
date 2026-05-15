@@ -118,6 +118,36 @@ public class Auth0Service(AppConfig appConfig, ILogger<Auth0Service> logger)
     }
   }
 
+  public async Task<bool> BlockUserAsync(string userId, bool blocked)
+  {
+    try
+    {
+      var token = await GetManagementApiTokenAsync();
+      var client = new RestClient($"{appConfig.Auth0Authority}/api/v2/users/{userId}");
+      var request = new RestRequest() { Method = Method.Patch };
+
+      request.AddHeader("Authorization", $"Bearer {token}");
+      request.AddHeader("content-type", "application/json");
+      request.AddJsonBody(new { blocked = blocked });
+
+      var response = await client.ExecuteAsync(request);
+
+      if (!response.IsSuccessStatusCode)
+      {
+        logger.LogError(response.Content, $"Auth0 Block User Error");
+        return false;
+      }
+
+      logger.LogInformation($"Auth0 Block User Success:\n {response.Content}");
+      return true;
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to block user in Auth0");
+      return false;
+    }
+  }
+
   public async Task DeleteUserByEmailAsync(string email)
   {
     try

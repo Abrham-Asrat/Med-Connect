@@ -6,7 +6,6 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationBellComponent } from '../../../shared/components/notification-bell/notification-bell.component';
 import { SignalRService } from '../../../core/services/signalr.service';
 import { NotificationStoreService } from '../../../core/services/notification-store.service';
-import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 import { ChatService } from '../../../core/services/chat.service';
 
 @Component({
@@ -17,8 +16,7 @@ import { ChatService } from '../../../core/services/chat.service';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    NotificationBellComponent,
-    ThemeToggleComponent
+    NotificationBellComponent
   ],
   templateUrl: './patient-layout.component.html'
 })

@@ -228,19 +228,8 @@
 
             <!-- Voice Message -->
             @if (msg.type === 'voice') {
-            <div [class.msg-sent]="msg.sender==='me'" [class.msg-received]="msg.sender==='them'"
-              class="voice-bubble d-flex align-items-center gap-2">
-              <button class="voice-play-btn" (click)="toggleAudio(msg.id, msg.audioUrl)">
-                <i class="bi" [class.bi-play-fill]="playingMessageId() !== msg.id"
-                  [class.bi-pause-fill]="playingMessageId() === msg.id"></i>
-              </button>
-              <div class="voice-waveform">
-                @for (h of (msg.waveformHeights ?? []); track $index) {
-                <span [style.height]="h + 'px'" [class.playing-bar]="playingMessageId() === msg.id"></span>
-                }
-              </div>
-              <small class="voice-duration">{{ msg.audioDuration }}</small>
-            </div>
+            <app-voice-message [audioUrl]="msg.audioUrl!" [audioDuration]="msg.audioDuration" [sender]="msg.sender">
+            </app-voice-message>
             } @else if (msg.type === 'image') {
             <!-- Image Message -->
             <div [class.msg-sent]="msg.sender==='me'" [class.msg-received]="msg.sender==='them'"
@@ -402,13 +391,19 @@
         <div class="alert alert-danger py-1 px-3 small mb-2 rounded-pill border-0">{{ errorMessage() }}</div>
         }
         <!-- Recording Indicator Bar -->
-        @if (isRecording()) {
-        <div class="recording-bar d-flex align-items-center gap-3 mb-2 px-3 py-2 rounded-3">
-          <span class="rec-dot"></span>
+        @if (voiceRecordingService.isRecording()) {
+        <div class="recording-bar d-flex align-items-center gap-3 mb-2 px-3 py-2 rounded-3"
+          style="background:#fff3cd; color:#856404; animation: fadeIn 0.3s">
+          <span class="rec-dot"
+            style="width:12px; height:12px; background:red; border-radius:50%; animation: listenerPulse 1s infinite alternate"></span>
           <span class="text-danger fw-semibold small">Recording...</span>
-          <span class="fw-bold small text-dark">{{ formatTime(recordingSeconds()) }}</span>
-          <div class="voice-waveform recording-live ms-1">
-            @for (b of [1,2,3,4,5,6,7,8]; track b) { <span></span> }
+          <span class="fw-bold small text-dark">{{ formatTime(voiceRecordingService.recordingSeconds()) }}</span>
+          <div class="voice-waveform recording-live ms-1 d-flex align-items-end gap-1" style="height:20px;">
+            @for (b of [1,2,3,4,5,6,7,8]; track b) {
+            <span
+              style="width:3px; background:#dc3545; height:100%; border-radius:1px; animation: bounce 0.5s infinite alternate"
+              [style.animation-delay]="$index * 0.1 + 's'"></span>
+            }
           </div>
           <button class="btn btn-sm btn-outline-danger rounded-pill ms-auto px-3" (click)="cancelRecording()">
             <i class="bi bi-x me-1"></i> Cancel
@@ -475,7 +470,7 @@
           }
           <input type="text" class="form-control" placeholder="Type a message... / መልዕክት ይጻፉ..."
             [ngModel]="newMessage()" (ngModelChange)="newMessage.set($event)" (keydown)="onKeyPress($event)"
-            [disabled]="isRecording()">
+            [disabled]="voiceRecordingService.isRecording()">
 
           <!-- Send or Mic button -->
           @if (newMessage().trim()) {
@@ -483,11 +478,11 @@
             (click)="sendMessage()">
             <i class="bi bi-send-fill"></i>
           </button>
-          } @else if (isRecording()) {
+          } @else if (voiceRecordingService.isRecording()) {
           <button class="btn btn-danger flex-shrink-0 pulse-btn"
             style="width:42px;height:42px;border-radius:50%;padding:0" (click)="stopRecording()"
             title="Send voice message">
-            <i class="bi bi-stop-fill"></i>
+            <i class="bi bi-send-fill"></i>
           </button>
           } @else {
           @if (activeConv()?.appointmentType !== 'InPerson') {
@@ -693,6 +688,28 @@
 
   .active-speaker-ring {
     animation: speakerPulse 2s infinite;
+  }
+
+  @keyframes bounce {
+    0% {
+      height: 10%;
+    }
+
+    100% {
+      height: 100%;
+    }
+  }
+
+  @keyframes listenerPulse {
+    0% {
+      opacity: 0.5;
+      transform: scale(0.9);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
   }
 
   .hover-scale:hover {

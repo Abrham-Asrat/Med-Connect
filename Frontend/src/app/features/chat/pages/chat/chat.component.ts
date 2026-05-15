@@ -52,10 +52,13 @@ interface Conversation {
   appointmentType?: string;
 }
 
+import { VoiceMessageComponent } from '../../components/voice-message/voice-message';
+import { VoiceRecordingService } from '../../../../core/services/voice-recording.service';
+
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, VoiceMessageComponent],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss']
 })
@@ -65,6 +68,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private reviewService = inject(ReviewService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  voiceRecordingService = inject(VoiceRecordingService);
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
@@ -200,14 +204,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Expose Math to template
   readonly Math = Math;
-
-  // Voice recording state
-  isRecording = signal(false);
-  recordingSeconds = signal(0);
-  private mediaRecorder: MediaRecorder | null = null;
-  private audioChunks: Blob[] = [];
-  private recordingTimer: any = null;
-  private activeStream: MediaStream | null = null; // kept so cancelRecording can stop tracks
 
   // Per-message playing state — tracks which message audio is currently playing
   playingMessageId = signal<string | null>(null);
@@ -405,12 +401,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   ngOnDestroy(): void {
     if (this.messageSub) this.messageSub.unsubscribe();
     this.chatService.stopConnection();
-    clearInterval(this.recordingTimer);
-    // Release microphone if still recording
-    if (this.activeStream) {
-      this.activeStream.getTracks().forEach(t => t.stop());
-      this.activeStream = null;
-    }
     // Release all audio instances
     this.disposeAudioInstances();
   }
@@ -1066,7 +1056,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const text = this.newMessage().trim();
     if (!text) return;
 
-    this.isRecording.set(false);
     this.newMessage.set('');
     this.errorMessage.set(null);
 
@@ -1204,147 +1193,54 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   async startRecording(): Promise<void> {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.activeStream = stream; // store so cancelRecording can stop tracks
-      this.audioChunks = [];
-      this.mediaRecorder = new MediaRecorder(stream);
-
-      this.mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) this.audioChunks.push(e.data);
-      };
-
-      this.mediaRecorder.onstop = () => {
-        // Stop all tracks to release the microphone
-        stream.getTracks().forEach(t => t.stop());
-        this.activeStream = null;
-
-        const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
-        // Use the duration captured in stopRecording() — recordingSeconds is already 0 by now
-        const duration = this.finalRecordingDuration || this.formatTime(this.recordingSeconds());
-        // Reset so the next recording doesn't inherit this duration
-        this.finalRecordingDuration = '';
-        const activeConvId = this.activeConversation();
-        if (!activeConvId) return;
-
-        // Use the actual MIME type the browser recorded with (e.g. "audio/webm;codecs=opus")
-        const mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
-
-        // Keep a local data URI so the sender can play back immediately
-        // (blob:// URLs are revoked on navigation; data URI survives)
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const dataUri = reader.result as string;
-          const base64 = dataUri.split(',')[1];
-
-          // Guard: base64 size check — 5MB raw ≈ ~6.7MB base64
-          const estimatedBytes = Math.ceil(base64.length * 0.75);
-          const maxBytes = 5 * 1024 * 1024; // 5MB — matches FileModel [MaxLength]
-          if (estimatedBytes > maxBytes) {
-            this.errorMessage.set('Voice message is too large (max 5MB). Please record a shorter message.');
-            return;
-          }
-
-          const filePayload = [{
-            mimeType: mimeType,
-            fileDataBase64: base64,
-            fileName: `voice_${Date.now()}.webm`
-          }];
-
-          // Create a Blob URL for the local preview — immediately playable
-          // and avoids data URI MIME parsing issues in the browser
-          const previewBlob = new Blob(this.audioChunks, { type: mimeType });
-          const previewBlobUrl = URL.createObjectURL(previewBlob);
-
-          // Show local preview using the Blob URL — playable immediately
-          const localId = `local_${Date.now()}`;
-          const voiceMsg: Message = {
-            id: localId,
-            sender: 'me',
-            text: '',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            type: 'voice',
-            read: false,
-            audioUrl: previewBlobUrl,
-            audioDuration: duration,
-            waveformHeights: this.generateWaveform()
-          };
-          this.messages.update(msgs => [...msgs, voiceMsg]);
-          this.conversations.update(convs => convs.map(c =>
-            c.id === this.activeConversation() ? { ...c, lastMessage: '🎤 Voice message', time: 'Just now' } : c
-          ));
-          this.shouldScroll = true;
-
-          this.chatService.sendMessageToHub(
-            activeConvId,
-            null,
-            filePayload,
-            'voice',
-            null,
-            duration
-          ).then(() => {
-            // Hub will broadcast the saved message back — remove the local preview
-            // Revoke the blob URL to free memory
-            URL.revokeObjectURL(previewBlobUrl);
-            this.audioInstances.delete(localId);
-            this.messages.update(msgs => msgs.filter(m => m.id !== localId));
-          }).catch(err => {
-            console.error('Voice message delivery failed:', err);
-            this.errorMessage.set('Voice message could not be sent.');
-            // Keep the local preview so the user can see it wasn't lost
-          });
-        };
-        reader.readAsDataURL(blob);
-      };
-
-      this.mediaRecorder.start();
-      this.isRecording.set(true);
-      this.recordingSeconds.set(0);
-
-      this.recordingTimer = setInterval(() => {
-        this.recordingSeconds.update(s => s + 1);
-      }, 1000);
-
+      await this.voiceRecordingService.startRecording();
     } catch (err) {
-      console.error('Microphone access denied:', err);
-      this.errorMessage.set('Microphone access is required to send voice messages. Please allow microphone access in your browser.');
+      this.errorMessage.set(String(err));
     }
   }
 
-  private finalRecordingDuration = '';
+  async stopRecording(): Promise<void> {
+    try {
+      const { blob, duration, mimeType } = await this.voiceRecordingService.stopRecording();
+      const activeConvId = this.activeConversation();
+      if (!activeConvId) return;
 
-  stopRecording(): void {
-    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-      // Snapshot the duration before resetting — onstop fires async so recordingSeconds
-      // would already be 0 by the time onstop reads it
-      this.finalRecordingDuration = this.formatTime(this.recordingSeconds());
-      this.mediaRecorder.stop();
+      const fileName = `voice_${Date.now()}.webm`;
+
+      // Upload Blob to Backend via VoiceRecordingService
+      this.voiceRecordingService.uploadVoiceMessage(blob, fileName).subscribe({
+        next: (res: any) => {
+          const uploadedUrl = res.data?.fileUrl || res.fileUrl;
+
+          // Once uploaded, send a SignalR message with the FileUrl and duration
+          this.chatService.sendMessageToHub(
+            activeConvId,
+            null, // text
+            [], // files array
+            'voice',
+            uploadedUrl,
+            duration
+          ).catch(err => {
+            console.error('Voice message delivery failed:', err);
+            this.errorMessage.set('Voice message could not be sent. SignalR error.');
+          });
+        },
+        error: (err) => {
+          console.error('Upload failed:', err);
+          this.errorMessage.set('Failed to upload voice message.');
+        }
+      });
+
+    } catch (err) {
+      console.error('Stop recording error:', err);
     }
-    clearInterval(this.recordingTimer);
-    this.isRecording.set(false);
-    this.recordingSeconds.set(0);
   }
 
   cancelRecording(): void {
-    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-      this.mediaRecorder.ondataavailable = null; // discard data
-      this.mediaRecorder.onstop = null;
-      this.mediaRecorder.stop();
-    }
-    // Always stop the microphone stream so the browser indicator goes away
-    if (this.activeStream) {
-      this.activeStream.getTracks().forEach(t => t.stop());
-      this.activeStream = null;
-    }
-    clearInterval(this.recordingTimer);
-    this.isRecording.set(false);
-    this.recordingSeconds.set(0);
-    this.audioChunks = [];
-    this.finalRecordingDuration = '';
+    this.voiceRecordingService.cancelRecording();
   }
 
   formatTime(seconds: number): string {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
+    return this.voiceRecordingService.formatTime(seconds);
   }
 }

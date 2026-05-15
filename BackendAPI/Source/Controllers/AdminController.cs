@@ -221,9 +221,14 @@ namespace BackendAPI.Source.Controllers
         {
             try
             {
-                // Note: This assumes UserService has or will have a DeactivateUserAsync method
-                // For now, we'll return a placeholder response
-                return Ok(new ApiResponse<object>(true, "User deactivated successfully", null));
+                var response = await userService.DeactivateUserAsync(userId);
+                
+                if (!response.Success)
+                {
+                    return StatusCode(response.StatusCode, new ApiResponse<object>(false, response.Message, null));
+                }
+                
+                return Ok(new ApiResponse<object>(true, response.Message, null));
             }
             catch (Exception ex)
             {
@@ -305,6 +310,147 @@ namespace BackendAPI.Source.Controllers
                 logger.LogError(ex, "Failed to get system statistics");
                 return StatusCode(500, new ApiResponse<object>(false, "An unexpected error occurred while retrieving statistics", null));
             }
+        }
+
+        [HttpGet("finance/analytics")]
+        public async Task<IActionResult> GetFinancialAnalytics()
+        {
+            try
+            {
+                var payments = await appContext.Payments
+                    .Include(p => p.Appointment)
+                    .ThenInclude(a => a.Doctor)
+                    .Include(p => p.Appointment)
+                    .ThenInclude(a => a.Patient)
+                    .ThenInclude(pa => pa.User)
+                    .Where(p => p.PaymentStatus == PaymentStatus.Success)
+                    .ToListAsync();
+                
+                var totalRevenue = payments.Sum(p => p.Amount);
+                var thisMonthRevenue = payments.Where(p => p.PaymentDate.Month == DateTime.UtcNow.Month && p.PaymentDate.Year == DateTime.UtcNow.Year).Sum(p => p.Amount);
+                
+                var monthlyRevenue = payments
+                    .GroupBy(p => new { p.PaymentDate.Year, p.PaymentDate.Month })
+                    .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                    .Select(g => new { 
+                        month = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM"), 
+                        amount = g.Sum(p => p.Amount) 
+                    })
+                    .TakeLast(10)
+                    .ToList();
+                    
+                var specialtyRevenue = payments
+                    .Where(p => p.Appointment?.Doctor != null)
+                    .Join(appContext.DoctorSpecialties.Include(ds => ds.Specialty), 
+                          p => p.Appointment!.DoctorId, 
+                          ds => ds.DoctorId, 
+                          (p, ds) => new { p.Amount, SpecialtyName = ds.Specialty.Name })
+                    .GroupBy(x => x.SpecialtyName)
+                    .Select(g => new { specialty = g.Key, amount = g.Sum(x => x.Amount) })
+                    .ToList();
+
+                var recentTxns = payments
+                    .OrderByDescending(p => p.PaymentDate)
+                    .Take(10)
+                    .Select(p => new {
+                        id = p.TxRef,
+                        doctor = p.Appointment?.Doctor?.User?.FirstName != null ? $"Dr. {p.Appointment.Doctor.User.FirstName} {p.Appointment.Doctor.User.LastName}" : "Unknown",
+                        patient = p.Appointment?.Patient?.User?.FirstName != null ? $"{p.Appointment.Patient.User.FirstName} {p.Appointment.Patient.User.LastName}" : "Unknown",
+                        amount = p.Amount,
+                        date = p.PaymentDate.ToString("yyyy-MM-dd"),
+                        status = p.PaymentStatus.ToString()
+                    }).ToList();
+
+                return Ok(new ApiResponse<object>(true, "Finance data loaded", new {
+                    totalRevenue,
+                    thisMonth = thisMonthRevenue,
+                    monthlyRevenue,
+                    revenueBySpecialty = specialtyRevenue,
+                    transactions = recentTxns
+                }));
+            }
+            catch (Exception ex)
+            {
+               logger.LogError(ex, "Failed to get finance data");
+               return StatusCode(500, new ApiResponse<object>(false, "An error occurred", null));
+            }
+        }
+
+        [HttpGet("moderation/flagged")]
+        public async Task<IActionResult> GetFlaggedContent()
+        {
+            try
+            {
+                var flaggedBlogs = await appContext.Blogs
+                    .Include(b => b.Author)
+                    .Where(b => b.IsFlagged)
+                    .Select(b => new {
+                        id = b.BlogId.ToString(),
+                        type = "blog",
+                        title = b.Title,
+                        authorName = b.Author != null ? b.Author.FirstName + " " + b.Author.LastName : "Unknown",
+                        content = b.Content,
+                        flaggedBy = b.FlaggedBy,
+                        flagReason = b.FlagReason,
+                        flaggedAt = b.FlaggedAt
+                    }).ToListAsync();
+
+                var flaggedReviews = await appContext.Reviews
+                    .Include(r => r.Patient).ThenInclude(p => p.User)
+                    .Include(r => r.Doctor).ThenInclude(d => d.User)
+                    .Where(r => r.IsFlagged)
+                    .Select(r => new {
+                        id = r.ReviewId.ToString(),
+                        type = "review",
+                        text = r.ReviewText,
+                        patientName = r.Patient != null && r.Patient.User != null ? r.Patient.User.FirstName + " " + r.Patient.User.LastName : "Unknown",
+                        doctorName = r.Doctor != null && r.Doctor.User != null ? r.Doctor.User.FirstName + " " + r.Doctor.User.LastName : "Unknown",
+                        rating = r.StarRating,
+                        flaggedBy = r.FlaggedBy,
+                        flagReason = r.FlagReason,
+                        flaggedAt = r.FlaggedAt
+                    }).ToListAsync();
+
+                var result = flaggedBlogs.Cast<object>().Concat(flaggedReviews).ToList();
+                return Ok(new ApiResponse<object>(true, "Flagged content loaded", result));
+            }
+            catch (Exception ex)
+            {
+               logger.LogError(ex, "Failed to get flagged content");
+               return StatusCode(500, new ApiResponse<object>(false, "Server Error", null));
+            }
+        }
+
+        [HttpPost("moderation/flagged/{type}/{id}/dismiss")]
+        public async Task<IActionResult> DismissFlaggedContent(string type, Guid id)
+        {
+            if (type == "blog")
+            {
+                var blg = await appContext.Blogs.FindAsync(id);
+                if (blg != null) { blg.IsFlagged = false; blg.FlagReason = null; await appContext.SaveChangesAsync(); }
+            }
+            else
+            {
+                var rev = await appContext.Reviews.FindAsync(id);
+                if (rev != null) { rev.IsFlagged = false; rev.FlagReason = null; await appContext.SaveChangesAsync(); }
+            }
+            return Ok(new ApiResponse<object>(true, "Flag dismissed", null));
+        }
+
+        [HttpDelete("moderation/flagged/{type}/{id}/remove")]
+        public async Task<IActionResult> RemoveFlaggedContent(string type, Guid id)
+        {
+            if (type == "blog")
+            {
+                var blg = await appContext.Blogs.FindAsync(id);
+                if (blg != null) { appContext.Blogs.Remove(blg); await appContext.SaveChangesAsync(); }
+            }
+            else
+            {
+                var rev = await appContext.Reviews.FindAsync(id);
+                if (rev != null) { appContext.Reviews.Remove(rev); await appContext.SaveChangesAsync(); }
+            }
+            return Ok(new ApiResponse<object>(true, "Content removed", null));
         }
     }
 }

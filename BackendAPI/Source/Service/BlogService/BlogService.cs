@@ -58,8 +58,10 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
         .Include(b => b.BlogComments)
         .ThenInclude(bc => bc.Sender)
         .Include(b => b.BlogTags)
-        .ThenInclude(bt => bt.Tag)
+          .ThenInclude(bt => bt.Tag)
+        .Include(b => b.Image)
         .Where(b => b.Author != null)
+        .OrderByDescending(b => b.CreatedAt)
         .Select(b => b.ToBlogDto(b.Author!, b.BlogLikes, b.BlogTags.Select(bt => bt.Tag!).ToList(), b.BlogComments))
         .ToListAsync();
       return blogs;
@@ -82,7 +84,8 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
         .Include(b => b.BlogComments)
         .ThenInclude(bc => bc.Sender)
         .Include(b => b.BlogTags)
-        .ThenInclude(bt => bt.Tag)
+          .ThenInclude(bt => bt.Tag)
+        .Include(b => b.Image)
         .Where(b => b.Author != null)
         .OrderByDescending(b => b.BlogLikes.Count)
         .Take(count)
@@ -109,7 +112,8 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
         .Include(b => b.BlogComments)
         .ThenInclude(bc => bc.Sender)
         .Include(b => b.BlogTags)
-        .ThenInclude(bt => bt.Tag)
+          .ThenInclude(bt => bt.Tag)
+        .Include(b => b.Image)
         .FirstOrDefaultAsync(b => b.BlogId == blogId);
 
       if (blog == default)
@@ -139,7 +143,8 @@ public class BlogService(ApplicationDbContext appContext, ILogger<BlogService> l
         .Include(b => b.BlogLikes)
         .ThenInclude(bl => bl.User)
         .Include(b => b.BlogComments)
-        .ThenInclude(bc => bc.Sender)
+          .ThenInclude(bc => bc.Sender)
+        .Include(b => b.Image)
         .FirstOrDefaultAsync(b => b.BlogId == blogId);
 
       if (blog == default)

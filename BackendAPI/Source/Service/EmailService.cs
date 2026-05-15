@@ -69,9 +69,11 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
     string fromEmail,
     string fromPassword,
     MimeMessage message,
-    MailKit.Security.SecureSocketOptions secureSocketOptions = MailKit.Security.SecureSocketOptions.StartTls)
+    MailKit.Security.SecureSocketOptions secureSocketOptions = MailKit.Security.SecureSocketOptions.Auto)
   {
     using var client = new SmtpClient();
+    // Add a reasonable timeout for connection
+    client.Timeout = 15000; // 15 seconds
     await client.ConnectAsync(host, port, secureSocketOptions);
     await client.AuthenticateAsync(fromEmail, fromPassword);
     await client.SendAsync(message);

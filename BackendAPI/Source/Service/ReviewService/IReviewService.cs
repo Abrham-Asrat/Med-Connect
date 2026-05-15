@@ -100,4 +100,14 @@ public interface IReviewService
   /// <param name="doctorId">Doctor ID</param>
   /// <returns>Average rating (0 if no reviews)</returns>
   Task<decimal> GetDoctorAverageRatingAsync(Guid doctorId);
+
+  /// <summary>
+  /// Increments the helpful count of a review
+  /// </summary>
+  Task<ReviewDto> MarkReviewAsHelpfulAsync(Guid reviewId);
+
+  /// <summary>
+  /// Adds a doctor reply to a review
+  /// </summary>
+  Task<ReviewDto> ReplyToReviewAsync(ReplyReviewDto replyDto);
 }

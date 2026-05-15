@@ -428,10 +428,9 @@ namespace BackendAPI.Source.Service
                 var doctors = await appContext.Doctors
                     .AsNoTracking()
                     .AsSplitQuery()
-                    .Include(d => d.User)
-                    .Include(d => d.DoctorAvailabilities)
                     .Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty)
                     .Include(d => d.DoctorPreference)
+                    .Include(d => d.Reviews)
                     .ToListAsync();
 
                 var doctorUsers = doctors.Select(d => d.ToDoctorProfileDto(
@@ -461,7 +460,7 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                var doctorUsers = await appContext.Doctors.Include(d=> d.User).Include(d=> d.DoctorSpecialties).ThenInclude(ds=>ds.Specialty).Where(d=> d.User.Gender == gender).Select(d=> d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
+                var doctorUsers = await appContext.Doctors.Include(d=> d.User).Include(d=> d.DoctorSpecialties).ThenInclude(ds=>ds.Specialty).Include(d => d.Reviews).Where(d=> d.User.Gender == gender).Select(d=> d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
                 
                 return new ServiceResponse<List<DoctorDto>>(true,200, doctorUsers, "Doctors fetched successfully");
             }
@@ -481,7 +480,7 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                var doctorUsers = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty).Where(ds => ds.DoctorSpecialties.Where(ds=> ds.Specialty != null).Any(ds=> EF.Functions.Like(ds.Specialty!.SpecialtyName, $"%{specialtyName}%"))).Select(d=> d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
+                var doctorUsers = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty).Include(d => d.Reviews).Where(ds => ds.DoctorSpecialties.Where(ds=> ds.Specialty != null).Any(ds=> EF.Functions.Like(ds.Specialty!.SpecialtyName, $"%{specialtyName}%"))).Select(d=> d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
 
 
                 return new ServiceResponse<List<DoctorDto>>(true, 200, doctorUsers, "Doctors fetched successfully");
@@ -499,7 +498,7 @@ namespace BackendAPI.Source.Service
         {
             try
             {
-                var doctorUsers = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty).Where(d => d.DoctorSpecialties.Any(ds => EF.Functions.Like(d.User.FirstName + " " + d.User.LastName, $"{doctorName}%"))).Select(d => d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
+                var doctorUsers = await appContext.Doctors.Include(d => d.User).Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty).Include(d => d.Reviews).Where(d => d.DoctorSpecialties.Any(ds => EF.Functions.Like(d.User.FirstName + " " + d.User.LastName, $"{doctorName}%"))).Select(d => d.ToDoctorDto(d.User, d.DoctorSpecialties.Select(ds => ds.Specialty!).ToList())).ToListAsync();
 
 
                 return new ServiceResponse<List<DoctorDto>>(true, 200, doctorUsers, "Doctors fetched successfully");
@@ -602,17 +601,30 @@ namespace BackendAPI.Source.Service
         .Include(d => d.Experiences)
         .Include(d => d.DoctorAvailabilities)
         .Include(d => d.DoctorPreference)
+        .Include(d => d.Reviews)
         .SingleOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
 
       if (doctor == null)
         return new ServiceResponse<DoctorProfileDto>(false, 404, null, "Doctor not found");
+
+      var patientCount = await appContext.Appointments
+        .Where(a => a.DoctorId == doctor.DoctorId)
+        .Select(a => a.PatientId)
+        .Distinct()
+        .CountAsync();
+
+      var experienceYears = doctor.Experiences.Any()
+        ? doctor.Experiences.Sum(e => (e.EndDate ?? DateTime.Now).Year - e.StartDate.Year)
+        : 0;
 
       var profile = doctor.ToDoctorProfileDto(
         doctor.User,
         doctor.DoctorAvailabilities,
         doctor.DoctorSpecialties.Where(ds => ds.Specialty != null).Select(ds => ds.Specialty!).ToList(),
         doctor.Educations,
-        doctor.Experiences
+        doctor.Experiences,
+        experienceYears,
+        patientCount
       );
 
       return new ServiceResponse<DoctorProfileDto>(true, 200, profile, "Doctor profile retrieved");
@@ -900,8 +912,11 @@ namespace BackendAPI.Source.Service
   {
     try
     {
+      var doctor = await appContext.Doctors.FirstOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
+      if (doctor == null) return [];
+
       var rows = await appContext.DoctorAvailabilities
-          .Where(da => da.DoctorId == doctorId || da.Doctor.UserId == doctorId)
+          .Where(da => da.DoctorId == doctor.DoctorId)
           .ToListAsync();
 
       return rows
@@ -956,6 +971,74 @@ namespace BackendAPI.Source.Service
     {
        logger.LogError(ex, "Failed to update availabilities for doctor {DoctorId}", doctorId);
        return new ServiceResponse<bool>(false, 500, false, $"Error saving schedule: {ex.Message}");
+    }
+  }
+
+  public async Task<ServiceResponse<bool>> UpdateAcceptingAppointmentsAsync(Guid doctorId, bool accepting)
+  {
+    try
+    {
+      var doctor = await appContext.Doctors.FirstOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
+      if (doctor == null) return new ServiceResponse<bool>(false, 404, false, "Doctor not found");
+
+      var pref = await appContext.DoctorPreferences.FirstOrDefaultAsync(p => p.DoctorId == doctor.DoctorId);
+      if (pref == null) return new ServiceResponse<bool>(false, 404, false, "Preferences not found");
+
+      pref.IsAcceptingAppointments = accepting;
+      await appContext.SaveChangesAsync();
+      return new ServiceResponse<bool>(true, 200, true, "Status updated");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error updating appointment status for {DoctorId}", doctorId);
+      return new ServiceResponse<bool>(false, 500, false, ex.Message);
+    }
+  }
+
+  public async Task<ServiceResponse<bool>> BlockDatesAsync(Guid doctorId, DateTime start, DateTime end, string? reason = null)
+  {
+    try
+    {
+      var doctor = await appContext.Doctors.FirstOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
+      if (doctor == null) return new ServiceResponse<bool>(false, 404, false, "Doctor not found");
+
+      var timeOff = new DoctorTimeOff
+      {
+        DoctorId = doctor.DoctorId,
+        StartDate = start,
+        EndDate = end,
+        Reason = reason,
+        Doctor = doctor
+      };
+
+      await appContext.DoctorTimeOffs.AddAsync(timeOff);
+      await appContext.SaveChangesAsync();
+      return new ServiceResponse<bool>(true, 200, true, "Dates blocked");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error blocking dates for {DoctorId}", doctorId);
+      return new ServiceResponse<bool>(false, 500, false, ex.Message);
+    }
+  }
+
+  public async Task<ServiceResponse<List<DoctorTimeOff>>> GetTimeOffsAsync(Guid doctorId)
+  {
+    try
+    {
+      var doctor = await appContext.Doctors.FirstOrDefaultAsync(d => d.DoctorId == doctorId || d.UserId == doctorId);
+      if (doctor == null) return new ServiceResponse<List<DoctorTimeOff>>(false, 404, null, "Doctor not found");
+
+      var timeOffs = await appContext.DoctorTimeOffs
+          .Where(t => t.DoctorId == doctor.DoctorId)
+          .OrderByDescending(t => t.StartDate)
+          .ToListAsync();
+      return new ServiceResponse<List<DoctorTimeOff>>(true, 200, timeOffs, "Success");
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error getting time offs for {DoctorId}", doctorId);
+      return new ServiceResponse<List<DoctorTimeOff>>(false, 500, null, ex.Message);
     }
   }
 }

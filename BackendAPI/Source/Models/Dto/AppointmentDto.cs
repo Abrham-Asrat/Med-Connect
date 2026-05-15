@@ -69,9 +69,18 @@ public record AppointmentDto
   public required AppointmentType AppointmentType { get; init; }
   public AppointmentStatus Status { get; init; }
 
+  public Guid? PatientId { get; init; }
+  public Guid? PatientUserId { get; init; }
+  public Guid? DoctorId { get; init; }
+  public Guid? DoctorUserId { get; init; }
+  public string? PatientName { get; init; }
+  public string? DoctorName { get; init; }
+
   // Clinic info — populated for InPerson appointments
   public string? ClinicName { get; init; }
   public string? ClinicAddress { get; init; }
   public string? ClinicCity { get; init; }
+
+  public decimal Fee { get; init; }
 }
 

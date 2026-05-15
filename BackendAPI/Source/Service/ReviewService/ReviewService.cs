@@ -418,4 +418,52 @@ public class ReviewService(
       throw;
     }
   }
+
+  public async Task<ReviewDto> MarkReviewAsHelpfulAsync(Guid reviewId)
+  {
+    try
+    {
+      var review = await appContext.Reviews
+        .Include(r => r.Doctor).ThenInclude(d => d!.User)
+        .Include(r => r.Patient).ThenInclude(p => p!.User)
+        .FirstOrDefaultAsync(r => r.ReviewId == reviewId);
+
+      if (review == null)
+        throw new KeyNotFoundException("Review not found");
+
+      review.HelpfulCount++;
+      await appContext.SaveChangesAsync();
+      return review.ToReviewDto();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to mark review as helpful");
+      throw;
+    }
+  }
+
+  public async Task<ReviewDto> ReplyToReviewAsync(ReplyReviewDto replyDto)
+  {
+    try
+    {
+      var review = await appContext.Reviews
+        .Include(r => r.Doctor).ThenInclude(d => d!.User)
+        .Include(r => r.Patient).ThenInclude(p => p!.User)
+        .FirstOrDefaultAsync(r => r.ReviewId == replyDto.ReviewId);
+
+      if (review == null)
+        throw new KeyNotFoundException("Review not found");
+
+      review.ReplyText = replyDto.ReplyText;
+      review.RepliedAt = DateTime.UtcNow;
+      
+      await appContext.SaveChangesAsync();
+      return review.ToReviewDto();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to reply to review");
+      throw;
+    }
+  }
 }

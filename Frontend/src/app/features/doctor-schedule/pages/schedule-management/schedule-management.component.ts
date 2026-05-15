@@ -53,13 +53,13 @@ export class ScheduleManagementComponent implements OnInit {
   readonly WEEKENDS = ['Saturday', 'Sunday'];
 
   days = signal([
-    { name: 'Monday',    isWeekend: false, enabled: true,  slots: [] as string[] },
-    { name: 'Tuesday',   isWeekend: false, enabled: true,  slots: [] as string[] },
-    { name: 'Wednesday', isWeekend: false, enabled: true,  slots: [] as string[] },
-    { name: 'Thursday',  isWeekend: false, enabled: true,  slots: [] as string[] },
-    { name: 'Friday',    isWeekend: false, enabled: true,  slots: [] as string[] },
-    { name: 'Saturday',  isWeekend: true,  enabled: false, slots: [] as string[] },
-    { name: 'Sunday',    isWeekend: true,  enabled: false, slots: [] as string[] },
+    { name: 'Monday', isWeekend: false, enabled: true, slots: [] as string[] },
+    { name: 'Tuesday', isWeekend: false, enabled: true, slots: [] as string[] },
+    { name: 'Wednesday', isWeekend: false, enabled: true, slots: [] as string[] },
+    { name: 'Thursday', isWeekend: false, enabled: true, slots: [] as string[] },
+    { name: 'Friday', isWeekend: false, enabled: true, slots: [] as string[] },
+    { name: 'Saturday', isWeekend: true, enabled: false, slots: [] as string[] },
+    { name: 'Sunday', isWeekend: true, enabled: false, slots: [] as string[] },
   ]);
 
   appointments = signal<any[]>([]);
@@ -76,28 +76,33 @@ export class ScheduleManagementComponent implements OnInit {
     if (this.doctorId) {
       this.loadAvailabilities();
       this.loadAppointments();
+      this.loadTimeOffs();
+      this.loadProfileStatus(); // Load acceptingAppointments flag
     }
+  }
+
+  loadProfileStatus(): void {
+    this.profileService.getDoctorProfile(this.doctorId).subscribe({
+      next: (res: any) => {
+        const data = res?.data || res;
+        if (data?.isAcceptingAppointments !== undefined) {
+          this.acceptingAppointments.set(data.isAcceptingAppointments);
+        }
+      }
+    });
   }
 
   loadAvailabilities(): void {
     this.isLoading.set(true);
-    console.log('[Schedule] Loading availabilities for doctorId:', this.doctorId);
     this.scheduleService.getAvailabilities(this.doctorId).subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
-        console.log('[Schedule] Raw GET response:', JSON.stringify(response, null, 2));
         const data = response?.data || response || [];
-        console.log('[Schedule] Parsed data array:', data);
         if (Array.isArray(data) && data.length > 0) {
           this.parseAvailabilities(data);
-        } else {
-          console.warn('[Schedule] No availability data returned — keeping defaults');
         }
       },
-      error: (err: any) => {
-        this.isLoading.set(false);
-        console.error('[Schedule] GET error:', err);
-      }
+      error: () => this.isLoading.set(false)
     });
   }
 
@@ -106,14 +111,21 @@ export class ScheduleManagementComponent implements OnInit {
       next: (response: any) => {
         const data = response?.data || response || [];
         this.appointments.set(Array.isArray(data) ? data : []);
-      },
-      error: () => {}
+      }
+    });
+  }
+
+  timeOffs = signal<any[]>([]);
+  loadTimeOffs(): void {
+    this.scheduleService.getTimeOffs(this.doctorId).subscribe({
+      next: (res: any) => {
+        const data = res?.data || res || [];
+        this.timeOffs.set(data);
+      }
     });
   }
 
   parseAvailabilities(availabilities: any[]): void {
-    console.log('[Schedule] parseAvailabilities input:', availabilities);
-    // Start with all days disabled, then enable only those returned by the backend
     const updatedDays = this.days().map(day => ({
       ...day,
       enabled: false,
@@ -121,26 +133,17 @@ export class ScheduleManagementComponent implements OnInit {
     }));
 
     availabilities.forEach((a: any) => {
-      // Backend returns { availableDay: "Monday", startTime: "09:00", endTime: "17:00" }
       const dayName = a.availableDay || a.AvailableDay || a.day || a.Day;
-      const start   = (a.startTime   || a.StartTime   || '').substring(0, 5);
-      const end     = (a.endTime     || a.EndTime     || '').substring(0, 5);
-
-      console.log(`[Schedule] Processing: day="${dayName}" start="${start}" end="${end}"`);
+      const start = (a.startTime || a.StartTime || '').substring(0, 5);
+      const end = (a.endTime || a.EndTime || '').substring(0, 5);
 
       const day = updatedDays.find(d => d.name === dayName);
       if (day && start && end && start !== end) {
         day.enabled = true;
         const slot = `${start} - ${end}`;
-        if (!day.slots.includes(slot)) {
-          day.slots.push(slot);
-        }
-      } else {
-        console.warn(`[Schedule] Skipped entry — day not matched or times equal:`, a);
+        if (!day.slots.includes(slot)) day.slots.push(slot);
       }
     });
-
-    console.log('[Schedule] Final days state:', updatedDays.map(d => `${d.name}: enabled=${d.enabled}, slots=${d.slots}`));
     this.days.set(updatedDays);
   }
 
@@ -151,7 +154,12 @@ export class ScheduleManagementComponent implements OnInit {
   }
 
   toggleAppointments(): void {
-    this.acceptingAppointments.update(v => !v);
+    const newVal = !this.acceptingAppointments();
+    this.acceptingAppointments.set(newVal);
+    this.scheduleService.toggleAcceptingAppointments(this.doctorId, newVal).subscribe({
+      next: () => this.successMessage.set(`Status updated to ${newVal ? 'Active' : 'Paused'}`),
+      error: () => this.errorMessage.set('Failed to update status.')
+    });
   }
 
   addTimeSlot(dayName: string, start: string, end: string): void {
@@ -161,7 +169,6 @@ export class ScheduleManagementComponent implements OnInit {
       return;
     }
     const slot = `${start} - ${end}`;
-    // Prevent duplicate slots
     const day = this.days().find(d => d.name === dayName);
     if (day?.slots.includes(slot)) return;
 
@@ -185,11 +192,7 @@ export class ScheduleManagementComponent implements OnInit {
   }
 
   saveSchedule(): void {
-    if (!this.doctorId) {
-      this.errorMessage.set('Doctor ID not found. Please log in again.');
-      return;
-    }
-
+    if (!this.doctorId) return;
     this.isSaving.set(true);
     this.errorMessage.set(null);
 
@@ -198,45 +201,35 @@ export class ScheduleManagementComponent implements OnInit {
       if (day.enabled && day.slots.length > 0) {
         day.slots.forEach(slot => {
           const [start, end] = slot.split(' - ');
-          availabilities.push({
-            availableDay: day.name,
-            startTime: start,
-            endTime: end
-          });
+          availabilities.push({ availableDay: day.name, startTime: start, endTime: end });
         });
       }
     });
 
-    console.log('[Schedule] Saving to backend. doctorId:', this.doctorId);
-    console.log('[Schedule] Payload:', JSON.stringify(availabilities, null, 2));
-
     this.scheduleService.updateAvailabilities(this.doctorId, availabilities).subscribe({
-      next: (res: any) => {
-        console.log('[Schedule] Save response:', res);
+      next: () => {
         this.isSaving.set(false);
-        if (res?.success === false) {
-          this.errorMessage.set(`Save failed: ${res?.message || 'Unknown error'}`);
-          setTimeout(() => this.errorMessage.set(null), 5000);
-          return;
-        }
-        this.successMessage.set('Schedule saved! Reloading to confirm...');
-        // Reload from backend to confirm what was actually stored
+        this.successMessage.set('Schedule saved!');
         this.loadAvailabilities();
         setTimeout(() => this.successMessage.set(null), 3000);
       },
       error: (err: any) => {
-        console.error('[Schedule] Save error:', err);
         this.isSaving.set(false);
-        this.errorMessage.set(`Failed to save: ${err?.error?.message || err?.message || 'Unknown error'}`);
-        setTimeout(() => this.errorMessage.set(null), 5000);
+        this.errorMessage.set('Failed to save schedule.');
       }
     });
   }
 
   blockDates(): void {
     if (this.awayFrom && this.awayTo) {
-      this.successMessage.set(`Blocked dates from ${this.awayFrom} to ${this.awayTo}`);
-      setTimeout(() => this.successMessage.set(null), 3000);
+      this.scheduleService.blockDates(this.doctorId, this.awayFrom, this.awayTo).subscribe({
+        next: () => {
+          this.successMessage.set(`Blocked dates from ${this.awayFrom} to ${this.awayTo}`);
+          this.loadTimeOffs();
+          setTimeout(() => this.successMessage.set(null), 3000);
+        },
+        error: () => this.errorMessage.set('Failed to block dates.')
+      });
     }
   }
 }

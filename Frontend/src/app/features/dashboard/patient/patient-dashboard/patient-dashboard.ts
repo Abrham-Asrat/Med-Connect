@@ -40,12 +40,17 @@ export class PatientDashboardComponent implements OnInit {
         const list = Array.isArray(data) ? data : [];
         this.appointments.set(list.slice(0, 5));
         this.totalAppointments.set(list.length);
-        this.upcomingAppointments.set(list.filter((a: any) =>
-          a.status === 'Scheduled' || a.status === 'Confirmed'
-        ).length);
-        this.completedAppointments.set(list.filter((a: any) =>
-          a.status === 'Completed'
-        ).length);
+
+        // Match backend enum values (case-insensitive)
+        this.upcomingAppointments.set(list.filter((a: any) => {
+          const s = a.status?.toLowerCase();
+          return s === 'scheduled' || s === 'confirmed' || s === 'active' || s === 'pending';
+        }).length);
+
+        this.completedAppointments.set(list.filter((a: any) => {
+          const s = a.status?.toLowerCase();
+          return s === 'completed' || s === 'closed';
+        }).length);
       },
       error: (error: any) => {
         this.isLoading.set(false);
@@ -62,9 +67,17 @@ export class PatientDashboardComponent implements OnInit {
   }
 
   getStatusClass(status: string): string {
-    return status === 'Scheduled' || status === 'Confirmed'
-      ? 'bg-primary-light text-primary'
-      : 'bg-warning-light text-warning-dark';
+    const s = status?.toLowerCase();
+    if (s === 'scheduled' || s === 'confirmed' || s === 'active') {
+      return 'bg-primary-light text-primary';
+    }
+    if (s === 'completed' || s === 'closed') {
+      return 'bg-success-light text-success';
+    }
+    if (s === 'cancelled') {
+      return 'bg-danger-light text-danger';
+    }
+    return 'bg-warning-light text-warning-dark';
   }
 
   getInitials(first: string, last: string): string {

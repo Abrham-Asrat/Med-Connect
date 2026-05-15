@@ -278,6 +278,10 @@ namespace BackendAPI.Source.Controllers
                 var recentRegistrations = await appContext.Users
                     .CountAsync(u => u.CreatedAt >= sevenDaysAgo);
                 
+                var totalRevenue = await appContext.Payments
+                    .Where(p => p.PaymentStatus == PaymentStatus.Success)
+                    .SumAsync(p => p.Amount);
+                
                 var stats = new
                 {
                     TotalDoctors = totalDoctors,
@@ -287,6 +291,7 @@ namespace BackendAPI.Source.Controllers
                     TotalAppointments = totalAppointments,
                     TotalReviews = totalReviews,
                     TotalUsers = totalUsers,
+                    TotalRevenue = totalRevenue,
                     UpcomingAppointments = upcomingAppointments,
                     TodaysAppointments = todaysAppointments,
                     RecentRegistrations = recentRegistrations

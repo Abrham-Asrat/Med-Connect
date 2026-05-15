@@ -2,6 +2,17 @@
 
   <h4 class="text-primary mb-4"><i class="bi bi-wallet2 me-2"></i>Payments / ክፍያዎች</h4>
 
+  @if (successMessage()) {
+  <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4">
+    <i class="bi bi-check-circle-fill me-2"></i>{{ successMessage() }}
+  </div>
+  }
+  @if (errorMessage()) {
+  <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMessage() }}
+  </div>
+  }
+
   <!-- Stats -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-4">
@@ -61,7 +72,7 @@
           @for (p of payments(); track p.paymentId) {
           <tr class="transaction-row">
             <td>{{ p.paymentDate | date:'mediumDate' }}</td>
-            <td>Doctor (Ref: {{ p.transactionReference?.substring(0,8) }})</td>
+            <td>{{ p.receiverName || 'Doctor' }}</td>
             <td>Appointment Fee</td>
             <td><strong>{{ p.amount }} ETB</strong></td>
             <td>
@@ -73,7 +84,7 @@
               @if (p.paymentStatus === 'Success' || p.paymentStatus === 1) {
               <span class="text-success"><i class="bi bi-check-circle me-1"></i>Verified</span>
               } @else {
-              <button class="btn btn-link btn-sm text-primary p-0">Verify</button>
+              <button class="btn btn-link btn-sm text-primary p-0" (click)="verifyPayment(p)">Verify</button>
               }
             </td>
           </tr>
@@ -90,6 +101,29 @@
       </table>
     </div>
   </div>
+
+  <!-- Outstanding Appointments -->
+  @if (dueAppointments().length > 0) {
+  <div class="card mt-4 border-warning shadow-sm">
+    <div class="card-header bg-warning-light" style="background: rgba(252, 209, 22, 0.1);">
+      <h6 class="text-warning-dark mb-0"><i class="bi bi-clock-history me-2"></i>Outstanding Appointments / ያልተከፈሉ ቀጠሮዎች
+      </h6>
+    </div>
+    <div class="list-group list-group-flush">
+      @for (apt of dueAppointments(); track apt.appointmentId) {
+      <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+        <div>
+          <h6 class="mb-0">Dr. {{ apt.doctorName || 'Medical Specialist' }}</h6>
+          <small class="text-medium">{{ apt.appointmentDate }} at {{ apt.appointmentTime }}</small>
+        </div>
+        <button class="btn btn-primary btn-sm rounded-pill px-4" (click)="openPayment(apt)">
+          <i class="bi bi-credit-card me-1"></i>Pay Now
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+  }
 
   @if (showPaymentModal()) {
   <div class="modal d-block" style="background:rgba(0,0,0,0.5)">

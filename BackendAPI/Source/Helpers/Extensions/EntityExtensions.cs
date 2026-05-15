@@ -54,7 +54,8 @@ namespace BackendAPI.Source.Helpers.Extensions
 
         public static DoctorProfileDto ToDoctorProfileDto(this DoctorModel doctor, UserModel user,
         ICollection<DoctorAvailabilityModel> availabilities,
-        ICollection<SpecialtyModel> specialties, ICollection<EducationModel> educations, ICollection<ExperienceModel> experiences)
+        ICollection<SpecialtyModel> specialties, ICollection<EducationModel> educations, ICollection<ExperienceModel> experiences,
+        int experienceYears = 0, int patientCount = 0)
         {
             var pref = doctor.DoctorPreference;
             return new DoctorProfileDto
@@ -85,13 +86,18 @@ namespace BackendAPI.Source.Helpers.Extensions
                 ClinicAddress    = pref?.ClinicAddress,
                 ClinicCity       = pref?.ClinicCity,
                 OnlineAppointmentFee   = pref?.OnlineAppointmentFee   ?? 0,
-                InPersonAppointmentFee = pref?.InPersonAppointmentFee ?? 0
+                InPersonAppointmentFee = pref?.InPersonAppointmentFee ?? 0,
+                Rating = doctor.Reviews.Any() ? Math.Round(doctor.Reviews.Average(r => r.StarRating), 1) : 0,
+                ReviewCount = doctor.Reviews.Count,
+                ExperienceYears = experienceYears,
+                PatientCount = patientCount
             };
         }
 
         public static DoctorProfileDto ToDoctorProfileDto(this UserModel user, DoctorModel doctor,
         ICollection<DoctorAvailabilityModel> availabilities,
-        ICollection<SpecialtyModel> specialties, ICollection<EducationModel> educations, ICollection<ExperienceModel> experiences)
+        ICollection<SpecialtyModel> specialties, ICollection<EducationModel> educations, ICollection<ExperienceModel> experiences,
+        int experienceYears = 0, int patientCount = 0)
         {
             var pref = doctor.DoctorPreference;
             return new DoctorProfileDto
@@ -118,11 +124,16 @@ namespace BackendAPI.Source.Helpers.Extensions
                 IsVerified = doctor.IsVerified,
                 AcceptsOnline    = pref?.AcceptsOnline    ?? true,
                 AcceptsInPerson  = pref?.AcceptsInPerson  ?? true,
+                IsAcceptingAppointments = pref?.IsAcceptingAppointments ?? true,
                 ClinicName       = pref?.ClinicName,
                 ClinicAddress    = pref?.ClinicAddress,
                 ClinicCity       = pref?.ClinicCity,
                 OnlineAppointmentFee   = pref?.OnlineAppointmentFee   ?? 0,
-                InPersonAppointmentFee = pref?.InPersonAppointmentFee ?? 0
+                InPersonAppointmentFee = pref?.InPersonAppointmentFee ?? 0,
+                Rating = doctor.Reviews.Any() ? Math.Round(doctor.Reviews.Average(r => r.StarRating), 1) : 0,
+                ReviewCount = doctor.Reviews.Count,
+                ExperienceYears = experienceYears,
+                PatientCount = patientCount
             };
         }
 
@@ -162,7 +173,8 @@ namespace BackendAPI.Source.Helpers.Extensions
                 file.MimeType,   // already stored as the MIME string e.g. "audio/webm"
                 FileHelper.ToBase64(file.FileData),
                 file.FileName,
-                file.FileSize
+                file.FileSize,
+                file.CreatedAt
             );
         }
 
@@ -198,6 +210,8 @@ namespace BackendAPI.Source.Helpers.Extensions
                 DoctorStatus = doctor.DoctorStatus,
 
                 ProfilePicture = user.ProfilePicture ?? "",
+                Rating = doctor.Reviews.Any() ? Math.Round(doctor.Reviews.Average(r => r.StarRating), 1) : 0,
+                ReviewCount = doctor.Reviews.Count
             };
         }
 
@@ -314,8 +328,14 @@ namespace BackendAPI.Source.Helpers.Extensions
     return new AppointmentDto
     {
       AppointmentId = appointment.AppointmentId,
-      Doctor = doctor.ToDoctorDto(doctorUser, specialties),
+      PatientId = patient.PatientId,
+      PatientUserId = patient.UserId,
+      DoctorId = doctor.DoctorId,
+      DoctorUserId = doctor.UserId,
+      PatientName = $"{patientUser.FirstName} {patientUser.LastName}",
+      DoctorName = $"{doctorUser.FirstName} {doctorUser.LastName}",
       Patient = patient.ToPatientDto(patientUser),
+      Doctor = doctor.ToDoctorDto(doctorUser, specialties),
       AppointmentDate = appointment.AppointmentDate,
       AppointmentTime = appointment.AppointmentTime,
       AppointmentType = appointment.AppointmentType,
@@ -323,6 +343,9 @@ namespace BackendAPI.Source.Helpers.Extensions
       ClinicName    = isInPerson ? pref?.ClinicName    : null,
       ClinicAddress = isInPerson ? pref?.ClinicAddress : null,
       ClinicCity    = isInPerson ? pref?.ClinicCity    : null,
+      Fee           = isInPerson 
+                        ? (pref?.InPersonAppointmentFee ?? 0) 
+                        : (pref?.OnlineAppointmentFee ?? 0)
     };
   }
 
@@ -335,6 +358,9 @@ namespace BackendAPI.Source.Helpers.Extensions
     return new AppointmentDto
     {
       AppointmentId = appointment.AppointmentId,
+      PatientId = patient.PatientId,
+      PatientUserId = patient.UserId,
+      PatientName = $"{patientUser.FirstName} {patientUser.LastName}",
       Patient = patient.ToPatientDto(patientUser),
       AppointmentDate = appointment.AppointmentDate,
       AppointmentTime = appointment.AppointmentTime,
@@ -351,14 +377,25 @@ namespace BackendAPI.Source.Helpers.Extensions
     ICollection<SpecialtyModel> specialties
   )
   {
+    var pref = doctor.DoctorPreference;
+    var isInPerson = appointment.AppointmentType == AppointmentType.InPerson;
     return new AppointmentDto
     {
       AppointmentId = appointment.AppointmentId,
+      DoctorId = doctor.DoctorId,
+      DoctorUserId = doctor.UserId,
+      DoctorName = $"{doctorUser.FirstName} {doctorUser.LastName}",
       Doctor = doctor.ToDoctorDto(doctorUser, specialties),
       AppointmentDate = appointment.AppointmentDate,
       AppointmentTime = appointment.AppointmentTime,
       AppointmentType = appointment.AppointmentType,
-      Status = appointment.Status
+      Status = appointment.Status,
+      ClinicName    = isInPerson ? pref?.ClinicName    : null,
+      ClinicAddress = isInPerson ? pref?.ClinicAddress : null,
+      ClinicCity    = isInPerson ? pref?.ClinicCity    : null,
+      Fee           = isInPerson 
+                        ? (pref?.InPersonAppointmentFee ?? 0) 
+                        : (pref?.OnlineAppointmentFee ?? 0)
     };
 
   }
@@ -398,6 +435,8 @@ namespace BackendAPI.Source.Helpers.Extensions
       IsEdited = review.HasBeenUpdated(),
       HelpfulCount = review.HelpfulCount,
       IsPublic = review.IsPublic,
+      ReplyText = review.ReplyText,
+      RepliedAt = review.RepliedAt,
       Doctor = review.Doctor != null ? new ReviewProfileDto
       {
         Id = review.Doctor.User?.UserId ?? Guid.Empty,
@@ -431,6 +470,8 @@ namespace BackendAPI.Source.Helpers.Extensions
       IsEdited = review.HasBeenUpdated(),
       HelpfulCount = review.HelpfulCount,
       IsPublic = review.IsPublic,
+      ReplyText = review.ReplyText,
+      RepliedAt = review.RepliedAt,
       PatientName = review.GetPatientFullName(),
       PatientProfilePicture = review.Patient?.User?.ProfilePicture ?? ""
     };
@@ -555,7 +596,11 @@ namespace BackendAPI.Source.Helpers.Extensions
       Content = blog.Content,
       Title = blog.Title,
       ImageId = blog.ImageId,
-      ImageUrl = blog.Image?.Url,
+      ImageUrl = blog.Image != null 
+        ? (string.IsNullOrEmpty(blog.Image.Url) 
+            ? $"data:{blog.Image.MimeType};base64,{Convert.ToBase64String(blog.Image.FileData)}" 
+            : blog.Image.Url) 
+        : null,
       CreatedAt = blog.CreatedAt,
       Tags = tags.Select(t => t.TagName).ToList()
     };
@@ -649,7 +694,8 @@ namespace BackendAPI.Source.Helpers.Extensions
       ConversationId = conversation.ConversationId,
       Participants = participants.Select(u => u.ToConversationProfileDto()).ToList(),
       LastMessageAt = conversation.LastMessageAt,
-      Status = conversation.Status.ToString().ToLower()
+      Status = conversation.Status.ToString().ToLower(),
+      AppointmentType = conversation.Appointment?.AppointmentType.ToString()
     };
   }
 

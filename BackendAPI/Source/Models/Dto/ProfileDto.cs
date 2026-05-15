@@ -83,6 +83,7 @@ public record DoctorProfileDto : ProfileDto
   // Appointment type availability
   public bool AcceptsOnline { get; init; } = true;
   public bool AcceptsInPerson { get; init; } = true;
+  public bool IsAcceptingAppointments { get; init; } = true;
 
   // Clinic info (for in-person appointments)
   public string? ClinicName { get; init; }
@@ -92,6 +93,12 @@ public record DoctorProfileDto : ProfileDto
   // Fees
   public decimal OnlineAppointmentFee { get; init; }
   public decimal InPersonAppointmentFee { get; init; }
+
+  // Stats
+  public decimal Rating { get; init; } = 0;
+  public int ReviewCount { get; init; } = 0;
+  public int ExperienceYears { get; init; } = 0;
+  public int PatientCount { get; init; } = 0;
 };
 
 /// <summary>

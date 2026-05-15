@@ -33,5 +33,6 @@ public class ContactInfoDto
     public string Email { get; set; } = string.Empty;
     public string AlternatePhone { get; set; } = string.Empty;
     public string AlternateEmail { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
 } 
 }

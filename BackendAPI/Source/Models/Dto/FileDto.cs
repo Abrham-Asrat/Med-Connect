@@ -19,5 +19,6 @@ public record FileDto(
   string MimeType,       // MIME string e.g. "audio/webm", not the enum integer
   string FileDataBase64,
   string? FileName,
-  int fileSize
+  int fileSize,
+  DateTime createdAt
 );

@@ -1,6 +1,7 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../../../../core/services/appointment.service';
 import { PaymentService } from '../../../../core/services/payment.service';
@@ -19,22 +20,23 @@ export class BookAppointmentComponent implements OnInit {
   private paymentService = inject(PaymentService);
   private doctorService = inject(DoctorService);
   private sanitizer = inject(DomSanitizer);
+  private authService = inject(AuthService);
 
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   // Session storage keys used to survive the Chapa full-page redirect
-  private static readonly SK_STEP           = 'bk_step';
-  private static readonly SK_DOCTOR_ID      = 'bk_doctorId';
-  private static readonly SK_DOCTOR_UID     = 'bk_doctorUserId';  // doctor's UserModel.UserId for chat
-  private static readonly SK_DOCTOR_NAME    = 'bk_doctorName';
-  private static readonly SK_DATE           = 'bk_date';
-  private static readonly SK_TIME           = 'bk_time';
-  private static readonly SK_TYPE           = 'bk_type';
+  private static readonly SK_STEP = 'bk_step';
+  private static readonly SK_DOCTOR_ID = 'bk_doctorId';
+  private static readonly SK_DOCTOR_UID = 'bk_doctorUserId';  // doctor's UserModel.UserId for chat
+  private static readonly SK_DOCTOR_NAME = 'bk_doctorName';
+  private static readonly SK_DATE = 'bk_date';
+  private static readonly SK_TIME = 'bk_time';
+  private static readonly SK_TYPE = 'bk_type';
   private static readonly SK_APPOINTMENT_ID = 'bk_appointmentId'; // appointment ID for chat welcome msg
-  private static readonly SK_CLINIC_NAME    = 'bk_clinicName';
+  private static readonly SK_CLINIC_NAME = 'bk_clinicName';
   private static readonly SK_CLINIC_ADDRESS = 'bk_clinicAddress';
-  private static readonly SK_CLINIC_CITY    = 'bk_clinicCity';
+  private static readonly SK_CLINIC_CITY = 'bk_clinicCity';
 
   step = signal(1);
   appointmentType = signal<'Virtual' | 'InPerson'>('Virtual');
@@ -103,17 +105,17 @@ export class BookAppointmentComponent implements OnInit {
   }
 
   private saveSession(): void {
-    sessionStorage.setItem(BookAppointmentComponent.SK_STEP,           '5');
-    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_ID,      this.doctorId() || '');
-    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_UID,     this.doctorUserId() || '');
-    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_NAME,    this.doctorName());
-    sessionStorage.setItem(BookAppointmentComponent.SK_DATE,           this.selectedDate());
-    sessionStorage.setItem(BookAppointmentComponent.SK_TIME,           this.selectedTime());
-    sessionStorage.setItem(BookAppointmentComponent.SK_TYPE,           this.appointmentType());
+    sessionStorage.setItem(BookAppointmentComponent.SK_STEP, '5');
+    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_ID, this.doctorId() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_UID, this.doctorUserId() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_DOCTOR_NAME, this.doctorName());
+    sessionStorage.setItem(BookAppointmentComponent.SK_DATE, this.selectedDate());
+    sessionStorage.setItem(BookAppointmentComponent.SK_TIME, this.selectedTime());
+    sessionStorage.setItem(BookAppointmentComponent.SK_TYPE, this.appointmentType());
     sessionStorage.setItem(BookAppointmentComponent.SK_APPOINTMENT_ID, this.appointmentId() || '');
-    sessionStorage.setItem(BookAppointmentComponent.SK_CLINIC_NAME,    this.clinicName() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_CLINIC_NAME, this.clinicName() || '');
     sessionStorage.setItem(BookAppointmentComponent.SK_CLINIC_ADDRESS, this.clinicAddress() || '');
-    sessionStorage.setItem(BookAppointmentComponent.SK_CLINIC_CITY,    this.clinicCity() || '');
+    sessionStorage.setItem(BookAppointmentComponent.SK_CLINIC_CITY, this.clinicCity() || '');
   }
 
   private clearSession(): void {
@@ -334,15 +336,16 @@ export class BookAppointmentComponent implements OnInit {
       ? this.onlineFee()
       : this.inPersonFee();
 
+    const user = this.authService.currentUser() as any;
     const chargePayload = {
       amount: fee.toFixed(2),
       currency: "ETB",
-      phoneNumber: "0900000000", // Fallback, would normally use logged-in patient's phone
+      phoneNumber: user?.phone || "0900000000",
       paymentProvider: "1",      // Matches enum value e.g 'Chapa'
       paymentMethod: "0",        // e.g 'Card/Telebirr'
-      email: "patient@medconnect.com",
-      firstName: "Patient",
-      lastName: "User",
+      email: user?.email || "patient@medconnect.com",
+      firstName: user?.firstName || "Patient",
+      lastName: user?.lastName || "User",
       txRef: `APPT-${Date.now()}`
     };
 

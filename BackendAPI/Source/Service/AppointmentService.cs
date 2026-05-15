@@ -547,7 +547,7 @@ public class AppointmentService(
       if (!string.IsNullOrEmpty(editAppointmentDto.Status))
       {
         var oldStatus = appointment.Status;
-        appointment.Status = editAppointmentDto.Status.ConvertToEnum<AppointmentStatus>();
+        appointment.Status = editAppointmentDto.Status.ConvertToEnum<AppointmentStatus>(true);
         
         // Notify patient if appointment is completed or cancelled
         if (appointment.Status != oldStatus)

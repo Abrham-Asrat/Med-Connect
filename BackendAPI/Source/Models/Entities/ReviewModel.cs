@@ -63,6 +63,16 @@ public class ReviewModel : BaseEntity
   /// </summary>
   public new DateTime? UpdatedAt { get; set; }
 
+  /// <summary>
+  /// Optional response from the doctor to the patient's review
+  /// </summary>
+  public string? ReplyText { get; set; }
+
+  /// <summary>
+  /// When the doctor replied to the review (null if never replied)
+  /// </summary>
+  public DateTime? RepliedAt { get; set; }
+
   // Navigation properties
   /// <summary>
   /// Navigation property to the Doctor being reviewed

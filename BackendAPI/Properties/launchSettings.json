@@ -2,20 +2,19 @@
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "MedConnect": {
-        "commandName": "Project",
-        "dotnetRunMessages": true,
-        "launchBrowser": true,
-        "launchUrl": "swagger",
-        "applicationUrl": "http://localhost:5000",
-        "environmentVariables": {
-          "ASPNETCORE_ENVIRONMENT": "Development",
-          "MAIL_SENDER_EMAIL": "medconnect271@gmail.com",
-          "MAIL_SENDER_PASSWORD": "utxp mxef lwzb ahig",
-          "MAIL_HOST": "smtp.gmail.com",
-          "MAIL_PORT": "587",
-          "MAIL_HOST": "smtp.gmail.com",
-          "MAIL_PORT": "587"
-        }
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "MAIL_SENDER_EMAIL": "medconnect271@gmail.com",
+        "MAIL_SENDER_PASSWORD": "utxp mxef lwzb ahig",
+        "MAIL_HOST": "smtp.gmail.com",
+        "MAIL_PORT": "587",
+        "MAIL_ADMIN_RECEIVER": "medconnect271@gmail.com"
+      }
     },
     "MedConnect (HTTPS)": {
       "commandName": "Project",
@@ -24,9 +23,9 @@
       "launchUrl": "swagger",
       "applicationUrl": "https://localhost:5001;http://localhost:5000",
       "environmentVariables": {
-          "ASPNETCORE_ENVIRONMENT": "Development",
-          "MAIL_SENDER_EMAIL": "medconnect271@gmail.com",
-          "MAIL_SENDER_PASSWORD": "utxp mxef lwzb ahig"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "MAIL_SENDER_EMAIL": "medconnect271@gmail.com",
+        "MAIL_SENDER_PASSWORD": "utxp mxef lwzb ahig"
       }
     }
   }

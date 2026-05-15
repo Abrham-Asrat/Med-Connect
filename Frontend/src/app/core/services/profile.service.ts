@@ -33,4 +33,8 @@ export class ProfileService {
   deleteAccount(userId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/User/${userId}`);
   }
+
+  getDoctorProfile(doctorId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/doctors/profile/${doctorId}`);
+  }
 }

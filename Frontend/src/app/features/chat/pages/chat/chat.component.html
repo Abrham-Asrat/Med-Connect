@@ -99,11 +99,13 @@
         </div>
         <div class="d-flex gap-2 ms-auto" (click)="$event.stopPropagation()">
 
+          @if (activeConv()?.appointmentType !== 'InPerson') {
           <button
             class="btn btn-primary text-white btn-sm rounded-circle shadow-sm d-flex align-items-center justify-content-center"
             style="width: 32px; height: 32px; padding: 0" (click)="toggleVideoCall()" title="Start Video Consultation">
             <i class="bi bi-camera-video-fill"></i>
           </button>
+          }
 
           @if (userRole === 'Doctor') {
           @if (activeConv()?.status === 'active') {
@@ -488,10 +490,12 @@
             <i class="bi bi-stop-fill"></i>
           </button>
           } @else {
+          @if (activeConv()?.appointmentType !== 'InPerson') {
           <button class="btn btn-light flex-shrink-0" style="width:42px;height:42px;border-radius:50%;padding:0"
             (click)="startRecording()" title="Record voice message">
             <i class="bi bi-mic-fill text-primary"></i>
           </button>
+          }
           }
         </div>
       </div>
@@ -548,6 +552,7 @@
           <h5 class="fw-bold mb-1 text-truncate">{{ activeConv()?.name }}</h5>
           <p class="text-muted small mb-0">{{ activeConv()?.role || 'Patient' }}</p>
 
+          @if (activeConv()?.appointmentType !== 'InPerson') {
           <div class="d-flex justify-content-center gap-3 mt-3">
             <button class="btn btn-primary rounded-circle shadow-sm" style="width:40px;height:40px"
               title="Audio Call"><i class="bi bi-telephone-fill"></i></button>
@@ -555,6 +560,7 @@
               style="width:40px;height:40px;background:rgba(7,137,48,0.1)" title="Video Call"><i
                 class="bi bi-camera-video-fill"></i></button>
           </div>
+          }
         </div>
 
         <div class="p-4 flex-grow-1 overflow-auto">

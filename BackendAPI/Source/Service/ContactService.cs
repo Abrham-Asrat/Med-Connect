@@ -28,7 +28,11 @@ public class ContactService : IContactService
     {
         try
         {
-            var adminReceiver = GetRequiredEnvironmentVariable("MAIL_ADMIN_RECEIVER");
+            var adminReceiver = _configuration["MAIL_ADMIN_RECEIVER"];
+            if (string.IsNullOrWhiteSpace(adminReceiver))
+            {
+                throw new InvalidOperationException("Environment variable 'MAIL_ADMIN_RECEIVER' is not configured.");
+            }
             var subject = $"Contact form submission from {formData.FirstName} {formData.LastName}";
             var bodyBuilder = new StringBuilder();
 
@@ -92,10 +96,11 @@ public class ContactService : IContactService
 
             return new ContactInfoDto
             {
-                Phone = phone ?? "+1 (555) 123-4567",
+                Phone = phone ?? "+251-11-XXX-XXXX",
                 Email = email ?? "contact@medconnect.com",
-                AlternatePhone = alternatePhone ?? "+1 (555) 987-6543",
-                AlternateEmail = alternateEmail ?? "support@medconnect.com"
+                AlternatePhone = alternatePhone ?? "+251-91-XXX-XXXX",
+                AlternateEmail = alternateEmail ?? "support@medconnect.com",
+                Address = contactInfo["Address"] ?? "Bole Road, Addis Ababa, Ethiopia"
             };
         }
         catch (Exception ex)

@@ -1,6 +1,6 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppointmentService } from '../../../../core/services/appointment.service';
 import { ProfileService } from '../../../../core/services/profile.service';
@@ -23,6 +23,7 @@ export class DoctorDashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private appointmentService = inject(AppointmentService);
   private profileService = inject(ProfileService);
+  private router = inject(Router);
 
   user = this.authService.currentUser;
   doctorId = localStorage.getItem('doctorId') || '';
@@ -75,14 +76,15 @@ export class DoctorDashboardComponent implements OnInit {
         this.appointments.set(apps.slice(0, 10));
 
         // Calculate stats
-        this.todayAppointments.set(apps.filter((a: any) =>
-          a.status === 'Scheduled' || a.status === 'Confirmed'
-        ).length);
+        this.todayAppointments.set(apps.filter((a: any) => {
+          const s = a.status?.toLowerCase();
+          return s === 'scheduled' || s === 'confirmed' || s === 'active';
+        }).length);
         this.pendingConfirmations.set(apps.filter((a: any) =>
-          a.status === 'Pending'
+          a.status?.toLowerCase() === 'pending'
         ).length);
         this.completedToday.set(apps.filter((a: any) =>
-          a.status === 'Completed'
+          a.status?.toLowerCase() === 'completed' || a.status?.toLowerCase() === 'closed'
         ).length);
         this.totalPatients.set(new Set(apps.map((a: any) => a.patientId)).size);
       },
@@ -105,11 +107,14 @@ export class DoctorDashboardComponent implements OnInit {
   }
 
   getStatusClass(status: string): string {
-    switch (status) {
-      case 'Scheduled':
-      case 'Confirmed': return 'bg-primary-light text-primary';
-      case 'Pending': return 'bg-warning-light text-warning-dark';
-      case 'Completed': return 'bg-success-light text-success';
+    switch (status?.toLowerCase()) {
+      case 'scheduled':
+      case 'confirmed':
+      case 'active': return 'bg-primary-light text-primary';
+      case 'pending': return 'bg-warning-light text-warning-dark';
+      case 'completed':
+      case 'closed': return 'bg-success-light text-success';
+      case 'cancelled': return 'bg-danger-light text-danger';
       default: return 'bg-light text-medium';
     }
   }
@@ -117,7 +122,8 @@ export class DoctorDashboardComponent implements OnInit {
   confirmAppointment(id: string): void {
     if (!id) return;
     this.isLoading.set(true);
-    this.appointmentService.updateAppointment(id, { status: 'Confirmed' }).subscribe({
+    // Use 'scheduled' as it's the valid backend enum value
+    this.appointmentService.updateAppointment(id, { status: 'scheduled' }).subscribe({
       next: () => {
         this.loadAppointments();
       },
@@ -133,13 +139,23 @@ export class DoctorDashboardComponent implements OnInit {
     if (!confirm('Are you sure you want to decline this appointment?')) return;
 
     this.isLoading.set(true);
-    this.appointmentService.updateAppointment(id, { status: 'Cancelled' }).subscribe({
+    this.appointmentService.updateAppointment(id, { status: 'cancelled' }).subscribe({
       next: () => {
         this.loadAppointments();
       },
       error: (err) => {
         this.isLoading.set(false);
         console.error('Error declining:', err);
+      }
+    });
+  }
+
+  goChat(apt: any): void {
+    if (!apt || !apt.patientId) return;
+    this.router.navigate(['/doctor/chat'], {
+      queryParams: {
+        startChatWith: apt.patientUserId || apt.userId || apt.patientId,
+        appointmentId: apt.appointmentId
       }
     });
   }

@@ -4,10 +4,10 @@ import { AppointmentService } from '../../../core/services/appointment.service';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-    selector: 'app-admin-scheduling',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
+  selector: 'app-admin-scheduling',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
     <div class="container-fluid p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -84,12 +84,12 @@ import { FormsModule } from '@angular/forms';
                   </td>
                   <td>
                     <span class="badge rounded-pill px-3 py-2" 
-                      [class.bg-success-light]="apt.status === 'Completed'"
-                      [class.text-success]="apt.status === 'Completed'"
-                      [class.bg-primary-light]="apt.status === 'Scheduled'"
-                      [class.text-primary]="apt.status === 'Scheduled'"
-                      [class.bg-danger-light]="apt.status === 'Cancelled'"
-                      [class.text-danger]="apt.status === 'Cancelled'">
+                      [class.bg-success-light]="apt.status?.toLowerCase() === 'completed' || apt.status?.toLowerCase() === 'closed'"
+                      [class.text-success]="apt.status?.toLowerCase() === 'completed' || apt.status?.toLowerCase() === 'closed'"
+                      [class.bg-primary-light]="apt.status?.toLowerCase() === 'scheduled' || apt.status?.toLowerCase() === 'confirmed'"
+                      [class.text-primary]="apt.status?.toLowerCase() === 'scheduled' || apt.status?.toLowerCase() === 'confirmed'"
+                      [class.bg-danger-light]="apt.status?.toLowerCase() === 'cancelled'"
+                      [class.text-danger]="apt.status?.toLowerCase() === 'cancelled'">
                       {{ apt.status }}
                     </span>
                   </td>
@@ -113,55 +113,56 @@ import { FormsModule } from '@angular/forms';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .bg-success-light { background: #E8F5EC; }
     .bg-primary-light { background: #E7F0FF; }
     .bg-danger-light { background: #FFEBEE; }
   `]
 })
 export class AdminSchedulingComponent implements OnInit {
-    private appointmentService = inject(AppointmentService);
+  private appointmentService = inject(AppointmentService);
 
-    appointments = signal<any[]>([]);
-    isLoading = signal(false);
-    searchTerm = signal('');
-    statusFilter = signal('All');
+  appointments = signal<any[]>([]);
+  isLoading = signal(false);
+  searchTerm = signal('');
+  statusFilter = signal('All');
 
-    pendingCount = signal(0);
+  pendingCount = signal(0);
 
-    ngOnInit(): void {
-        this.loadAppointments();
+  ngOnInit(): void {
+    this.loadAppointments();
+  }
+
+  loadAppointments(): void {
+    this.isLoading.set(true);
+    this.appointmentService.getAllAppointments().subscribe({
+      next: (res: any) => {
+        const data = res?.data || res || [];
+        this.appointments.set(data);
+        // Count any 'not-yet-cancelled/not-yet-completed' as pending for admin's view or use strict pending
+        this.pendingCount.set(data.filter((a: any) => (a as any).status?.toLowerCase() === 'pending').length);
+        this.isLoading.set(false);
+      },
+      error: () => this.isLoading.set(false)
+    });
+  }
+
+  filteredAppointments() {
+    return this.appointments().filter(a => {
+      const patientName = (a as any).patientName || '';
+      const doctorName = (a as any).doctorName || '';
+      const matchesSearch = (patientName.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
+        doctorName.toLowerCase().includes(this.searchTerm().toLowerCase()));
+      const matchesStatus = this.statusFilter() === 'All' || (a as any).status?.toLowerCase() === this.statusFilter().toLowerCase();
+      return matchesSearch && matchesStatus;
+    });
+  }
+
+  cancelAppointment(id: string): void {
+    if (confirm('Are you sure you want to cancel this appointment?')) {
+      this.appointmentService.deleteAppointment(id).subscribe({
+        next: () => this.loadAppointments()
+      });
     }
-
-    loadAppointments(): void {
-        this.isLoading.set(true);
-        this.appointmentService.getAllAppointments().subscribe({
-            next: (res: any) => {
-                const data = res?.data || res || [];
-                this.appointments.set(data);
-                this.pendingCount.set(data.filter((a: any) => (a as any).status === 'Scheduled').length);
-                this.isLoading.set(false);
-            },
-            error: () => this.isLoading.set(false)
-        });
-    }
-
-    filteredAppointments() {
-        return this.appointments().filter(a => {
-            const patientName = (a as any).patientName || '';
-            const doctorName = (a as any).doctorName || '';
-            const matchesSearch = (patientName.toLowerCase().includes(this.searchTerm().toLowerCase()) ||
-                doctorName.toLowerCase().includes(this.searchTerm().toLowerCase()));
-            const matchesStatus = this.statusFilter() === 'All' || (a as any).status === this.statusFilter();
-            return matchesSearch && matchesStatus;
-        });
-    }
-
-    cancelAppointment(id: string): void {
-        if (confirm('Are you sure you want to cancel this appointment?')) {
-            this.appointmentService.deleteAppointment(id).subscribe({
-                next: () => this.loadAppointments()
-            });
-        }
-    }
+  }
 }

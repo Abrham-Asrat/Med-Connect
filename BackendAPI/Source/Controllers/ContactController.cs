@@ -37,7 +37,7 @@ namespace BackendAPI.Source.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Contact form submission failed.");
-                return StatusCode(500, new { title = "Internal server error", message = "Failed to send contact message. Please try again later.", errors = "Failed to send contact message." });
+                return StatusCode(500, new { title = "Internal server error", message = "Failed to send contact message. Please try again later.", errors = ex.Message });
             }
         }
 

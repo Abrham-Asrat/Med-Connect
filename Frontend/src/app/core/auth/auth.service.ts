@@ -38,11 +38,13 @@ export class AuthService {
         // Repair missing ids for existing sessions
         if (!localStorage.getItem('userId')) localStorage.setItem('userId', user.userId);
         if (user.role === 'Patient' && !localStorage.getItem('patientId')) {
-          localStorage.setItem('patientId', user.userId);
-          this.patientIdSignal.set(user.userId);
+          const id = user.patientId || user.userId;
+          localStorage.setItem('patientId', id);
+          this.patientIdSignal.set(id);
         } else if (user.role === 'Doctor' && !localStorage.getItem('doctorId')) {
-          localStorage.setItem('doctorId', user.userId);
-          this.doctorIdSignal.set(user.userId);
+          const id = user.doctorId || user.userId;
+          localStorage.setItem('doctorId', id);
+          this.doctorIdSignal.set(id);
         }
       } catch {
         this.logout();
@@ -121,11 +123,13 @@ export class AuthService {
     localStorage.setItem('user', JSON.stringify(user));
 
     if (user.role === 'Patient') {
-      localStorage.setItem('patientId', user.userId);
-      this.patientIdSignal.set(user.userId);
+      const id = user.patientId || user.userId;
+      localStorage.setItem('patientId', id);
+      this.patientIdSignal.set(id);
     } else if (user.role === 'Doctor') {
-      localStorage.setItem('doctorId', user.userId);
-      this.doctorIdSignal.set(user.userId);
+      const id = user.doctorId || user.userId;
+      localStorage.setItem('doctorId', id);
+      this.doctorIdSignal.set(id);
     }
     localStorage.setItem('userId', user.userId);
 

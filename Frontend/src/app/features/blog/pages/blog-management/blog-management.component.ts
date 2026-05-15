@@ -136,6 +136,29 @@ export class BlogManagementComponent implements OnInit {
       return;
     }
 
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    // 1. Check if there's a new image to upload
+    if (this.imageFile) {
+      this.blogService.uploadImage(this.imageFile).subscribe({
+        next: (res: any) => {
+          const imageId = res?.data?.imageId || res?.imageId;
+          this.executeSave(imageId);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          this.errorMessage.set('Failed to upload image. Please try again.');
+          console.error(err);
+        }
+      });
+    } else {
+      this.executeSave();
+    }
+  }
+
+  private executeSave(imageId?: string): void {
     const data: any = {
       authorId: this.userId,
       title: this.title.trim(),
@@ -143,9 +166,7 @@ export class BlogManagementComponent implements OnInit {
       tags: this.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t),
     };
 
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    this.successMessage.set(null);
+    if (imageId) data.imageId = imageId;
 
     const request = this.editMode() && this.editingBlogId()
       ? this.blogService.updateBlog(this.editingBlogId()!, data)

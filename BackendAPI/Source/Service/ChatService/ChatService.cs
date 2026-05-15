@@ -377,6 +377,7 @@ public class ChatService(
       // (so the frontend can find the "other" participant)
       var conversations = await appContext.Conversations
         .Where(c => conversationIds.Contains(c.ConversationId))
+        .Include(c => c.Appointment)
         .Include(c => c.ConversationMemberships)
           .ThenInclude(cm => cm.User)
         .ToListAsync();
@@ -393,7 +394,8 @@ public class ChatService(
           ConversationId = c.ConversationId,
           Participants = allParticipants,
           LastMessageAt = c.LastMessageAt,
-          Status = c.Status.ToString().ToLower()
+          Status = c.Status.ToString().ToLower(),
+          AppointmentType = c.Appointment?.AppointmentType.ToString()
         };
       }).ToList();
 

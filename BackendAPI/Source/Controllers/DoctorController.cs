@@ -149,7 +149,7 @@ namespace BackendAPI.Source.Controllers
             }
         }
 
-        [HttpGet("{doctorId}")]
+        [HttpGet("profile/{doctorId}")]
         public async Task<IActionResult> GetDoctorProfile([FromRoute] Guid doctorId)
         {
             try
@@ -165,6 +165,27 @@ namespace BackendAPI.Source.Controllers
                 logger.LogError(ex, $"Failed to fetch profile for doctor {doctorId}");
                 return StatusCode(500, "Internal Server Error");
             }
+        }
+
+        [HttpPost("accept-appointments/{doctorId}")]
+        public async Task<IActionResult> ToggleAcceptingAppointments(Guid doctorId, [FromQuery] bool accepting)
+        {
+            var response = await doctorService.UpdateAcceptingAppointmentsAsync(doctorId, accepting);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpPost("time-off/{doctorId}")]
+        public async Task<IActionResult> BlockDates(Guid doctorId, [FromQuery] DateTime start, [FromQuery] DateTime end, [FromQuery] string? reason)
+        {
+            var response = await doctorService.BlockDatesAsync(doctorId, start, end, reason);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpGet("time-off/{doctorId}")]
+        public async Task<IActionResult> GetTimeOffs(Guid doctorId)
+        {
+            var response = await doctorService.GetTimeOffsAsync(doctorId);
+            return StatusCode(response.StatusCode, response);
         }
     }
 }

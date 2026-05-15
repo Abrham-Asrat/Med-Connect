@@ -56,11 +56,11 @@ export class MedicalRecordsComponent implements OnInit {
     const records = [
       ...appointments.map((apt: any) => ({
         id: apt.appointmentId,
-        category: apt.status === 'Completed' ? 'diagnosis' : 'general',
+        category: apt.status?.toLowerCase() === 'completed' || apt.status?.toLowerCase() === 'closed' ? 'diagnosis' : 'general',
         title: `${apt.appointmentType || 'Virtual'} Consultation`,
         date: new Date(apt.appointmentDate).toISOString().split('T')[0],
         doctor: apt.doctorName ? `Dr. ${apt.doctorName}` : 'Assigning Doctor',
-        description: apt.status === 'Completed'
+        description: apt.status?.toLowerCase() === 'completed' || apt.status?.toLowerCase() === 'closed'
           ? `Post-consultation summary record for your appointment on ${apt.appointmentDate}.`
           : `Appointment scheduled at ${apt.appointmentTime}. Status: ${apt.status}.`,
         status: apt.status,
@@ -70,7 +70,7 @@ export class MedicalRecordsComponent implements OnInit {
         id: file.fileId,
         category: this.inferCategory(file.fileName, file.mimeType),
         title: file.fileName,
-        date: new Date().toISOString().split('T')[0], // File model needs a proper upload date if available
+        date: file.createdAt || new Date().toISOString(),
         doctor: 'Uploaded By Patient',
         description: 'Personally uploaded medical document.',
         status: 'Completed',
@@ -141,70 +141,5 @@ export class MedicalRecordsComponent implements OnInit {
     }
     const byteArray = new Uint8Array(byteNumbers);
     return new Blob([byteArray], { type: mimeType });
-  }
-
-  isUploading = signal(false);
-
-
-  triggerFileInput(): void {
-    const fileInput = document.getElementById('recordUpload') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.click();
-    }
-  }
-
-  onFileSelected(event: any): void {
-    const file: File = event.target.files[0];
-    if (file && this.patientId) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size exceeds 5MB limit / የፋይል መጠን ከ5MB ገደብ ያልፋል');
-        return;
-      }
-
-      this.isUploading.set(true);
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = (reader.result as string).split(',')[1];
-
-        const payload = {
-          fileName: file.name,
-          mimeType: file.type || 'application/pdf',
-          fileDataBase64: base64String
-        };
-
-        this.http.post(`${this.apiUrl}/Patient/${this.patientId}/medical-records`, payload).subscribe({
-          next: () => {
-            alert('Medical record uploaded securely! / የህክምና መዝገብዎ በደህና ተሰቅሏል!');
-            this.isUploading.set(false);
-            // Optionally reload or push to records list
-            this.filteredRecords.update(records => [
-              {
-                id: Math.random().toString(),
-                category: 'general',
-                title: file.name,
-                date: new Date().toISOString().split('T')[0],
-                doctor: 'Uploaded By Patient',
-                description: 'Patient uploaded physical medical record.',
-                status: 'Completed'
-              },
-              ...records
-            ]);
-          },
-          error: (err) => {
-            console.error('File Upload Error:', err);
-            alert('Error securely uploading file / ፋይል በመስቀል ላይ ስህተት ተፈጥሯል');
-            this.isUploading.set(false);
-          }
-        });
-      };
-
-      reader.onerror = () => {
-        alert('Error reading file / ፋይል በማንበብ ላይ ስህተት ተፈጥሯል');
-        this.isUploading.set(false);
-      };
-
-      reader.readAsDataURL(file);
-    }
   }
 }

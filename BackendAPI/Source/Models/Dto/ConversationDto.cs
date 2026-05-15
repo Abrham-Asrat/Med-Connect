@@ -9,6 +9,7 @@ public interface IConversationDto
   ICollection<IProfileDto> Participants { get; set; }
   DateTime? LastMessageAt { get; set; }
   string Status { get; set; }
+  string? AppointmentType { get; set; }
 }
 
 public class ConversationDtoBase : IConversationDto
@@ -17,6 +18,7 @@ public class ConversationDtoBase : IConversationDto
   public required ICollection<IProfileDto> Participants { get; set; }
   public DateTime? LastMessageAt { get; set; }
   public string Status { get; set; } = "active";
+  public string? AppointmentType { get; set; }
 }
 
 public class CreateConversationDto

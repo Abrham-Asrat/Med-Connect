@@ -40,6 +40,7 @@ namespace BackendAPI.Source.Data
 
         public DbSet<MessageFileAssociation> MessageFileAssociations { get; set; } = null!;
         public DbSet<DocumentFileAssociation> DocumentFileAssociations { get; set; } = null!;
+        public DbSet<DoctorTimeOff> DoctorTimeOffs { get; set; } = null!;
     
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -18,18 +18,54 @@ public class BlogController : ControllerBase
   private readonly IBlogService _blogService;
   private readonly AuthService _authService;
   private readonly ApplicationDbContext _context;
+  private readonly FileService _fileService;
   private readonly ILogger<BlogController> _logger;
 
   public BlogController(
     IBlogService blogService,
     AuthService authService,
     ApplicationDbContext context,
+    FileService fileService,
     ILogger<BlogController> logger)
   {
     _blogService = blogService;
     _authService = authService;
     _context = context;
+    _fileService = fileService;
     _logger = logger;
+  }
+
+  [HttpPost("upload-image")]
+  [Consumes("multipart/form-data")]
+  public async Task<IActionResult> UploadBlogImage(IFormFile file)
+  {
+    try
+    {
+      if (file == null || file.Length == 0)
+        return BadRequest(new ApiResponse<object>(false, "No file uploaded", null));
+
+      if (file.Length > 5 * 1024 * 1024)
+        return BadRequest(new ApiResponse<object>(false, "File size exceeds 5MB limit", null));
+
+      using var ms = new MemoryStream();
+      await file.CopyToAsync(ms);
+      var fileBytes = ms.ToArray();
+
+      var createFileDto = new CreateFileDto(
+        file.ContentType,
+        Convert.ToBase64String(fileBytes),
+        file.FileName
+      );
+
+      var savedFile = await _fileService.CreateFileAsync(createFileDto);
+
+      return Ok(new ApiResponse<object>(true, "Image uploaded successfully", new { imageId = savedFile.FileId }));
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error uploading blog image");
+      return StatusCode(500, new ApiResponse<object>(false, "Internal server error during upload", null));
+    }
   }
 
   /// <summary>

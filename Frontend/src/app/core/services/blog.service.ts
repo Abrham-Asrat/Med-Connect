@@ -67,4 +67,11 @@ export class BlogService {
   deleteComment(commentId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/blogs/comment/${commentId}`);
   }
+
+  // POST /api/blogs/upload-image
+  uploadImage(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/blogs/upload-image`, formData);
+  }
 }

@@ -82,7 +82,7 @@
       </div>
       }
       @for (apt of appointments(); track apt.appointmentId) {
-      <div class="appointment-row p-3 border-bottom" [class.pending]="apt.status==='Pending'">
+      <div class="appointment-row p-3 border-bottom" [class.pending]="apt.status?.toLowerCase()==='pending'">
         <div class="row align-items-center">
           <div class="col-md-2">
             <span class="text-primary fw-bold">{{ apt.appointmentTime }}</span>
@@ -95,13 +95,17 @@
             <span class="badge rounded-pill px-3" [ngClass]="getStatusClass(apt.status)">{{ apt.status }}</span>
           </div>
           <div class="col-md-3 text-end">
-            @if (apt.status === 'Pending') {
+            @if (apt.status?.toLowerCase() === 'pending') {
             <button class="btn btn-primary btn-sm me-1" (click)="confirmAppointment(apt.appointmentId)">Confirm</button>
             <button class="btn btn-outline-danger btn-sm"
               (click)="declineAppointment(apt.appointmentId)">Decline</button>
             }
-            @if (apt.status === 'Scheduled' || apt.status === 'Confirmed') {
-            <button class="btn btn-outline-primary btn-sm">Start</button>
+            @if (apt.status?.toLowerCase() === 'scheduled' || apt.status?.toLowerCase() === 'confirmed' ||
+            apt.status?.toLowerCase() === 'active') {
+            <button class="btn btn-outline-primary btn-sm me-1" (click)="goChat(apt)">
+              <i class="bi bi-chat-dots me-1"></i>Chat
+            </button>
+            <button class="btn btn-primary btn-sm">Start Consultation</button>
             }
           </div>
         </div>

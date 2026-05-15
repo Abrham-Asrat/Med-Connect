@@ -42,8 +42,8 @@
   <!-- Appointments List -->
   @if (!isLoading() && !errorMessage()) {
   @for (apt of filteredAppointments(); track apt.appointmentId) {
-  <div class="appointment-card card mb-3" [class.pending]="apt.status==='Pending'"
-    [class.cancelled]="apt.status==='Cancelled'">
+  <div class="appointment-card card mb-3" [class.pending]="apt.status?.toLowerCase()==='pending'"
+    [class.cancelled]="apt.status?.toLowerCase()==='cancelled'">
     <div class="card-body">
       <div class="row align-items-center">
         <div class="col-md-4">
@@ -74,8 +74,7 @@
             </small>
             }
             <a [href]="getMapsLink(apt)" target="_blank" rel="noopener noreferrer"
-               class="btn btn-link btn-sm p-0 text-primary" style="font-size:0.75rem"
-               (click)="$event.stopPropagation()">
+              class="btn btn-link btn-sm p-0 text-primary" style="font-size:0.75rem" (click)="$event.stopPropagation()">
               <i class="bi bi-map me-1"></i>Directions / አቅጣጫ
             </a>
           </div>
@@ -90,44 +89,44 @@
 
           <!-- Scheduled: can still cancel or reschedule -->
           @if (apt.status?.toLowerCase() === 'scheduled' || apt.status?.toLowerCase() === 'pending' ||
-               apt.status?.toLowerCase() === 'confirmed') {
-            <button class="btn btn-outline-primary btn-sm me-1" (click)="openReschedule(apt)">
-              <i class="bi bi-calendar-event me-1"></i>Reschedule
-            </button>
-            <button class="btn btn-outline-danger btn-sm me-1" (click)="openCancel(apt)">
-              <i class="bi bi-x-circle me-1"></i>Cancel
-            </button>
-            <a [routerLink]="['/patient/chat']"
-               [queryParams]="{ startChatWith: apt.doctor?.userId || apt.doctorId }"
-               class="btn btn-primary btn-sm">
-              <i class="bi bi-chat me-1"></i>Chat
-            </a>
+          apt.status?.toLowerCase() === 'confirmed') {
+          <button class="btn btn-outline-primary btn-sm me-1" (click)="openReschedule(apt)">
+            <i class="bi bi-calendar-event me-1"></i>Reschedule
+          </button>
+          <button class="btn btn-outline-danger btn-sm me-1" (click)="openCancel(apt)">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+          <a [routerLink]="['/patient/chat']"
+            [queryParams]="{ startChatWith: apt.doctorUserId || apt.doctor?.userId || apt.doctorId }"
+            class="btn btn-primary btn-sm">
+            <i class="bi bi-chat me-1"></i>Chat
+          </a>
           }
 
           <!-- Active / Follow-up: consultation in progress — chat only, no cancel/reschedule -->
           @if (apt.status?.toLowerCase() === 'active' || apt.status?.toLowerCase() === 'follow_up') {
-            <a [routerLink]="['/patient/chat']"
-               [queryParams]="{ startChatWith: apt.doctor?.userId || apt.doctorId }"
-               class="btn btn-primary btn-sm">
-              <i class="bi bi-chat-dots-fill me-1"></i>Open Chat
-            </a>
+          <a [routerLink]="['/patient/chat']"
+            [queryParams]="{ startChatWith: apt.doctorUserId || apt.doctor?.userId || apt.doctorId }"
+            class="btn btn-primary btn-sm">
+            <i class="bi bi-chat-dots-fill me-1"></i>Open Chat
+          </a>
           }
 
           <!-- Completed / Closed: leave a review -->
           @if (apt.status?.toLowerCase() === 'completed' || apt.status?.toLowerCase() === 'closed') {
-            <a routerLink="/patient/reviews" class="btn btn-outline-warning btn-sm me-1">
-              <i class="bi bi-star me-1"></i>Review
-            </a>
-            <a routerLink="/patient/doctors" class="btn btn-outline-primary btn-sm">
-              <i class="bi bi-arrow-repeat me-1"></i>Re-book
-            </a>
+          <a routerLink="/patient/reviews" class="btn btn-outline-warning btn-sm me-1">
+            <i class="bi bi-star me-1"></i>Review
+          </a>
+          <a routerLink="/patient/doctors" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-arrow-repeat me-1"></i>Re-book
+          </a>
           }
 
           <!-- Cancelled: only option is to book again -->
           @if (apt.status?.toLowerCase() === 'cancelled') {
-            <a routerLink="/patient/doctors" class="btn btn-outline-primary btn-sm">
-              <i class="bi bi-arrow-repeat me-1"></i>Book Again
-            </a>
+          <a routerLink="/patient/doctors" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-arrow-repeat me-1"></i>Book Again
+          </a>
           }
 
         </div>

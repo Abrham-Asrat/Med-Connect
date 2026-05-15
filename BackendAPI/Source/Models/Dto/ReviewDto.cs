@@ -34,6 +34,8 @@ public record ReviewDto
   public required bool IsEdited { get; set; }
   public required int HelpfulCount { get; set; }
   public required bool IsPublic { get; set; }
+  public string? ReplyText { get; set; }
+  public DateTime? RepliedAt { get; set; }
 };
 
 /// <summary>
@@ -51,6 +53,8 @@ public record ReviewSummaryDto
   public required bool IsEdited { get; set; }
   public required int HelpfulCount { get; set; }
   public required bool IsPublic { get; set; }
+  public string? ReplyText { get; set; }
+  public DateTime? RepliedAt { get; set; }
 };
 
 /// <summary>
@@ -180,4 +184,18 @@ public record ReviewSearchDto
   public int PageSize { get; set; } = 10;
   public string? SortBy { get; set; } = "CreatedAt";
   public bool SortDescending { get; set; } = true;
+};
+
+/// <summary>
+/// DTO for a doctor to reply to a review
+/// </summary>
+public record ReplyReviewDto
+{
+    [Required]
+    public required Guid ReviewId { get; set; }
+    
+    [Required]
+    [MinLength(3, ErrorMessage = "Reply must be at least 3 characters")]
+    [MaxLength(1000)]
+    public required string ReplyText { get; set; }
 };

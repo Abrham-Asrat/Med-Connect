@@ -33,6 +33,10 @@ namespace BackendAPI.Source.Models.Dto
         public required string Biography { get; set; }
         public List<string> Languages { get; set; } = new();
         public DoctorStatus DoctorStatus { get; set; } = DoctorStatus.Active;
+        
+        // Stats
+        public decimal Rating { get; set; } = 0;
+        public int ReviewCount { get; set; } = 0;
     }
 
 

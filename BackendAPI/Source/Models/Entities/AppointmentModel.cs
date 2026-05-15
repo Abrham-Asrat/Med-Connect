@@ -24,7 +24,7 @@ public class Appointment : BaseEntity
 
   [Required]
   public AppointmentType AppointmentType { get; set; }
-  public AppointmentStatus Status { get; set; } = AppointmentStatus.scheduled;
+  public AppointmentStatus Status { get; set; } = AppointmentStatus.pending;
 
   public virtual required DoctorModel Doctor { get; set; } // <<NAV>>
   public virtual required PatientModel Patient { get; set; } // <<NAV>>

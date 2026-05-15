@@ -396,4 +396,54 @@ public class ReviewController(IReviewService reviewService, ILogger<ReviewContro
       return StatusCode(500, new ApiResponse<decimal>(false, "An error occurred while retrieving doctor average rating", 0));
     }
   }
+
+  /// <summary>
+  /// Mark a review as helpful (like)
+  /// </summary>
+  /// <param name="reviewId">The ID of the review</param>
+  [HttpPost("{reviewId}/helpful")]
+  public async Task<IActionResult> MarkAsHelpful(Guid reviewId)
+  {
+    try
+    {
+      var review = await reviewService.MarkReviewAsHelpfulAsync(reviewId);
+      return Ok(new ApiResponse<ReviewDto>(true, "Review marked as helpful", review));
+    }
+    catch (KeyNotFoundException ex)
+    {
+      return NotFound(new ApiResponse<ReviewDto>(false, ex.Message, null));
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to mark review as helpful");
+      return StatusCode(500, new ApiResponse<ReviewDto>(false, "Error marking review as helpful", null));
+    }
+  }
+
+  /// <summary>
+  /// Reply to a review (Doctor only)
+  /// </summary>
+  /// <param name="replyDto">Reply data</param>
+  [HttpPost("reply")]
+  // [Authorize(Roles = "Doctor")]
+  public async Task<IActionResult> ReplyToReview([FromBody] ReplyReviewDto replyDto)
+  {
+    if (replyDto == null || !ModelState.IsValid)
+      return BadRequest(new ApiResponse<ReviewDto>(false, "Invalid reply data", null));
+
+    try
+    {
+      var review = await reviewService.ReplyToReviewAsync(replyDto);
+      return Ok(new ApiResponse<ReviewDto>(true, "Reply posted successfully", review));
+    }
+    catch (KeyNotFoundException ex)
+    {
+      return NotFound(new ApiResponse<ReviewDto>(false, ex.Message, null));
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to reply to review");
+      return StatusCode(500, new ApiResponse<ReviewDto>(false, "Error posting reply", null));
+    }
+  }
 }

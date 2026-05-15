@@ -18,6 +18,7 @@ interface Doctor {
   onlineFee?: number;
   inPersonFee?: number;
   profilePicture?: string;
+  isVerified?: boolean;
 }
 
 @Component({
@@ -74,7 +75,10 @@ export class DoctorSearchComponent implements OnInit {
           return {
             ...d,
             doctorId: docId,
-            specialties: d.specialtyModel || d.specialties || []
+            specialties: d.specialtyModel || d.specialties || [],
+            onlineFee: d.onlineAppointmentFee,
+            inPersonFee: d.inPersonAppointmentFee,
+            isVerified: d.isVerified
           };
         });
 

@@ -18,7 +18,7 @@ export const DOCTOR_ROUTES: Routes = [
       },
       {
         path: 'earnings',
-        loadComponent: () => import('../../payments/pages/payment-history/payment-history.component').then(m => m.PaymentHistoryComponent)
+        loadComponent: () => import('../../payments/pages/doctor-earnings/doctor-earnings.component').then(m => m.DoctorEarningsComponent)
       },
       {
         path: 'settings',

@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { DoctorService } from '../../../../core/services/doctor.service';
@@ -18,6 +18,19 @@ export class DoctorProfileComponent implements OnInit {
   private reviewService = inject(ReviewService);
   private route = inject(ActivatedRoute);
   private sanitizer = inject(DomSanitizer);
+  private cdr = inject(ChangeDetectorRef);
+
+  likeReview(review: any) {
+    if (!review.reviewId && !review.id) return;
+    const rid = review.reviewId || review.id;
+    this.reviewService.markAsHelpful(rid).subscribe({
+      next: (res) => {
+        if (res.success) {
+          review.helpfulCount = res.data.helpfulCount;
+        }
+      }
+    });
+  }
 
   doctor = signal<any>(null);
   reviews = signal<any[]>([]);
@@ -54,6 +67,10 @@ export class DoctorProfileComponent implements OnInit {
           // Normalize fields from backend DoctorProfileDto
           const normalized = {
             ...doctor,
+            isVerified: doctor.isVerified,
+            experience: doctor.experienceYears || doctor.experience || 0,
+            patientCount: doctor.patientCount || 0,
+            satisfaction: doctor.rating ? Math.round((doctor.rating / 5) * 100) : 100,
             onlineFee: doctor.onlineAppointmentFee ?? doctor.onlineFee ?? 500,
             inPersonFee: doctor.inPersonAppointmentFee ?? doctor.inPersonFee ?? 800,
             acceptsOnline: doctor.acceptsOnline !== false,
@@ -66,11 +83,15 @@ export class DoctorProfileComponent implements OnInit {
             specialties: Array.isArray(doctor.specialties)
               ? doctor.specialties.map((s: any) => typeof s === 'string' ? s : s.name || s.specialtyName || '')
               : [],
+            // Mapping education/experience lists
+            education: (doctor.educations || []).map((e: any) => `${e.degree} - ${e.institution} (${new Date(e.graduationDate).getFullYear()})`),
+            experienceList: (doctor.experiences || []).map((e: any) => `${e.position} at ${e.institution} (${new Date(e.startDate).getFullYear()} - ${e.endDate ? new Date(e.endDate).getFullYear() : 'Present'})`)
           };
           this.doctor.set(normalized);
         }
         this.isLoading.set(false);
         this.loadReviews(doctorId);
+        this.loadAvailabilities(doctorId);
       },
       error: () => {
         // Fallback to mock if API fails
@@ -82,45 +103,25 @@ export class DoctorProfileComponent implements OnInit {
   }
 
   loadReviews(doctorId: string): void {
-    // Generate dummy reviews populated from the Telemedicine Chat Workflow
-    setTimeout(() => {
-      this.ratingStats.set({
-        averageRating: 4.8,
-        totalReviews: 24,
-        fiveStarReviews: 18,
-        fourStarReviews: 5,
-        threeStarReviews: 1,
-        twoStarReviews: 0,
-        oneStarReviews: 0
-      });
-
-      this.reviews.set([
-        {
-          id: 'rev1',
-          starRating: 5,
-          reviewText: 'Dr. Abrham was very helpful and professional. Reassured me regarding my chest pains via the telemedicine chat.',
-          createdAt: new Date().toISOString(),
-          helpfulCount: 12,
-          patient: { firstName: 'Abebe', lastName: 'Tesfaye', profilePicture: null }
-        },
-        {
-          id: 'rev2',
-          starRating: 5,
-          reviewText: 'Excellent service. The telemedicine chat allowed me to get my prescription renewed instantly without leaving my house.',
-          createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-          helpfulCount: 5,
-          patient: { firstName: 'Meron', lastName: 'Haile', profilePicture: null }
-        },
-        {
-          id: 'rev3',
-          starRating: 4,
-          reviewText: 'Great doctor, minor wait time to get the consultation started but the medical advice was spot on.',
-          createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-          helpfulCount: 2,
-          patient: { firstName: 'Samuel', lastName: 'G.', profilePicture: null }
+    // 1. Get stats
+    this.reviewService.getReviewStats(doctorId).subscribe({
+      next: (res: any) => {
+        const stats = res?.data || res;
+        if (stats) {
+          this.ratingStats.set(stats);
         }
-      ]);
-    }, 500);
+      },
+      error: (err) => console.error('Error fetching review stats:', err)
+    });
+
+    // 2. Get review list
+    this.reviewService.getReviewsByDoctor(doctorId).subscribe({
+      next: (res: any) => {
+        const list = res?.data || res || [];
+        this.reviews.set(Array.isArray(list) ? list : []);
+      },
+      error: (err) => console.error('Error fetching reviews:', err)
+    });
   }
 
   loadAvailabilities(doctorId: string): void {

@@ -2,6 +2,7 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppointmentService } from '../../../../core/services/appointment.service';
 import { PaymentService } from '../../../../core/services/payment.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-payment-history',
@@ -13,11 +14,15 @@ import { PaymentService } from '../../../../core/services/payment.service';
 export class PaymentHistoryComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
   private paymentService = inject(PaymentService);
+  private authService = inject(AuthService);
 
   patientId = localStorage.getItem('patientId') || '';
+  user = this.authService.currentUser;
+
   successMessage = signal<string | null>(null);
   errorMessage = signal<string | null>(null);
   isLoading = signal(false);
+
   appointments = signal<any[]>([]);
   payments = signal<any[]>([]);
 
@@ -25,6 +30,7 @@ export class PaymentHistoryComponent implements OnInit {
   totalSpent = signal(0);
   pendingPayments = signal(0);
   completedPayments = signal(0);
+  dueAppointments = signal<any[]>([]);
 
   ngOnInit(): void {
     this.loadData();
@@ -39,19 +45,42 @@ export class PaymentHistoryComponent implements OnInit {
       next: (response: any) => {
         this.isLoading.set(false);
         const data = response?.data || response || [];
-        this.payments.set(Array.isArray(data) ? data : []);
+        const payList = Array.isArray(data) ? data : [];
+        this.payments.set(payList);
         this.calculateStats();
+
+        // After loading payments, fetch appointments to find which ones are unpaid
+        this.loadAppointments();
       },
       error: (error: any) => {
         this.isLoading.set(false);
         console.error('Error loading payments:', error);
       }
     });
+  }
 
+  loadAppointments(): void {
     this.appointmentService.getPatientAppointments(this.patientId).subscribe({
       next: (response: any) => {
         const data = response?.data || response || [];
-        this.appointments.set(Array.isArray(data) ? data : []);
+        const apps = Array.isArray(data) ? data : [];
+        this.appointments.set(apps);
+
+        // Filter appointments that might need payment
+        // We look for Pending/Scheduled appointments that don't have a matching successful payment reference
+        const unpaid = apps.filter(a => {
+          const status = a.status?.toLowerCase();
+          const needsPayment = status === 'pending' || status === 'scheduled';
+          if (!needsPayment) return false;
+
+          // Check if any payment exists that contains this appointment ID in its reference
+          return !this.payments().some(p =>
+            (p.paymentStatus === 'Success' || p.paymentStatus === 1) &&
+            (p.transactionReference?.includes(a.appointmentId) || p.receiverId === a.doctorId)
+          );
+        });
+
+        this.dueAppointments.set(unpaid.slice(0, 5));
       }
     });
   }
@@ -84,6 +113,32 @@ export class PaymentHistoryComponent implements OnInit {
     }
   }
 
+  verifyPayment(p: any): void {
+    const txRef = p.transactionReference || p.txRef;
+    if (!txRef) {
+      alert('No transaction reference found to verify.');
+      return;
+    }
+    this.isLoading.set(true);
+    this.paymentService.verifyTransaction(txRef).subscribe({
+      next: (res) => {
+        this.isLoading.set(false);
+        if (res.success || res.status === 'success') {
+          this.successMessage.set('Payment verified successfully!');
+          this.loadData();
+        } else {
+          this.errorMessage.set('Payment could not be verified yet.');
+        }
+        setTimeout(() => { this.successMessage.set(null); this.errorMessage.set(null); }, 3000);
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.errorMessage.set('Verification failed.');
+        setTimeout(() => this.errorMessage.set(null), 3000);
+      }
+    });
+  }
+
   showPaymentModal = signal(false);
   paymentAppointment = signal<any>(null);
   paymentLoading = signal(false);
@@ -97,27 +152,31 @@ export class PaymentHistoryComponent implements OnInit {
     if (!this.paymentAppointment()) return;
 
     this.paymentLoading.set(true);
-
-    // Get amount from appointment, fallback to 500
-    const fee = this.paymentAppointment().appointmentFee || this.paymentAppointment().onlineFee || '500';
+    const apt = this.paymentAppointment();
+    const fee = apt.appointmentFee || apt.onlineFee || '500';
+    const user = this.user();
 
     this.paymentService.charge({
       amount: fee.toString(),
       currency: 'ETB',
-      phoneNumber: '0911111111', // This should ideally come from user profile, hardcoded for democartion
+      email: user?.email || '',
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      phoneNumber: user?.phone || '0900000000',
       paymentProvider: 'Chapa',
-      paymentMethod: 'mobile'
+      paymentMethod: 'mobile',
+      txRef: 'APT-' + apt.appointmentId.substring(0, 8) + '-' + Date.now()
     }).subscribe({
       next: (res: any) => {
         this.paymentLoading.set(false);
         this.showPaymentModal.set(false);
-        // If Chapa returns a checkout url, consider redirecting them
         if (res?.data?.checkoutUrl) {
           window.open(res.data.checkoutUrl, '_blank');
         } else {
           this.successMessage.set('Payment initiated! Check your phone.');
           setTimeout(() => this.successMessage.set(null), 3000);
         }
+        this.loadData();
       },
       error: () => {
         this.paymentLoading.set(false);

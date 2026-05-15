@@ -25,4 +25,7 @@ public class DoctorPreference
 
   /// <summary>City where the clinic is located.</summary>
   public string? ClinicCity { get; set; }
+
+  /// <summary>Global toggle for accepting any appointments.</summary>
+  public bool IsAcceptingAppointments { get; set; } = true;
 }

@@ -24,6 +24,14 @@ export class ReviewService {
     return this.http.get(`${this.apiUrl}/reviews/patient/${patientId}/history`);
   }
 
+  markAsHelpful(reviewId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reviews/${reviewId}/helpful`, {});
+  }
+
+  replyToReview(reviewId: string, replyText: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reviews/reply`, { reviewId, replyText });
+  }
+
   postReview(reviewData: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/reviews`, reviewData);
   }

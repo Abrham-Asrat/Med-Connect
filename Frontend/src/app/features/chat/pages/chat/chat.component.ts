@@ -49,6 +49,7 @@ interface Conversation {
   status?: 'scheduled' | 'active' | 'follow_up' | 'closed';
   otherUserId?: string;
   appointmentId?: string;
+  appointmentType?: string;
 }
 
 @Component({
@@ -475,7 +476,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             online: false,
             status: (c.status || c.Status || 'active') as Conversation['status'],
             otherUserId: uid?.toString(),
-            appointmentId: c.appointmentId || c.AppointmentId
+            appointmentId: c.appointmentId || c.AppointmentId,
+            appointmentType: c.appointmentType || c.AppointmentType
           };
         });
 

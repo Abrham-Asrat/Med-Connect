@@ -428,6 +428,8 @@ namespace BackendAPI.Source.Service
                 var doctors = await appContext.Doctors
                     .AsNoTracking()
                     .AsSplitQuery()
+                    .Include(d => d.User)
+                    .Include(d => d.DoctorAvailabilities)
                     .Include(d => d.DoctorSpecialties).ThenInclude(ds => ds.Specialty)
                     .Include(d => d.DoctorPreference)
                     .Include(d => d.Reviews)

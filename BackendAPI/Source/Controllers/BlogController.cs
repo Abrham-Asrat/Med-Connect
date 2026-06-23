@@ -116,7 +116,7 @@ public class BlogController : ControllerBase
   /// <returns></returns>
   [HttpGet("{blogId}")]
   [AllowAnonymous]
-  public async Task<IActionResult> GetBlogById([FromRoute] [Required] [Guid] Guid blogId)
+  public async Task<IActionResult> GetBlogById([FromRoute] [Required] Guid blogId)
   {
     try
     {
@@ -179,7 +179,7 @@ public class BlogController : ControllerBase
   /// </summary>
   [HttpGet("author/{authorId}")]
   [AllowAnonymous]
-  public async Task<IActionResult> GetBlogsByAuthor([FromRoute] [Required] [Guid] Guid authorId)
+  public async Task<IActionResult> GetBlogsByAuthor([FromRoute] [Required] Guid authorId)
   {
     try
     {
@@ -198,7 +198,7 @@ public class BlogController : ControllerBase
   /// Delete a single blog by id
   /// </summary>
   [HttpDelete("{blogId}")]
-  public async Task<IActionResult> DeleteBlog([FromRoute] [Required] [Guid] Guid blogId)
+  public async Task<IActionResult> DeleteBlog([FromRoute] [Required] Guid blogId)
   {
     try
     {
@@ -254,7 +254,7 @@ public class BlogController : ControllerBase
 
   [HttpGet("{blogId}/comments")]
   [AllowAnonymous]
-  public async Task<IActionResult> GetBlogComments([FromRoute] [Required] [Guid] Guid blogId)
+  public async Task<IActionResult> GetBlogComments([FromRoute] [Required] Guid blogId)
   {
     try
     {

@@ -68,13 +68,12 @@ Migrations/
  20260507221728_UpdateTelemedicineSchema.Designer.cs
  20260513164259_AddConversationAutoClose.cs
  20260513164259_AddConversationAutoClose.Designer.cs
- 20260514000000_AddDoctorPreferenceClinicFields.cs
- 20260514100000_MakeMessageSenderIdNullable.cs
- 20260514110000_AddPerformanceIndexes.cs
  20260515022037_AddDoctorTimeOffTable.cs
  20260515022037_AddDoctorTimeOffTable.Designer.cs
  20260515104745_AddUserSettings.cs
  20260515104745_AddUserSettings.Designer.cs
+ 20260527074519_FixGhostedMigrations.cs
+ 20260527074519_FixGhostedMigrations.Designer.cs
  ApplicationDbContextModelSnapshot.cs
 obj/Debug/net10.0/
  .NETCoreApp,Version=v10.0.AssemblyAttributes.cs

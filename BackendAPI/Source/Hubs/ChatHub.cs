@@ -91,7 +91,7 @@ namespace BackendAPI.Source.Hubs
     /// <exception cref="ArgumentException">Thrown when neither text nor files are provided.</exception>
     /// <exception cref="HubException">Thrown when the caller is not authenticated or the user ID is malformed.</exception>
     public async Task SendMessage(
-      [Guid] Guid conversationId,
+      Guid conversationId,
       string? messageText = null,
       [ValidCreateFileList] List<CreateFileDto>? files = null,
       BackendAPI.Source.Models.Enums.MessageType type = BackendAPI.Source.Models.Enums.MessageType.text,

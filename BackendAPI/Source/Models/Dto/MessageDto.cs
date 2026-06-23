@@ -16,8 +16,8 @@ public record MessageDto(
 );
 
 public record CreateMessageDto(
-  [Guid] Guid ConversationId,
-  [Guid] Guid SenderId,
+  Guid ConversationId,
+  Guid SenderId,
   string? MessageText = null,
   [ValidCreateFileList] List<CreateFileDto>? Files = null,
   BackendAPI.Source.Models.Enums.MessageType Type = BackendAPI.Source.Models.Enums.MessageType.text,

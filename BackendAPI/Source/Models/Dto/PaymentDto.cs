@@ -26,7 +26,6 @@ public record TransferRequestDto
   public required string PhoneNumber { get; set; }
 
   [Required]
-  [Guid]
   public required Guid ReceiverId { get; set; }
 
   /// <summary>

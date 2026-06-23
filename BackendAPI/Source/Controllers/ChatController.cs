@@ -51,7 +51,7 @@ public class ChatController(
   /// <returns></returns>
   [HttpGet("messages/{conversationId}")]
   public async Task<IActionResult> GetMessagesByConversationId(
-    [FromRoute] [Required(ErrorMessage = "Conversation id is required")] [Guid] Guid conversationId
+    [FromRoute] [Required(ErrorMessage = "Conversation id is required")] Guid conversationId
   )
   {
     try
@@ -72,7 +72,7 @@ public class ChatController(
   /// <param name="userId"></param>
   /// <returns></returns>
   [HttpGet("users/{userId}")]
-  public async Task<IActionResult> GetConversations([FromRoute] [Required] [Guid] Guid userId)
+  public async Task<IActionResult> GetConversations([FromRoute] [Required] Guid userId)
   {
     try
     {
@@ -95,7 +95,7 @@ public class ChatController(
   /// <returns></returns>
   [HttpGet("{conversationId}")]
   public async Task<IActionResult> GetConversation(
-    [FromRoute] [Required] [Guid] Guid conversationId
+    [FromRoute] [Required] Guid conversationId
   )
   {
     try
@@ -137,7 +137,7 @@ public class ChatController(
   /// <param name="messageId"></param>
   /// <returns></returns>
   [HttpDelete("message/{messageId}")]
-  public async Task<IActionResult> DeleteMessage([Required] [FromRoute] [Guid] Guid messageId)
+  public async Task<IActionResult> DeleteMessage([Required] [FromRoute] Guid messageId)
   {
     try
     {
@@ -160,7 +160,7 @@ public class ChatController(
   /// <returns></returns>
   [HttpPost("{conversationId}/block")]
   public async Task<IActionResult> BlockConversation(
-    [FromRoute] [Required] [Guid] Guid conversationId,
+    [FromRoute] [Required] Guid conversationId,
     [FromBody] [Required] BlockConversationRequestDto requestBody
   )
   {
@@ -186,7 +186,7 @@ public class ChatController(
   /// </summary>
   [HttpPatch("{conversationId}/status")]
   public async Task<IActionResult> UpdateConversationStatus(
-    [FromRoute] [Required] [Guid] Guid conversationId,
+    [FromRoute] [Required] Guid conversationId,
     [FromBody] [Required] UpdateConversationStatusDto requestBody
   )
   {

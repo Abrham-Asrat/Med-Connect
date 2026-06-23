@@ -7,7 +7,6 @@ namespace BackendAPI.Source.Models.Dto;
 public record CreateBlogDto
 {
   [Required]
-  [Guid]
   public required Guid AuthorId { get; set; }
 
   [Required]
@@ -61,11 +60,9 @@ public record BlogDto
 public record CreateBlogCommentDto
 {
   [Required]
-  [Guid]
   public required Guid BlogId { get; set; }
 
   [Required]
-  [Guid]
   public required Guid SenderId { get; set; }
 
   [Required]
@@ -95,6 +92,6 @@ public record BlogCommentDto
 }
 
 // Request DTO for creating a blog like
-public record CreateBlogLikeDto([Required] [Guid] Guid UserId, [Required] [Guid] Guid BlogId);
+public record CreateBlogLikeDto([Required] Guid UserId, [Required] Guid BlogId);
 
 public record BlogLikeDto(Guid BlogLikeId, Guid UserId, Guid BlogId, IProfileDto User);

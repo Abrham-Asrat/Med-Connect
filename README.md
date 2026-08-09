@@ -1,7 +1,5 @@
 # 🏥 Med-Connect: Ethiopia's Integrated Healthcare Platform
 
-![Med-Connect Banner](Frontend/public/assets/blog-banner.png)
-
 ## 🌟 1. Project Overview & Scope
 **Med-Connect** is a comprehensive, production-grade digital health ecosystem designed and developed as a final year capstone project. Its primary goal is to modernize healthcare delivery in Ethiopia by bridging the gap between patients and verified medical professionals. The platform facilitates real-time scheduling, safe data management, peer-reviewed medical insights, and telemedicine capabilities through real-time communication.
 
@@ -28,7 +26,7 @@
 The project is divided into highly cohesive modules targeting specific business domains:
 
 ### 📅 A. Unified Appointment Engine
-- **Doctor Discovery:** Advanced filtering system powered by EF Core LINQ.
+- **Doctor Discovery:** Advanced filtering system powered by EF Core link.
 - **Scheduling System:** Automated calendar mapping to avoid overlapping schedules.
 - **Payment Integration:** Integrated **Chapa Payment Gateway** for seamless local currency transactions.
 

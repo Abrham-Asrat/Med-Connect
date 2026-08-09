@@ -1,6 +1,49 @@
 @use "sass:color";
+
 $primary: #078930;
 $light-bg: #F8F9FA;
+
+@mixin collapsed-sidebar {
+    width: 80px;
+    min-width: 80px;
+
+    .sidebar-title {
+        display: none !important;
+    }
+
+    .input-group {
+        opacity: 0;
+        pointer-events: none;
+        display: none !important; // Added for max-width scenario
+    }
+
+    .p-2.border-bottom {
+        padding: 0 !important;
+        height: 0;
+        overflow: hidden;
+        border: none !important;
+    }
+
+    .min-width-0,
+    .online-dot {
+        display: none !important;
+    }
+
+    .conv-item {
+        padding: 1rem !important;
+        justify-content: center;
+    }
+
+    h5 {
+        text-align: center;
+        width: 100%;
+    }
+
+    .bi-chat-dots-fill {
+        margin-right: 0 !important;
+        font-size: 1.5rem;
+    }
+}
 
 .chat-container {
     height: calc(100vh - 140px);
@@ -26,50 +69,7 @@ $light-bg: #F8F9FA;
     overflow: hidden;
 
     &.collapsed {
-        width: 80px;
-        min-width: 80px;
-
-        .sidebar-title {
-            display: none !important;
-        }
-
-        .input-group {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .p-2.border-bottom {
-            padding: 0 !important;
-            height: 0;
-            overflow: hidden;
-            border: none !important;
-        }
-
-        /* hides search bar parent */
-
-        /* Elements inside conv-item to hide */
-        .min-width-0 {
-            display: none !important;
-        }
-
-        .online-dot {
-            display: none !important;
-        }
-
-        .conv-item {
-            padding: 1rem !important;
-            justify-content: center;
-        }
-
-        h5 {
-            text-align: center;
-            width: 100%;
-        }
-
-        .bi-chat-dots-fill {
-            margin-right: 0 !important;
-            font-size: 1.5rem;
-        }
+        @include collapsed-sidebar;
     }
 }
 
@@ -237,26 +237,26 @@ $light-bg: #F8F9FA;
 /* Responsiveness for sidebar */
 @media (max-width: 768px) {
     .conversation-list {
-        width: 80px;
-        min-width: 80px;
+        @include collapsed-sidebar;
         z-index: 1040;
-
-        .sidebar-title, .input-group { display: none !important; }
-        .p-2.border-bottom { padding: 0 !important; height: 0; border: none !important; }
-        .min-width-0, .online-dot { display: none !important; }
-        .conv-item { padding: 1rem !important; justify-content: center; }
-        h5 { text-align: center; width: 100%; }
-        .bi-chat-dots-fill { margin-right: 0 !important; font-size: 1.5rem; }
     }
 
-    .chat-container { height: calc(100vh - 100px); }
+    .chat-container {
+        height: calc(100vh - 100px);
+    }
 
     .profile-sidebar {
         position: absolute;
-        right: 0; top: 0; bottom: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
         z-index: 1050;
         box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
-        &.open { width: 280px; min-width: 280px; }
+
+        &.open {
+            width: 280px;
+            min-width: 280px;
+        }
     }
 }
 
